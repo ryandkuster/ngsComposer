@@ -10,7 +10,7 @@ class file_type:
                     if line[0] != '@':
                         return
                     else:
-                        pairs = file_type.is_barcode(filename, line, pairs)
+                        pairs = file_type.is_paired(filename, line, pairs)
                 if i == 3 and line[0] != '+':
                     return
                 if i == 5:
@@ -34,15 +34,16 @@ class file_type:
                     else:
                         return True, pairs
 
-    def is_barcode(filename, line, pairs):
-            if line in pairs:
-                pairs[line].append(filename)
-            else:
-                pairs[line] = [filename]
-            return pairs
-        
-    def is_paired(filename):
-        pass
+    def is_paired(filename, line, pairs):
+        for pos, x in enumerate(line):
+            if x == ' ':
+                space_pos = pos
+        header = line[:space_pos]
+        if header in pairs:
+            pairs[header].append(filename)
+        else:
+            pairs[header] = [filename]
+        return pairs
 
     def phred(file):
         pass
