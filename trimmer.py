@@ -1,15 +1,17 @@
 import sys
+import os
 import gzip
 
 class trimmer:
-    def test(input_file, b, e, gzipped):
+    def test(input_file, b, e, output_file, gzipped):
         if gzipped == 0:
             with open(input_file) as f, \
-                 open('trimmer_' + input_file, 'w') as o:
+                 open('trimmer_' + output_file, 'w') as o:
                 trimmer.trim(f, b, e, o)
         if gzipped == 1:
+            output_file = output_file.strip('.gz')
             with gzip.open(input_file, 'rt') as f, \
-                 open('trimmer_' + input_file, 'w') as o:
+                 open('trimmer_' + output_file, 'w') as o:
                 trimmer.trim(f, b, e, o)
     
     def trim(f, b, e, o):
@@ -27,5 +29,6 @@ if __name__ == '__main__':
     input_file = sys.argv[1] # fastq file
     b = int(sys.argv[2]) # bases to remove from beginning of sequence
     e = int(sys.argv[3]) # bases to remove from end of sequence
+    output_file = sys.argv[4]
     gzipped = 0 # change to '1' for gzipped file
-    trimmer.test(input_file, b, e, gzipped)
+    trimmer.test(input_file, b, e, output_file, gzipped)
