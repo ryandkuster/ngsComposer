@@ -20,7 +20,7 @@ def config_reader(project_dir):
               '''
              )
 
-def fastq_finder():
+def fastq_reader():
     fastq_list, gz, pairs = [], [], {}
     for filename in os.listdir(project_dir):
         if filename == 'config.txt':
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     project_dir = sys.argv[1]
     assert os.path.exists(project_dir),'project directory not found'
     config = config_reader(project_dir)
-    fastq_list, gz, pairs = fastq_finder()
+    fastq_list, gz, pairs = fastq_reader()
     for x, input_file in enumerate(fastq_list):
         output_file = os.path.basename(input_file)
         trimmer.test(input_file, b, e, output_file, gz[x])
