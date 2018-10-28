@@ -39,6 +39,7 @@ class file_type:
             if x == ' ':
                 space_pos = pos
         header = line[:space_pos]
+        end = line[space_pos+1]
         if header in pairs:
             pairs[header].append(filename)
         else:
