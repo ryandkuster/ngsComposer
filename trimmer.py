@@ -6,14 +6,14 @@ class trimmer:
     def test(input_file, b, e, output_file, gzipped):
         if gzipped == 0:
             with open(input_file) as f, \
-                 open('trimmer_' + output_file, 'w') as o:
+                 open(output_file, 'w') as o:
                 trimmer.trim(f, b, e, o)
         if gzipped == 1:
             output_file = output_file.strip('.gz')
             with gzip.open(input_file, 'rt') as f, \
-                 open('trimmer_' + output_file, 'w') as o:
+                 open(output_file, 'w') as o:
                 trimmer.trim(f, b, e, o)
-    
+
     def trim(f, b, e, o):
 	    i = 0
 	    for line in f:
