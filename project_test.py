@@ -74,8 +74,11 @@ class file_type:
             i = 0
             for line in f:
                 i += 1
-                if i == 1 and line[0] != '@':
-                    return
+                if i == 1:
+                    if line[0] != '@':
+                        return
+                    else:
+                        pairs = file_type.is_paired(filename, line, pairs)
                 if i == 3 and line[0] != '+':
                     return
                 if i == 5:
