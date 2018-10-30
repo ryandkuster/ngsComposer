@@ -57,4 +57,4 @@ if __name__ == '__main__':
     for x, input1 in enumerate(input1_list):
         input1 = input1
         input2 = input2_list[x]
-        composer.line_writer(input1, input2, config_cutoff, 200000, R1_barcodes, project_dir)
+        composer.pipe_writer(input1, input2, config_cutoff, 200000, R1_barcodes, project_dir)
