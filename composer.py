@@ -19,35 +19,34 @@ class composer:
             with open(project_dir + '/' + str(output_data2[0]) + '_' + output2, 'a') as outfile2:
                 outfile2.write(str(''.join(output_data2[1:])))
 
-    def pipe_writer(input1, input2, cutoff, chunk, barcodes, project_dir):
-        output1 = input1
-        output2 = input2
-        input1 = project_dir + '/trimmer_' + input1
-        input2 = project_dir + '/trimmer_' + input2
-        composer.line_writer(input1, input2, cutoff, chunk, barcodes, project_dir, output1, output2)
+    def first_round(barcodes, line1):
+        for file_prefix, x in enumerate(barcodes):
+            hamm, z = 0, 0
+            for j in range(len(x)):
+                if x[j] != line1[j]:
+                    hamm = hamm + 1
+                    break
+            if hamm == 0:
+                output_prefix = file_prefix
+                z = len(x)
+                break
+            else:
+                output_prefix = -1
+        return output_prefix, z
 
-    def line_writer(input1, input2, cutoff, chunk, barcodes, project_dir, output1, output2):
+    def line_writer(input1, input2, cutoff, chunk, barcodes,
+                    project_dir, output1, output2, round):
+        # consider with open(all outputs, 'w') here,then indent the next with open
         with open(input1) as f1, open(input2) as f2:
             row_len = len(barcodes) + 1
             matrix_one = composer.matrix_maker(row_len)
             matrix_two = composer.matrix_maker(row_len)
-            i, y, z, entry1, entry2 = 0, 0, 0, "", ""
+            i, y, entry1, entry2 = 0, 0, "", ""
             for line1 in f1:
                 i += 1
                 y += 1
                 if y == 2:
-                    for file_prefix, x in enumerate(barcodes):
-                        hamm = 0
-                        for j in range(len(x)):
-                            if x[j] != line1[j]:
-                                hamm = hamm + 1
-                                break
-                        if hamm == 0:
-                            output_prefix = file_prefix
-                            z = len(x)
-                            break
-                        else:
-                            output_prefix = -1
+                    output_prefix, z = composer.first_round(barcodes, line1)
                 if y == 2 or y == 4:
                     line1 = line1[z:]
                 entry1 = entry1 + line1
@@ -57,13 +56,15 @@ class composer:
                 if y == 4:
                     matrix_one[output_prefix].append(entry1)
                     matrix_two[output_prefix].append(entry2)
-                    y, z, entry1, entry2 = 0, 0, "", ""
+                    y, entry1, entry2 = 0, "", ""
                 if i == chunk:
                     composer.unload(matrix_one, matrix_two, row_len, output1, output2, project_dir)
                     i = 0
                     matrix_one = composer.matrix_maker(row_len)
                     matrix_two = composer.matrix_maker(row_len)
             composer.unload(matrix_one, matrix_two, row_len, output1, output2, project_dir)
+        # close the unmatched file here?
+
 
 if __name__ == '__main__':
     input1 = sys.argv[1] # R1 reads
@@ -79,4 +80,5 @@ if __name__ == '__main__':
     print(project_dir)
     output1 = os.path.basename(input1)
     output2 = os.path.basename(input2)
-    composer.line_writer(input1, input2, cutoff, chunk, barcodes, project_dir, output1, output2)
+    matrix_one, matrix_two = composer.line_writer(input1, input2, cutoff, chunk, barcodes,
+                        project_dir, output1, output2, 1)

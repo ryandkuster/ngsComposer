@@ -5,14 +5,23 @@ from project_test import reader
 from trimmer import trimmer
 from composer import composer
 
-# user must input full path to project folder
-config_threads = 1 # this will be found in input file
-config_b = 6 # this will be found in input file
-config_e = 0 # this will be found in input file
-config_library = 'pe' # this will be found in input file
-config_R1_barcodes = True # this will be found in input file
-config_R2_barcodes = False # this will be found in input file
-config_cutoff = 0 # this will be found in input file
+# CONFIG SETTINGS
+config_threads = 1
+config_trim = True
+config_b = 6
+config_e = 0
+config_library = 'pe'
+config_R1_barcodes = True
+config_R2_barcodes = False
+config_cutoff = 0
+
+def pipe_writer_forward1(input1, input2, cutoff, chunk, barcodes, project_dir):
+    output1 = input1
+    output2 = input2
+    input1 = project_dir + '/trimmer_' + input1
+    input2 = project_dir + '/trimmer_' + input2
+    composer.line_writer(input1, input2, cutoff, chunk, barcodes,
+                        project_dir, output1, output2, 1)
 
 if __name__ == '__main__':
     project_dir = sys.argv[1]
@@ -29,9 +38,10 @@ if __name__ == '__main__':
 
     # 'fastq_list' will be used to find files repeatedly
 
-    for x, input_file in enumerate(fastq_list):
-        output_file =  project_dir + '/trimmer_' + os.path.basename(input_file)
-        trimmer.test(input_file, config_b, config_e, output_file, gz[x])
+    if config_trim == True:
+        for x, input_file in enumerate(fastq_list):
+            output_file =  project_dir + '/trimmer_' + os.path.basename(input_file)
+            trimmer.test(input_file, config_b, config_e, output_file, gz[x])
 
 
     input1_list, input2_list = [], []
@@ -54,7 +64,8 @@ if __name__ == '__main__':
 
     print(input1_list)
     print(input2_list)
-    for x, input1 in enumerate(input1_list):
-        input1 = input1
-        input2 = input2_list[x]
-        composer.pipe_writer(input1, input2, config_cutoff, 200000, R1_barcodes, project_dir)
+    if config_R1_barcodes == True:
+        for x, input1 in enumerate(input1_list):
+            input1 = input1
+            input2 = input2_list[x]
+            pipe_writer_forward1(input1, input2, config_cutoff, 200000, R1_barcodes, project_dir)
