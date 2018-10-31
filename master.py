@@ -21,7 +21,7 @@ def pipe_writer_forward1(input1, input2, cutoff, chunk, barcodes, project_dir):
     input1 = project_dir + '/trimmer_' + input1
     input2 = project_dir + '/trimmer_' + input2
     composer.line_writer(input1, input2, cutoff, chunk, barcodes,
-                        project_dir, output1, output2, 1)
+                        project_dir, output1, output2)
 
 if __name__ == '__main__':
     project_dir = sys.argv[1]
