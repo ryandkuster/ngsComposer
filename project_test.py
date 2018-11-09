@@ -3,17 +3,6 @@ import os
 import gzip
 
 class reader:
-    def config_reader(project_dir):
-        try:
-            with open(project_dir + '/config.txt') as f:
-                for line in f:
-                    print(line)
-        except FileNotFoundError:
-            sys.exit('''
-                your project directory must contain a
-                configuration file named config.txt
-                ''')
-
     def barcode_reader(project_dir, config_barcodes, prefix):
         if config_barcodes == True:
             barcode_list = []

@@ -1,19 +1,12 @@
 import sys
 import os
+from conf import *
 from project_test import file_type
 from project_test import reader
 from trimmer import trimmer
 from composer import composer
 
-# CONFIG SETTINGS
-config_threads = 1
-config_trim = True
-config_b = 6
-config_e = 0
-config_library = 'pe'
-config_R1_barcodes = True
-config_R2_barcodes = False
-config_cutoff = 0
+print(cutoff)
 
 def pipe_writer_forward1(input1, input2, cutoff, chunk, barcodes, project_dir):
     output1 = input1
@@ -24,24 +17,22 @@ def pipe_writer_forward1(input1, input2, cutoff, chunk, barcodes, project_dir):
                         project_dir, output1, output2)
 
 if __name__ == '__main__':
-    project_dir = sys.argv[1]
     if os.path.exists(project_dir) == True:
         project_dir = os.path.abspath(project_dir)
     else:
         sys.exit('''
                 project directory not found
                 ''')
-    config = reader.config_reader(project_dir)
-    R1_barcodes = reader.barcode_reader(project_dir, config_R1_barcodes, 'R1')
-    R2_barcodes = reader.barcode_reader(project_dir, config_R2_barcodes, 'R2')
+    R1_barcodes = reader.barcode_reader(project_dir, R1_barcodes, 'R1')
+    R2_barcodes = reader.barcode_reader(project_dir, R2_barcodes, 'R2')
     fastq_list, gz, pairs = reader.fastq_reader(project_dir)
 
     # 'fastq_list' will be used to find files repeatedly
 
-    if config_trim == True:
+    if trim == True:
         for x, input_file in enumerate(fastq_list):
             output_file =  project_dir + '/trimmer_' + os.path.basename(input_file)
-            trimmer.test(input_file, config_b, config_e, output_file, gz[x])
+            trimmer.test(input_file, b, e, output_file, gz[x])
 
 
     input1_list, input2_list = [], []
@@ -64,8 +55,8 @@ if __name__ == '__main__':
 
     print(input1_list)
     print(input2_list)
-    if config_R1_barcodes == True:
+    if R1_barcodes == True:
         for x, input1 in enumerate(input1_list):
             input1 = input1
             input2 = input2_list[x]
-            pipe_writer_forward1(input1, input2, config_cutoff, 200000, R1_barcodes, project_dir)
+            pipe_writer_forward1(input1, input2, cutoff, 200000, R1_barcodes, project_dir)
