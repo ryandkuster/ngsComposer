@@ -18,17 +18,6 @@ def unload(matrix_one, matrix_two, row_len, output1, output2, project_dir):
         with open(project_dir + '/' + str(output_data2[0]) + '_' + output2, 'a') as outfile2:
             outfile2.write(str(''.join(output_data2[1:])))
 
-def first_round(barcodes, line1):
-    for file_prefix, x in enumerate(barcodes):
-        hamm, z = 0, 0
-        if line1.startswith(x): #
-            output_prefix = file_prefix
-            z = len(x)
-            break #
-        else:
-            output_prefix = -1
-    return output_prefix, z
-
 def line_writer(input1, input2, cutoff, chunk, barcodes,
                 project_dir, output1, output2):
     # consider with open(all outputs, 'w') here,then indent the next with open
@@ -41,7 +30,14 @@ def line_writer(input1, input2, cutoff, chunk, barcodes,
             i += 1
             y += 1
             if y == 2:
-                output_prefix, z = first_round(barcodes, line1)
+                for file_prefix, x in enumerate(barcodes):
+                    hamm, z = 0, 0
+                    if line1.startswith(x): 
+                        output_prefix = file_prefix
+                        z = len(x)
+                        break
+                    else:
+                        output_prefix = -1
             if y == 2 or y == 4:
                 line1 = line1[z:]
             entry1 = entry1 + line1
