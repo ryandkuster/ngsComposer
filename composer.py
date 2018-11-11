@@ -18,10 +18,11 @@ def unload(matrix_one, matrix_two, row_len, output1, output2, project_dir):
         with open(project_dir + '/' + str(output_data2[0]) + '_' + output2, 'a') as outfile2:
             outfile2.write(str(''.join(output_data2[1:])))
 
-def line_writer(input1, input2, cutoff, chunk, barcodes,
-                project_dir, output1, output2):
+def composer(input1, input2, mismatch, chunk, barcodes, project_dir):
     # consider with open(all outputs, 'w') here,then indent the next with open
     with open(input1) as f1, open(input2) as f2:
+        output1 = os.path.basename(input1)
+        output2 = os.path.basename(input2)
         row_len = len(barcodes) + 1
         matrix_one = matrix_maker(row_len)
         matrix_two = matrix_maker(row_len)
@@ -56,18 +57,20 @@ def line_writer(input1, input2, cutoff, chunk, barcodes,
         unload(matrix_one, matrix_two, row_len, output1, output2, project_dir)
     # close the unmatched file here?
 
+def comp_piper(input1_list, input2_list, mismatch, R1_barcodes, project_dir, input1):
+    input2 = input2_list[input1_list.index(input1)] 
+    print(input1 + ' is gonna love ' + input2)
+    composer(input1, input2, mismatch, 3000000, R1_barcodes, project_dir)
 
 if __name__ == '__main__':
     input1 = sys.argv[1] # R1 reads
     input2 = sys.argv[2] # R2 reads
-    cutoff = int(sys.argv[3]) # number of mismatches allowed
+    mismatch = int(sys.argv[3]) # number of mismatches allowed
     barcode_file = sys.argv[4] # barcodes file
-    chunk = 3000000 # how many reads to process before writing, 20000 is good so far
+    chunk = 3000000 # how many reads to process before writing
     with open(barcode_file) as f:
         barcodes = []
         for line in f:
             barcodes.append(line.rstrip())
     project_dir = os.path.dirname(os.path.abspath(input1))
-    output1 = os.path.basename(input1)
-    output2 = os.path.basename(input2)
-    line_writer(input1, input2, cutoff, chunk, barcodes, project_dir, output1, output2)
+    composer(input1, input2, mismatch, chunk, barcodes, project_dir)
