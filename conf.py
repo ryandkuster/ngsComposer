@@ -1,10 +1,8 @@
-project_dir = '/home/ryan/Testing/'
-threads = 1
-trim = True
-b = 6
-e = 0
-library = 'pe'
-R1_barcodes = True
-R2_barcodes = False
+project_dir = '/home/ryan/Testing'
+threads = 2
+front_trim = 75
+back_trim = 0
+R1_barcodes = 'R1_barkies.txt'
+R2_barcodes = ''
 cutoff = 0
 
