@@ -160,4 +160,4 @@ project directory not found
             for i, filename in enumerate(input2_list):
                 tmp2.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
         input1_list, input2_list = tmp1, tmp2
-        print(input1_list)
+
