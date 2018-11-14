@@ -44,21 +44,22 @@ def composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_
             y += 1
             if y == 2 and round_one == True:
                 for file_prefix, x in enumerate(barcodes):
-                    z = 0
                     if line1.startswith(x): 
                         output_prefix = file_prefix + 1
                         z = len(x)
                         break
                     else:
+                        z = 0
                         output_prefix = 0
             if y == 2 and round_one == False:
                 multi, output_prefix = 0, 0
                 for file_prefix, x in enumerate(barcodes):
-                    hamm, z = 0, 0
+                    hamm = 0
                     for j in range(len(x)):
                         if x[j] != line1[j]:
                             hamm = hamm + 1
                             if hamm > mismatch:
+                                z = 0
                                 break
                     if hamm <= mismatch:        
                         output_prefix = file_prefix + 1
