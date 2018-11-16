@@ -52,14 +52,13 @@ def composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_
                         z = 0
                         output_prefix = 0
             if y == 2 and round_one == False:
-                multi, output_prefix = 0, 0
+                z, multi, output_prefix = 0, 0, 0
                 for file_prefix, x in enumerate(barcodes):
                     hamm = 0
                     for j in range(len(x)):
                         if x[j] != line1[j]:
                             hamm = hamm + 1
                             if hamm > mismatch:
-                                z = 0
                                 break
                     if hamm <= mismatch:        
                         output_prefix = file_prefix + 1
@@ -86,7 +85,16 @@ def composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_
                 matrix_two = matrix_maker(row_len)
         unload(matrix_one, matrix_two, row_len, outfile1_list, outfile2_list)
     if round_one == True:
-        mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir)
+        if mismatch > 0:
+            mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir)
+        else:
+            for x in outfile1_list:
+                x.close()
+            for x in outfile2_list:
+                x.close()
+            os.rename(project_dir + '/temp_unknown_' + output1, project_dir + '/unknown_' + output1)
+            os.rename(project_dir + '/temp_unknown_' + output2, project_dir + '/unknown_' + output2)
+            sys.exit()
     else:
         os.remove(project_dir + '/temp_unknown_' + output1)
         os.remove(project_dir + '/temp_unknown_' + output2)
