@@ -1,6 +1,7 @@
 import sys
 import os
 
+
 def comp_main():
     input1 = sys.argv[1] # R1 reads
     input2 = sys.argv[2] # R2 reads
@@ -12,33 +13,61 @@ def comp_main():
         for line in f:
             barcodes.append(line.rstrip())
     project_dir = os.path.dirname(os.path.abspath(input1))
-    composer(input1, input2, mismatch, chunk, barcodes, project_dir)
+    output1 = os.path.basename(input1)
+    output2 = os.path.basename(input2)
+    comp_init(input1, input2, output1, output2, mismatch, chunk, barcodes, project_dir)
 
-def comp_piper(input1_list, input2_list, mismatch, R1_barcodes, project_dir, input1):
-    input2 = input2_list[input1_list.index(input1)] 
-    composer(input1, input2, mismatch, 3000000, R1_barcodes, project_dir)
 
-def composer(input1, input2, mismatch, chunk, barcodes, project_dir):
-    # consider with open(all outputs, 'w') here,then indent the next with open
+def comp_piper(input1_list, input2_list, mismatch, barcodes, project_dir, input1):
+    input2 = input2_list[input1_list.index(input1)]
+    output1 = os.path.basename(input1)
+    output2 = os.path.basename(input2)
+    comp_init(input1, input2, output1, output2, mismatch, chunk, barcodes, project_dir)
+
+
+def comp_init(input1, input2, output1, output2, mismatch, chunk, barcodes, project_dir):
+    row_len = len(barcodes) + 1
+    outfile1_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
+    outfile2_list = [open(project_dir + '/temp_unknown_' + output2, 'w')]
+    for row in range(row_len - 1):
+        outfile1_list.append(open(project_dir + '/' + str(row + 1) + '_' + output1, 'w'))
+        outfile2_list.append(open(project_dir + '/' + str(row + 1) + '_' + output2, 'w'))
+    composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, 3000000, barcodes, project_dir, True)
+
+def composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, round_one):
+    matrix_one = matrix_maker(row_len)
+    matrix_two = matrix_maker(row_len)
+    i, y, entry1, entry2 = 0, 0, "", ""
     with open(input1) as f1, open(input2) as f2:
-        output1 = os.path.basename(input1)
-        output2 = os.path.basename(input2)
-        row_len = len(barcodes) + 1
-        matrix_one = matrix_maker(row_len)
-        matrix_two = matrix_maker(row_len)
-        i, y, entry1, entry2 = 0, 0, "", ""
         for line1 in f1:
             i += 1
             y += 1
-            if y == 2:
+            if y == 2 and round_one == True:
                 for file_prefix, x in enumerate(barcodes):
-                    hamm, z = 0, 0
                     if line1.startswith(x): 
-                        output_prefix = file_prefix
+                        output_prefix = file_prefix + 1
                         z = len(x)
                         break
                     else:
-                        output_prefix = -1
+                        z = 0
+                        output_prefix = 0
+            if y == 2 and round_one == False:
+                z, multi, output_prefix = 0, 0, 0
+                for file_prefix, x in enumerate(barcodes):
+                    hamm = 0
+                    for j in range(len(x)):
+                        if x[j] != line1[j]:
+                            hamm = hamm + 1
+                            if hamm > mismatch:
+                                break
+                    if hamm <= mismatch:        
+                        output_prefix = file_prefix + 1
+                        z = len(x)
+                        multi += 1
+                    if multi > 1:
+                        z = 0
+                        output_prefix = 0
+                        break
             if y == 2 or y == 4:
                 line1 = line1[z:]
             entry1 = entry1 + line1
@@ -50,30 +79,54 @@ def composer(input1, input2, mismatch, chunk, barcodes, project_dir):
                 matrix_two[output_prefix].append(entry2)
                 y, entry1, entry2 = 0, "", ""
             if i == chunk:
-                unload(matrix_one, matrix_two, row_len, output1, output2, project_dir)
+                unload(matrix_one, matrix_two, row_len, outfile1_list, outfile2_list)
                 i = 0
-
                 matrix_one = matrix_maker(row_len)
                 matrix_two = matrix_maker(row_len)
-        unload(matrix_one, matrix_two, row_len, output1, output2, project_dir)
-    # close the unmatched file here?
+        unload(matrix_one, matrix_two, row_len, outfile1_list, outfile2_list)
+    if round_one == True:
+        if mismatch > 0:
+            mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir)
+        else:
+            for x in outfile1_list:
+                x.close()
+            for x in outfile2_list:
+                x.close()
+            os.rename(project_dir + '/temp_unknown_' + output1, project_dir + '/unknown_' + output1)
+            os.rename(project_dir + '/temp_unknown_' + output2, project_dir + '/unknown_' + output2)
+            sys.exit()
+    else:
+        os.remove(project_dir + '/temp_unknown_' + output1)
+        os.remove(project_dir + '/temp_unknown_' + output2)
+        for x in outfile1_list:
+            x.close()
+        for x in outfile2_list:
+            x.close()
+
 
 def matrix_maker(row_len):
     matrix = [[0] * 1 for i in range(row_len)]
-    counter = 0
     for i in range(row_len):
-        counter += 1
-        matrix[i][0] = counter
+        matrix[i][0] = ''
     return matrix
 
-def unload(matrix_one, matrix_two, row_len, output1, output2, project_dir):
-    for row in range(row_len):
-        output_data1 = matrix_one[row]
-        output_data2 = matrix_two[row]
-        with open(project_dir + '/' + str(output_data1[0]) + '_' + output1, 'a') as outfile1:
-            outfile1.write(str(''.join(output_data1[1:])))
-        with open(project_dir + '/' + str(output_data2[0]) + '_' + output2, 'a') as outfile2:
-            outfile2.write(str(''.join(output_data2[1:])))
+
+def unload(matrix_one, matrix_two, row_len, outfile1_list, outfile2_list):
+    for x, fo in enumerate(outfile1_list):
+        fo.write(str(''.join(matrix_one[x])))
+    for x, fo in enumerate(outfile2_list):
+        fo.write(str(''.join(matrix_two[x])))
+
+
+def mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir):
+    outfile1_list[0].close()
+    outfile2_list[0].close()
+    outfile1_list[0] = open(project_dir + '/unknown_' + output1, 'w')
+    outfile2_list[0] = open(project_dir + '/unknown_' + output2, 'w')
+    input1 = project_dir + '/temp_unknown_' + output1
+    input2 = project_dir + '/temp_unknown_' + output2
+    composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, False)
+
 
 if __name__ == '__main__':
     comp_main()
