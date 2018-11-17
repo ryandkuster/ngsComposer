@@ -153,19 +153,32 @@ project directory not found
         pool = Pool(threads)
         pool.map(comp_part, input1_list)
         pool.close()
-        tmp1, tmp2 = [], []
+        
+        '''
+        remove unwanted files
+        '''
+        tmp1, tmp2, = [], []
         for x in range(len(R1_barcodes)):
             for i, filename in enumerate(input1_list):
                 tmp1.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
             for i, filename in enumerate(input2_list):
                 tmp2.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
         if remove_intermediates == True and front_trim > 0:
-            for item in input1_list:
-                os.remove(item)
-            for item in input2_list:
-                os.remove(item)
+            for filename in input1_list:
+                os.remove(filename)
+            for filename in input2_list:
+                os.remove(filename)
         if remove_fail == True:
-            print('remove unknowns')
+            fail1, fail2 = [], []
+            for filename in input1_list:
+                fail1.append(project_dir + '/unknown_' + os.path.basename(filename))
+            for filename in input2_list:
+                fail2.append(project_dir + '/unknown_' + os.path.basename(filename))
+            for filename in fail1:
+                os.remove(filename)
+            for filename in fail2:
+                os.remove(filename)
+            
         input1_list, input2_list = tmp1, tmp2
     if overhang_list:
         hang_part = partial(overhang, project_dir, overhang_list)
@@ -173,6 +186,10 @@ project directory not found
         inputs_list = input1_list + input2_list
         pool.map(hang_part, inputs_list)
         pool.close()
+        
+        '''
+        remove unwanted files
+        '''
         if remove_intermediates == True and R1_barcodes:
             for item in input1_list:
                 os.remove(item)
