@@ -22,6 +22,7 @@ def comp_piper(input1_list, input2_list, mismatch, barcodes, project_dir, input1
     input2 = input2_list[input1_list.index(input1)]
     output1 = os.path.basename(input1)
     output2 = os.path.basename(input2)
+    chunk = 3000000
     comp_init(input1, input2, output1, output2, mismatch, chunk, barcodes, project_dir)
 
 
@@ -94,7 +95,6 @@ def composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_
                 x.close()
             os.rename(project_dir + '/temp_unknown_' + output1, project_dir + '/unknown_' + output1)
             os.rename(project_dir + '/temp_unknown_' + output2, project_dir + '/unknown_' + output2)
-            sys.exit()
     else:
         os.remove(project_dir + '/temp_unknown_' + output1)
         os.remove(project_dir + '/temp_unknown_' + output2)

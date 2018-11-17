@@ -6,7 +6,7 @@ from functools import partial
 from conf import *
 from trimmer import *
 from composer import *
-
+from overhang import overhang
 
 def fastq_reader(project_dir):
     fastq_list, gz, pairs_list = [], [], {}
@@ -149,15 +149,32 @@ project directory not found
         for i, filename in enumerate(input2_list):
             input2_list[i] = project_dir + '/trimmed_' + os.path.basename(filename)
     if R1_barcodes:
-#        comp_part = partial(comp_piper, input1_list, input2_list, mismatch, R1_barcodes, project_dir)
-#        pool = Pool(threads)        
-#        pool.map(comp_part, input1_list)
-#        pool.close()
+        comp_part = partial(comp_piper, input1_list, input2_list, mismatch, R1_barcodes, project_dir)
+        pool = Pool(threads)
+        pool.map(comp_part, input1_list)
+        pool.close()
         tmp1, tmp2 = [], []
         for x in range(len(R1_barcodes)):
             for i, filename in enumerate(input1_list):
                 tmp1.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
             for i, filename in enumerate(input2_list):
                 tmp2.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
+        if remove_intermediates == True and front_trim > 0:
+            for item in input1_list:
+                os.remove(item)
+            for item in input2_list:
+                os.remove(item)
+        if remove_fail == True:
+            print('remove unknowns')
         input1_list, input2_list = tmp1, tmp2
-
+    if overhang_list:
+        hang_part = partial(overhang, project_dir, overhang_list)
+        pool = Pool(threads)
+        inputs_list = input1_list + input2_list
+        pool.map(hang_part, inputs_list)
+        pool.close()
+        if remove_intermediates == True and R1_barcodes:
+            for item in input1_list:
+                os.remove(item)
+            for item in input2_list:
+                os.remove(item)
