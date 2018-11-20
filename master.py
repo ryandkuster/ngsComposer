@@ -149,7 +149,10 @@ project directory not found
         for i, filename in enumerate(input2_list):
             input2_list[i] = project_dir + '/trimmed_' + os.path.basename(filename)
     if R1_barcodes:
-        comp_part = partial(comp_piper, input1_list, input2_list, mismatch, R1_barcodes, project_dir)
+        if paired == True:
+            comp_part = partial(comp_piper, input1_list, input2_list, mismatch, R1_barcodes, project_dir)
+        if paired == False:
+            comp_part = partial(comp_piper_single, mismatch, R1_barcodes, project_dir)    
         pool = Pool(threads)
         pool.map(comp_part, input1_list)
         pool.close()
