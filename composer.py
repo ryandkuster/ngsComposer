@@ -19,7 +19,7 @@ def comp_main():
         barcodes = []
         for line in f:
             barcodes.append(line.rstrip())
-    project_dir = os.path.dirname(os.path.abspath(input1))
+    project_dir = os.getcwd()
     if paired == True:
         comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes, project_dir)
     if paired == False:
