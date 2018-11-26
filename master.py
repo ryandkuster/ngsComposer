@@ -11,9 +11,7 @@ from overhang import overhang
 def fastq_reader(project_dir):
     fastq_list, gz, pairs_list = [], [], {}
     for filename in os.listdir(project_dir):
-        if filename == R1_barcodes:
-            pass
-        elif filename == R2_barcodes:
+        if filename == barcodes_file:
             pass
         else:
             try:
@@ -72,22 +70,7 @@ def is_paired(filename, line, pairs_list):
         pairs_list[header] = [filename]
     return pairs_list
 
-
-def barcode_reader(project_dir, barcodes):
-    barcode_list = []
-    try:
-        with open(project_dir + '/' + barcodes) as f:
-            for line in f:
-                barcode_list.append(line.rstrip())
-            return barcode_list
-    except FileNotFoundError:
-        sys.exit('''
-based on your configuration file your project
-directory must contain a newline-separated list
-of barcodes named ''' + barcodes
-        )
-
-
+   
 def input_sort(paired, pairs_list):
     input1_list, input2_list, ignore = [], [], False
     for values in pairs_list.values():
@@ -126,6 +109,52 @@ unexpected paired libraries found
     return input1_list, input2_list
 
 
+def barcode_reader(project_dir, barcodes_file):
+    header = []
+    try:
+        with open(project_dir + '/' +  barcodes_file) as f:
+            for i, line in enumerate(f):
+                if i == 1:
+                    barcodes_matrix = array_maker(header)
+                for j, item in enumerate(line.split()):
+                    if i == 0:
+                        header.append(item)
+                    else:
+                        barcodes_matrix[j].append(item)
+        return barcodes_matrix
+    except FileNotFoundError:
+        sys.exit('''
+based on your configuration file your project
+directory must contain a newline-separated list
+of barcodes named ''' + barcodes_file
+        )
+
+
+def array_maker(header):
+    barcodes_matrix = [[0] * 1 for i in range(len(header))]
+    for i, x in enumerate(header):
+        barcodes_matrix[i][0] = x
+    return barcodes_matrix
+
+
+def barcode_test(barcodes_matrix, input1_list):
+    test_count = 0
+    for x in input1_list:
+        filename = os.path.basename(x)
+        if dual_index == True:
+            modifier = 2 
+        else:
+            modifier = 1
+        for i, item in enumerate(barcodes_matrix):
+            if item[0] == filename:
+                test_count += 1
+    if test_count != len(barcodes_matrix) - modifier:
+        sys.exit('''
+based on the configuration, the header of the barcodes file does not match
+the fastq files contained in the project directory'''
+        )
+
+
 if __name__ == '__main__':
     if os.path.exists(project_dir) == True:
         project_dir = os.path.abspath(project_dir)
@@ -135,10 +164,9 @@ project directory not found
                 ''')
     fastq_list, gz, pairs_list = fastq_reader(project_dir)
     input1_list, input2_list = input_sort(paired, pairs_list)
-    if R1_barcodes:
-        R1_barcodes = barcode_reader(project_dir, R1_barcodes)
-    if R2_barcodes:
-        R2_barcodes = barcode_reader(project_dir, R2_barcodes)
+    if barcodes_file:
+        barcodes_matrix = barcode_reader(project_dir, barcodes_file)
+        barcode_test(barcodes_matrix, input1_list)
     if front_trim > 0:
         trim_part = partial(trimmer, front_trim, back_trim, project_dir)
         pool = Pool(threads)        
@@ -148,7 +176,7 @@ project directory not found
             input1_list[i] = project_dir + '/trimmed_' + os.path.basename(filename)
         for i, filename in enumerate(input2_list):
             input2_list[i] = project_dir + '/trimmed_' + os.path.basename(filename)
-    if R1_barcodes:
+    if barcodes_file:
         if paired == True:
             comp_part = partial(comp_piper, input1_list, input2_list, mismatch, R1_barcodes, project_dir)
         if paired == False:
@@ -156,45 +184,45 @@ project directory not found
         pool = Pool(threads)
         pool.map(comp_part, input1_list)
         pool.close()
-        
-        '''
-        remove unwanted files
-        '''
-        tmp1, tmp2, = [], []
-        for x in range(len(R1_barcodes)):
-            for i, filename in enumerate(input1_list):
-                tmp1.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
-            for i, filename in enumerate(input2_list):
-                tmp2.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
-        if remove_intermediates == True and front_trim > 0:
-            for filename in input1_list:
-                os.remove(filename)
-            for filename in input2_list:
-                os.remove(filename)
-        if remove_fail == True:
-            fail1, fail2 = [], []
-            for filename in input1_list:
-                fail1.append(project_dir + '/unknown_' + os.path.basename(filename))
-            for filename in input2_list:
-                fail2.append(project_dir + '/unknown_' + os.path.basename(filename))
-            for filename in fail1:
-                os.remove(filename)
-            for filename in fail2:
-                os.remove(filename)
-            
-        input1_list, input2_list = tmp1, tmp2
-    if overhang_list:
-        hang_part = partial(overhang, project_dir, overhang_list)
-        pool = Pool(threads)
-        inputs_list = input1_list + input2_list
-        pool.map(hang_part, inputs_list)
-        pool.close()
-        
-        '''
-        remove unwanted files
-        '''
-        if remove_intermediates == True and R1_barcodes:
-            for item in input1_list:
-                os.remove(item)
-            for item in input2_list:
-                os.remove(item)
+#        
+#        '''
+#        remove unwanted files
+#        '''
+#        tmp1, tmp2, = [], []
+#        for x in range(len(R1_barcodes)):
+#            for i, filename in enumerate(input1_list):
+#                tmp1.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
+#            for i, filename in enumerate(input2_list):
+#                tmp2.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
+#        if remove_intermediates == True and front_trim > 0:
+#            for filename in input1_list:
+#                os.remove(filename)
+#            for filename in input2_list:
+#                os.remove(filename)
+#        if remove_fail == True:
+#            fail1, fail2 = [], []
+#            for filename in input1_list:
+#                fail1.append(project_dir + '/unknown_' + os.path.basename(filename))
+#            for filename in input2_list:
+#                fail2.append(project_dir + '/unknown_' + os.path.basename(filename))
+#            for filename in fail1:
+#                os.remove(filename)
+#            for filename in fail2:
+#                os.remove(filename)
+#            
+#        input1_list, input2_list = tmp1, tmp2
+#    if overhang_list:
+#        hang_part = partial(overhang, project_dir, overhang_list)
+#        pool = Pool(threads)
+#        inputs_list = input1_list + input2_list
+#        pool.map(hang_part, inputs_list)
+#        pool.close()
+#        
+#        '''
+#        remove unwanted files
+#        '''
+#        if remove_intermediates == True and R1_barcodes:
+#            for item in input1_list:
+#                os.remove(item)
+#            for item in input2_list:
+#                os.remove(item)

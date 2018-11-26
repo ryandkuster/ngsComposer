@@ -14,10 +14,10 @@ front_trim = 0
 back_trim = 0
 
 # name of  file with barcodes to demultiplex forward reads
-R1_barcodes = 'R1_barcodes.txt'
+barcodes_file = 'key.txt'
 
-# name of  file with barcodes to demultiplex reverse reads if dual indexing
-R2_barcodes = None
+# if forward and reverse reads each have corresponding sets of barcodes
+dual_index = False
 
 # number of mismatches (hamming distance) allowed in barcodes
 mismatch = 0
