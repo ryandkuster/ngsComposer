@@ -56,7 +56,6 @@ def is_gz(filename, pairs_list):
                 sys.exit('''
 sorry, gzipped functionality is not currently supported
             ''')
-#                    return True, pairs_list
 
 
 def is_paired(filename, line, pairs_list):
@@ -68,9 +67,9 @@ def is_paired(filename, line, pairs_list):
         pairs_list[header].append(filename)
     else:
         pairs_list[header] = [filename]
-    return pairs_list
+    return pairs_list   
 
-   
+
 def input_sort(paired, pairs_list):
     input1_list, input2_list, ignore = [], [], False
     for values in pairs_list.values():
@@ -150,7 +149,7 @@ def barcode_test(barcodes_matrix, input1_list):
                 test_count += 1
     if test_count != len(barcodes_matrix) - modifier:
         sys.exit('''
-based on the configuration, the header of the barcodes file does not match
+based on the configuration, the header(s) of the barcodes file does not match
 the fastq files contained in the project directory'''
         )
 
