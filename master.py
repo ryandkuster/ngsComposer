@@ -8,6 +8,7 @@ from trimmer import *
 from composer import *
 from overhang import overhang
 
+
 def fastq_reader(project_dir):
     fastq_list, gz, pairs_list = [], [], {}
     for filename in os.listdir(project_dir):
@@ -25,7 +26,6 @@ def fastq_reader(project_dir):
             fastq_list.append(project_dir + '/' + filename)
     return fastq_list, gz, pairs_list
 
-
 def is_fq(filename, pairs_list):
     with open(filename) as f:
         for i, line in enumerate(f):
@@ -39,7 +39,6 @@ def is_fq(filename, pairs_list):
                 return
             else:
                 return True, pairs_list
-
 
 def is_gz(filename, pairs_list):
     with gzip.open(filename, 'rt') as f:
@@ -57,7 +56,6 @@ def is_gz(filename, pairs_list):
 sorry, gzipped functionality is not currently supported
             ''')
 
-
 def is_paired(filename, line, pairs_list):
     for i, x in enumerate(line):
         if x == ' ':
@@ -69,7 +67,9 @@ def is_paired(filename, line, pairs_list):
         pairs_list[header] = [filename]
     return pairs_list   
 
+    
 
+    
 def input_sort(paired, pairs_list):
     input1_list, input2_list, ignore = [], [], False
     for values in pairs_list.values():
@@ -107,6 +107,8 @@ unexpected paired libraries found
                     input1_list.append(filename)
     return input1_list, input2_list
 
+    
+    
 
 def barcode_reader(project_dir, barcodes_file):
     header = []
@@ -128,13 +130,11 @@ directory must contain a newline-separated list
 of barcodes named ''' + barcodes_file
         )
 
-
 def array_maker(header):
     barcodes_matrix = [[0] * 1 for i in range(len(header))]
     for i, x in enumerate(header):
         barcodes_matrix[i][0] = x
     return barcodes_matrix
-
 
 def barcode_test(barcodes_matrix, input1_list):
     test_count = 0
@@ -153,6 +153,8 @@ based on the configuration, the header(s) of the barcodes file does not match
 the fastq files contained in the project directory'''
         )
 
+        
+        
 
 if __name__ == '__main__':
     if os.path.exists(project_dir) == True:
@@ -177,9 +179,9 @@ project directory not found
             input2_list[i] = project_dir + '/trimmed_' + os.path.basename(filename)
     if barcodes_file:
         if paired == True:
-            comp_part = partial(comp_piper, input1_list, input2_list, mismatch, R1_barcodes, project_dir)
+            comp_part = partial(comp_piper, input1_list, input2_list, mismatch, barcodes_matrix, project_dir)
         if paired == False:
-            comp_part = partial(comp_piper_single, mismatch, R1_barcodes, project_dir)    
+            comp_part = partial(comp_piper_single, mismatch, barcodes_matrix, project_dir)    
         pool = Pool(threads)
         pool.map(comp_part, input1_list)
         pool.close()
