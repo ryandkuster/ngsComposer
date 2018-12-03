@@ -168,6 +168,8 @@ project directory not found
     if barcodes_file:
         barcodes_matrix = barcode_reader(project_dir, barcodes_file)
         barcode_test(barcodes_matrix, input1_list)
+
+
     if front_trim > 0:
         trim_part = partial(trimmer, front_trim, back_trim, project_dir)
         pool = Pool(threads)        
@@ -177,6 +179,8 @@ project directory not found
             input1_list[i] = project_dir + '/trimmed_' + os.path.basename(filename)
         for i, filename in enumerate(input2_list):
             input2_list[i] = project_dir + '/trimmed_' + os.path.basename(filename)
+
+
     if barcodes_file:
         if paired == True:
             comp_part = partial(comp_piper, input1_list, input2_list, mismatch, barcodes_matrix, project_dir)

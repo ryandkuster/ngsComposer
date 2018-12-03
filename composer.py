@@ -34,13 +34,11 @@ def comp_piper(input1_list, input2_list, mismatch, barcodes_matrix, project_dir,
     filename = os.path.basename(input1)
     for i, item in enumerate(barcodes_matrix):
         if item[0] == filename:
-            name_index = i
-            sample_id = barcodes_matrix[name_index][1:]
+            sample_id = barcodes_matrix[i][1:]
             R1_barcodes = barcodes_matrix[0][1:]
             R2_barcodes = barcodes_matrix[1][1:]
             print(sample_id)
             print(R1_barcodes)
-            print(R2_barcodes)
             na_list = []
     for i, item in enumerate(sample_id):
         if item == 'na':
@@ -48,13 +46,9 @@ def comp_piper(input1_list, input2_list, mismatch, barcodes_matrix, project_dir,
     for i in sorted(na_list, reverse=True):
         del sample_id[i]
         del R1_barcodes[i]
-        del R2_barcodes[i]
     print(sample_id)
     print(R1_barcodes)
-    print(R2_barcodes)
-    
-    
-    comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes, project_dir)
+    comp_init_paired(input1, input2, output1, output2, mismatch, chunk, R1_barcodes, project_dir)
 
 
 def comp_piper_single(mismatch, barcodes, project_dir, input1):
