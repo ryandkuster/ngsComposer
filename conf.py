@@ -1,6 +1,6 @@
 # provide the full path to your fastq files
-project_dir = '/home/ryan/Testing'
-# project_dir = '/media/sf_E_DRIVE/Analysis/Testing'
+# project_dir = '/home/ryan/Testing'
+project_dir = '/media/sf_E_DRIVE/Analysis/Testing'
 
 # if fastq files are only paired and should be treated as such, use 'True', else 'False'
 paired = True
@@ -18,7 +18,7 @@ back_trim = 0
 barcodes_file = 'key.txt'
 
 # if forward and reverse reads each have corresponding sets of barcodes
-dual_index = False
+dual_index = True
 
 # number of mismatches (hamming distance) allowed in barcodes
 mismatch = 0

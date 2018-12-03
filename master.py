@@ -183,7 +183,7 @@ project directory not found
 
     if barcodes_file:
         if paired == True:
-            comp_part = partial(comp_piper, input1_list, input2_list, mismatch, barcodes_matrix, project_dir)
+            comp_part = partial(comp_piper_paired, input1_list, input2_list, mismatch, barcodes_matrix, project_dir)
         if paired == False:
             comp_part = partial(comp_piper_single, mismatch, barcodes_matrix, project_dir)    
         pool = Pool(threads)

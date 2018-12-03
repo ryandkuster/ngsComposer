@@ -26,29 +26,12 @@ def comp_main():
         comp_init_single(input1, output1, mismatch, chunk, barcodes, project_dir)
 
 
-def comp_piper(input1_list, input2_list, mismatch, barcodes_matrix, project_dir, input1):
+def comp_piper_paired(input1_list, input2_list, mismatch, barcodes_matrix, project_dir, input1):
     input2 = input2_list[input1_list.index(input1)]
     output1 = os.path.basename(input1)
     output2 = os.path.basename(input2)
     chunk = 3000000
-    filename = os.path.basename(input1)
-    for i, item in enumerate(barcodes_matrix):
-        if item[0] == filename:
-            sample_id = barcodes_matrix[i][1:]
-            R1_barcodes = barcodes_matrix[0][1:]
-            R2_barcodes = barcodes_matrix[1][1:]
-            print(sample_id)
-            print(R1_barcodes)
-            na_list = []
-    for i, item in enumerate(sample_id):
-        if item == 'na':
-            na_list.append(i)
-    for i in sorted(na_list, reverse=True):
-        del sample_id[i]
-        del R1_barcodes[i]
-    print(sample_id)
-    print(R1_barcodes)
-    comp_init_paired(input1, input2, output1, output2, mismatch, chunk, R1_barcodes, project_dir)
+    comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir)
 
 
 def comp_piper_single(mismatch, barcodes, project_dir, input1):
@@ -57,14 +40,26 @@ def comp_piper_single(mismatch, barcodes, project_dir, input1):
     comp_init_single(input1, output1, mismatch, chunk, barcodes, project_dir)
 
 
-def comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes, project_dir):
-    row_len = len(barcodes) + 1
+def comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):
+    filename = os.path.basename(input1)
+    for i, item in enumerate(barcodes_matrix):
+        if item[0] == filename:
+            sample_id = barcodes_matrix[i][1:]
+            R1_barcodes = barcodes_matrix[0][1:]
+            na_list = []
+    for i, item in enumerate(sample_id):
+        if item == 'na':
+            na_list.append(i)
+    for i in sorted(na_list, reverse=True):
+        del sample_id[i]
+        del R1_barcodes[i]
+    row_len = len(R1_barcodes) + 1
     outfile1_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
     outfile2_list = [open(project_dir + '/temp_unknown_' + output2, 'w')]
-    for row in range(row_len - 1):
-        outfile1_list.append(open(project_dir + '/' + str(row + 1) + '_' + output1, 'w'))
-        outfile2_list.append(open(project_dir + '/' + str(row + 1) + '_' + output2, 'w'))
-    composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, 3000000, barcodes, project_dir, True)
+    for id in sample_id:
+        outfile1_list.append(open(project_dir + '/' + str(id) + '_' + output1, 'w'))
+        outfile2_list.append(open(project_dir + '/' + str(id) + '_' + output2, 'w'))
+    composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, 3000000, R1_barcodes, project_dir, True)
 
 
 def comp_init_single(input1, output1, mismatch, chunk, barcodes, project_dir):
