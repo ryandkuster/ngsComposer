@@ -3,10 +3,10 @@
 project_dir = '/media/sf_E_DRIVE/Analysis/Testing'
 
 # if fastq files are only paired and should be treated as such, use 'True', else 'False'
-paired = True
+paired = False
 
 # choose number of subprocesses
-threads = 1
+threads = 2
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
 front_trim = 0
@@ -21,7 +21,7 @@ barcodes_file = 'key.txt'
 dual_index = True
 
 # number of mismatches (hamming distance) allowed in barcodes
-mismatch = 0
+mismatch = 1
 
 # list sequences immediately adjacent to barcodes
 overhang_list = ['TCC','TCT']
