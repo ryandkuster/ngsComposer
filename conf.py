@@ -9,7 +9,7 @@ paired = False
 threads = 2
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
-front_trim = 0
+front_trim = 6
 
 # positions to trim from end of read before demultiplexing, leave 0 if no buffer sequence
 back_trim = 0

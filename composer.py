@@ -4,7 +4,7 @@ import os
 
 def comp_main():
     mismatch = int(sys.argv[1]) # number of mismatches allowed
-    barcode_file = sys.argv[2] # barcodes file
+    barcodes_file = sys.argv[2] # barcodes file
     input1 = sys.argv[3] # R1 reads
     output1 = os.path.basename(input1)
     try:
@@ -43,7 +43,14 @@ directory must contain a newline-separated list
 of barcodes named ''' + barcodes_file
         )
 
-        
+
+def array_maker(header):
+    barcodes_matrix = [[0] * 1 for i in range(len(header))]
+    for i, x in enumerate(header):
+        barcodes_matrix[i][0] = x
+    return barcodes_matrix
+
+    
 def comp_piper_paired(input1_list, input2_list, mismatch, barcodes_matrix, project_dir, input1):
     input2 = input2_list[input1_list.index(input1)]
     output1 = os.path.basename(input1)

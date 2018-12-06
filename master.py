@@ -150,7 +150,8 @@ def barcode_test(barcodes_matrix, input1_list):
     if test_count != len(barcodes_matrix) - modifier:
         sys.exit('''
 based on the configuration, the header(s) of the barcodes file does not match
-the fastq files contained in the project directory'''
+the fastq files contained in the project directory
+(is this library dual-indexed?)'''
         )
 
         
