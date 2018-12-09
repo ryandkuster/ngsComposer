@@ -1,6 +1,8 @@
 import sys
 import os
 import gzip
+import shutil
+
 from multiprocessing import Pool
 from functools import partial
 from conf import *
@@ -172,63 +174,49 @@ project directory not found
 
 
     if front_trim > 0:
-        trim_part = partial(trimmer, front_trim, back_trim, project_dir)
+        os.mkdir(project_dir + '/trim')
+        project_dir_current = project_dir + '/trim'
+        trim_part = partial(trimmer, front_trim, back_trim, project_dir_current)
         pool = Pool(threads)        
         pool.map(trim_part, fastq_list)
         pool.close()
         for i, filename in enumerate(input1_list):
-            input1_list[i] = project_dir + '/trimmed_' + os.path.basename(filename)
+            input1_list[i] = project_dir_current + '/trimmed_' + os.path.basename(filename)
         for i, filename in enumerate(input2_list):
-            input2_list[i] = project_dir + '/trimmed_' + os.path.basename(filename)
+            input2_list[i] = project_dir_current + '/trimmed_' + os.path.basename(filename)
+        if barcodes_file:
+            for i in range(len(barcodes_matrix)):
+                barcodes_matrix[i][0] = 'trimmed_' + barcodes_matrix[i][0]
 
 
     if barcodes_file:
+        os.mkdir(project_dir + '/demulti')
+        project_dir_current = project_dir + '/demulti'
         if paired == True:
-            comp_part = partial(comp_piper_paired, input1_list, input2_list, mismatch, barcodes_matrix, project_dir)
+            comp_part = partial(comp_piper_paired, input1_list, input2_list, mismatch, barcodes_matrix, project_dir_current)
         if paired == False:
-            comp_part = partial(comp_piper_single, mismatch, barcodes_matrix, project_dir)    
+            comp_part = partial(comp_piper_single, mismatch, barcodes_matrix, project_dir_current)    
         pool = Pool(threads)
         pool.map(comp_part, input1_list)
         pool.close()
-#        
-#        '''
-#        remove unwanted files
-#        '''
-#        tmp1, tmp2, = [], []
-#        for x in range(len(R1_barcodes)):
-#            for i, filename in enumerate(input1_list):
-#                tmp1.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
-#            for i, filename in enumerate(input2_list):
-#                tmp2.append(project_dir + '/' + str(x + 1) + '_' + os.path.basename(filename))
-#        if remove_intermediates == True and front_trim > 0:
-#            for filename in input1_list:
-#                os.remove(filename)
-#            for filename in input2_list:
-#                os.remove(filename)
-#        if remove_fail == True:
-#            fail1, fail2 = [], []
-#            for filename in input1_list:
-#                fail1.append(project_dir + '/unknown_' + os.path.basename(filename))
-#            for filename in input2_list:
-#                fail2.append(project_dir + '/unknown_' + os.path.basename(filename))
-#            for filename in fail1:
-#                os.remove(filename)
-#            for filename in fail2:
-#                os.remove(filename)
-#            
-#        input1_list, input2_list = tmp1, tmp2
-#    if overhang_list:
-#        hang_part = partial(overhang, project_dir, overhang_list)
-#        pool = Pool(threads)
-#        inputs_list = input1_list + input2_list
-#        pool.map(hang_part, inputs_list)
-#        pool.close()
-#        
-#        '''
-#        remove unwanted files
-#        '''
-#        if remove_intermediates == True and R1_barcodes:
-#            for item in input1_list:
-#                os.remove(item)
-#            for item in input2_list:
-#                os.remove(item)
+
+  
+    if overhang_list:
+        os.mkdir(project_dir + '/overhang')
+        inputs_list = []
+        try:
+            for filename in os.listdir(project_dir_current):
+                inputs_list.append(project_dir_current + '/' + filename)
+        except:
+            inputs_list = fastq_list
+        project_dir_current = project_dir + '/overhang'
+        hang_part = partial(overhang, project_dir_current, overhang_list)
+        pool = Pool(threads)
+        pool.map(hang_part, inputs_list)
+        pool.close()
+
+
+
+    shutil.rmtree(project_dir + '/demulti')
+    shutil.rmtree(project_dir + '/trim')
+    shutil.rmtree(project_dir + '/overhang')

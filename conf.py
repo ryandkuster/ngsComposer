@@ -1,15 +1,15 @@
 # provide the full path to your fastq files
-# project_dir = '/home/ryan/Testing'
-project_dir = '/media/sf_E_DRIVE/Analysis/Testing'
+project_dir = '/home/ryan/Testing'
+#project_dir = '/media/sf_E_DRIVE/Analysis/Testing'
 
 # if fastq files are only paired and should be treated as such, use 'True', else 'False'
-paired = False
+paired = True
 
 # choose number of subprocesses
-threads = 2
+threads = 4
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
-front_trim = 6
+front_trim = 5
 
 # positions to trim from end of read before demultiplexing, leave 0 if no buffer sequence
 back_trim = 0
@@ -18,7 +18,7 @@ back_trim = 0
 barcodes_file = 'key.txt'
 
 # if forward and reverse reads each have corresponding sets of barcodes
-dual_index = True
+dual_index = False
 
 # number of mismatches (hamming distance) allowed in barcodes
 mismatch = 1
