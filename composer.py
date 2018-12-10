@@ -51,12 +51,23 @@ def array_maker(header):
     return barcodes_matrix
 
     
-def comp_piper_paired(input1_list, input2_list, mismatch, barcodes_matrix, project_dir, input1):
+def comp_pipeline_pe(input1_list, input2_list, mismatch, barcodes_matrix, project_dir, input1):
     input2 = input2_list[input1_list.index(input1)]
     output1 = os.path.basename(input1)
     output2 = os.path.basename(input2)
     chunk = 3000000
     comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir)
+
+
+def comp_pipeline_pe_di(input1_list, input2_list, mismatch, barcodes_matrix, project_dir, input1):
+    input2 = input2_list[input1_list.index(input1)]
+    output1 = os.path.basename(input1)
+    output2 = os.path.basename(input2)
+    chunk = 3000000
+    comp_init_de(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir)
+
+
+def comp_init_de(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):
 
 
 def comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):
@@ -152,7 +163,7 @@ def composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_
             x.close()
 
 
-def comp_piper_single(mismatch, barcodes_matrix, project_dir, input1):
+def comp_pipeline_se(mismatch, barcodes_matrix, project_dir, input1):
     output1 = os.path.basename(input1)
     chunk = 3000000
     comp_init_single(input1, output1, mismatch, chunk, barcodes_matrix, project_dir)
