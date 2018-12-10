@@ -15,7 +15,7 @@ front_trim = 5
 back_trim = 0
 
 # name of  file with barcodes to demultiplex forward reads
-barcodes_file = 'key.txt'
+barcodes_file = 'key_dual.txt'
 
 # if forward and reverse reads each have corresponding sets of barcodes
 dual_index = False

@@ -192,7 +192,9 @@ project directory not found
     if barcodes_file:
         os.mkdir(project_dir + '/demulti')
         project_dir_current = project_dir + '/demulti'
-        if paired == True:
+        if dual_index == True:
+        #TODO make a nice new function in composer that uses the barcodes as the file prefixes and doesn't duplicate barcodes
+        elif paired == True:
             comp_part = partial(comp_piper_paired, input1_list, input2_list, mismatch, barcodes_matrix, project_dir_current)
         if paired == False:
             comp_part = partial(comp_piper_single, mismatch, barcodes_matrix, project_dir_current)    
@@ -214,7 +216,6 @@ project directory not found
         pool = Pool(threads)
         pool.map(hang_part, inputs_list)
         pool.close()
-
 
 
     shutil.rmtree(project_dir + '/demulti')
