@@ -64,10 +64,11 @@ def comp_pipeline_pe_di(input1_list, input2_list, mismatch, barcodes_matrix, pro
     output1 = os.path.basename(input1)
     output2 = os.path.basename(input2)
     chunk = 3000000
-    comp_init_de(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir)
+    comp_init_di(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir)
 
 
-def comp_init_de(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):
+def comp_init_di(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):
+    pass
 
 
 def comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):

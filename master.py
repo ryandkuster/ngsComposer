@@ -91,6 +91,7 @@ def input_sort(paired, pairs_list):
             else:
                 sys.exit('''
 paired forward and end reads don't match expected number
+check the naming conventions of the barcodes_file
                     ''')
         if paired == False:
             if len(values) == 1:
@@ -142,6 +143,7 @@ def barcode_test(barcodes_matrix, input1_list):
     test_count = 0
     for x in input1_list:
         filename = os.path.basename(x)
+        print(filename)
         if dual_index == True:
             modifier = 2 
         else:
@@ -149,7 +151,7 @@ def barcode_test(barcodes_matrix, input1_list):
         for i, item in enumerate(barcodes_matrix):
             if item[0] == filename:
                 test_count += 1
-    if test_count * modifier != len(barcodes_matrix) - modifier:
+    if test_count != len(barcodes_matrix) - modifier:
         sys.exit('''
 based on the configuration, the header(s) of the barcodes file does not match
 the fastq files contained in the project directory
@@ -193,7 +195,7 @@ project directory not found
         os.mkdir(project_dir + '/demulti')
         project_dir_current = project_dir + '/demulti'
         if dual_index == True:
-            print('make dual index work')
+            comp_part = partial(comp_pipeline_pe_di, input1_list, input2_list, mismatch, barcodes_matrix, project_dir_current)
         #TODO make a nice new function in composer that uses the barcodes as the file prefixes and doesn't duplicate barcodes
         elif paired == True:
             comp_part = partial(comp_pipeline_pe, input1_list, input2_list, mismatch, barcodes_matrix, project_dir_current)
