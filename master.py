@@ -205,7 +205,7 @@ project directory not found
         pool.map(comp_part, input1_list)
         pool.close()
 
-  
+
     if overhang_list:
         os.mkdir(project_dir + '/overhang')
         inputs_list = []
