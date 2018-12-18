@@ -151,31 +151,89 @@ def input_single(values, input1_list, input2_list):
     return input1_list, input2_list
 
 
+def barcode_reader(barcodes_file):
+    '''
+    open user-defined barcode file and extract forward and reverse barcodes
+    create matrix to pull corresponding sample ids that match barcodes
+    '''
+    barcodes_matrix = []
+    with open(barcodes_file) as f:
+        R2_barcodes = R2_barcodes_maker([], f)
+        barcodes_matrix = array_maker(R2_barcodes)
+        barcodes_matrix, R1_barcodes = barcodes_matrix_maker([], f, barcodes_matrix)
+    return barcodes_matrix, R1_barcodes, R2_barcodes
+
+
+def R2_barcodes_maker(R2_barcodes, f):
+    '''
+    populate list of R2 barcodes
+    '''
+    line = f.readline()
+    for item in line.split():
+        R2_barcodes.append(item)
+    if len(R2_barcodes) == 1 and dual_index == True:
+        sys.exit("expected barcodes file to have reverse barcodes")
+    return R2_barcodes
+
+
+def array_maker(R2_barcodes):
+    '''
+    create empty matrix with dimensions 1 by length R2 barcodes 
+    '''
+    barcodes_matrix = [[0] * 1 for i in range(len(R2_barcodes))]
+    for i, x in enumerate(R2_barcodes):
+        barcodes_matrix[i][0] = x
+    return barcodes_matrix
+
+
+def barcodes_matrix_maker(R1_barcodes, f, barcodes_matrix):
+    '''
+    create a matrix of user-defined sample ids and populate list of R1 barcodes
+    '''
+    for i, line in enumerate(f):
+        for j, item in enumerate(line.split()):
+            if j == 0:
+                R1_barcodes.append(item)
+            if j > 0:
+                barcodes_matrix[j - 1].append(item)    
+    return barcodes_matrix, R1_barcodes
+
+
+def trim_muliproc(project_dir, threads, front_trim, back_trim, fastq_list):
+    '''
+    create user-defined number of subprocesses to trim every file in fastq_list
+    '''
+    project_dir_current = project_dir + '/trim'    
+    os.mkdir(project_dir_current)
+    trim_part = partial(trimmer, front_trim, back_trim, project_dir_current)
+    pool = Pool(threads)        
+    pool.map(trim_part, fastq_list)
+    pool.close()
+    for i, filename in enumerate(input1_list):
+        input1_list[i] = project_dir_current + '/trimmed_' + os.path.basename(filename)
+    for i, filename in enumerate(input2_list):
+        input2_list[i] = project_dir_current + '/trimmed_' + os.path.basename(filename)
+    # if barcodes_file:
+        # for i in range(len(barcodes_matrix)):
+            # barcodes_matrix[i][0] = 'trimmed_' + barcodes_matrix[i][0]    
+
+
+def grater_multiproc():
+    '''
+    create user-defined number of subprocesses to demultiplex
+    '''
+    pass
+
 if __name__ == '__main__':
     input1_list, input2_list, fastq_list, pairs_list = initialize(project_dir, paired)
-    print(input1_list)
-    print(input2_list)
-    print(fastq_list)
-    print(pairs_list)
-    # if barcodes_file:
-        # barcodes_matrix = barcode_reader(project_dir, barcodes_file)
-        # barcode_test(barcodes_matrix, input1_list)
-    # if front_trim > 0:
-        # os.mkdir(project_dir + '/trim')
-        # project_dir_current = project_dir + '/trim'
-        # trim_part = partial(trimmer, front_trim, back_trim, project_dir_current)
-        # pool = Pool(threads)        
-        # pool.map(trim_part, fastq_list)
-        # pool.close()
-        # for i, filename in enumerate(input1_list):
-            # input1_list[i] = project_dir_current + '/trimmed_' + os.path.basename(filename)
-        # for i, filename in enumerate(input2_list):
-            # input2_list[i] = project_dir_current + '/trimmed_' + os.path.basename(filename)
-        # if barcodes_file:
-            # for i in range(len(barcodes_matrix)):
-                # barcodes_matrix[i][0] = 'trimmed_' + barcodes_matrix[i][0]
-
-
+    if barcodes_file:
+        barcodes_file = project_dir + '/' + barcodes_file
+        barcodes_matrix, R1_barcodes, R2_barcodes = barcode_reader(barcodes_file)
+        print(R1_barcodes)
+        print(R2_barcodes)
+        print(barcodes_matrix)
+    if front_trim > 0:
+        trim_muliproc(project_dir, threads, front_trim, back_trim, fastq_list)
     # if barcodes_file:
         # os.mkdir(project_dir + '/demulti')
         # project_dir_current = project_dir + '/demulti'
