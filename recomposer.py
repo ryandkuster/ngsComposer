@@ -222,7 +222,18 @@ def grater_multiproc():
     '''
     create user-defined number of subprocesses to demultiplex
     '''
-    pass
+    project_dir_current = project_dir + '/demulti'
+    os.mkdir(project_dir_current)
+    if dual_index == True:
+        comp_part = partial(comp_pipeline_pe_di, input1_list, input2_list, mismatch, barcodes_matrix, project_dir_current)
+    elif paired == True:
+        comp_part = partial(comp_pipeline_pe, input1_list, input2_list, mismatch, barcodes_matrix, project_dir_current)
+    if paired == False:
+        comp_part = partial(comp_pipeline_se, mismatch, barcodes_matrix, project_dir_current)    
+    pool = Pool(threads)
+    pool.map(comp_part, input1_list)
+    pool.close()    
+
 
 if __name__ == '__main__':
     input1_list, input2_list, fastq_list, pairs_list = initialize(project_dir, paired)
@@ -234,19 +245,10 @@ if __name__ == '__main__':
         print(barcodes_matrix)
     if front_trim > 0:
         trim_muliproc(project_dir, threads, front_trim, back_trim, fastq_list)
-    # if barcodes_file:
-        # os.mkdir(project_dir + '/demulti')
-        # project_dir_current = project_dir + '/demulti'
-        # if dual_index == True:
-            # comp_part = partial(comp_pipeline_pe_di, input1_list, input2_list, mismatch, barcodes_matrix, project_dir_current)
-        # TODO make a nice new function in composer that uses the barcodes as the file prefixes and doesn't duplicate barcodes
-        # elif paired == True:
-            # comp_part = partial(comp_pipeline_pe, input1_list, input2_list, mismatch, barcodes_matrix, project_dir_current)
-        # if paired == False:
-            # comp_part = partial(comp_pipeline_se, mismatch, barcodes_matrix, project_dir_current)    
-        # pool = Pool(threads)
-        # pool.map(comp_part, input1_list)
-        # pool.close()
+    if barcodes_file:
+        grater_multiproc()
+
+
 
   
     # if overhang_list:

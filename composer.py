@@ -68,6 +68,8 @@ def comp_pipeline_pe_di(input1_list, input2_list, mismatch, barcodes_matrix, pro
 
 
 def comp_init_di(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):
+    print("here")
+    print(mistmatch)
     pass
 
 
