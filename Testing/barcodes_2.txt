@@ -1,0 +1,5 @@
+    A   C   G   T
+T   a1  b1  c1  d1
+G   a2  b2  c2  d2
+C   a3  b3  c3  d3
+A   a4  b4  c4  d4
