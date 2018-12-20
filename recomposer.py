@@ -8,8 +8,9 @@ from multiprocessing import Pool
 from functools import partial
 from conf import *
 from trimmer import *
-from composer import *
+from anemone import *
 from overhang import overhang
+
 
 # composer is:
 # scallop - trimmer
@@ -18,7 +19,27 @@ from overhang import overhang
 # rotifer - overhang
 # baleen
 
-def initialize(project_dir, paired):
+
+def index_reader(barcodes_index):
+    '''
+    open barcodes_index and create dictionary of associated barcode keyfiles
+    '''
+    barcodes_dict = {}
+    with open(barcodes_index) as f:
+        for line in f:
+            for j, item in enumerate(line.split()):
+                if j == 0:
+                    key = item
+                if j == 1:
+                    value = item
+                if j == 2:
+                    sys.exit("barcodes_index should only contain forward reads" + "\n" +
+                            "and their respective barcodes key file")
+            barcodes_dict[key] = project_dir + '/' + value
+    return barcodes_dict
+
+
+def initialize(project_dir, paired, barcodes_dict):
     '''
     check files in project_dir for completeness
     '''
@@ -26,18 +47,20 @@ def initialize(project_dir, paired):
         project_dir = os.path.abspath(project_dir)
     else:
         sys.exit('project directory not found')
-    fastq_list, gz, pairs_list = fastq_reader(project_dir)
+    fastq_list, gz, pairs_list = fastq_reader(project_dir, barcodes_dict)
     input1_list, input2_list = input_sort(paired, pairs_list)
     return input1_list, input2_list, fastq_list, pairs_list
 
 
-def fastq_reader(project_dir):
+def fastq_reader(project_dir, barcodes_dict):
     '''
-    open fastq files, test first read structure, create file lists
+    bypass recognized barcode files, open fastqs, test first read structure, create file lists
     '''
     fastq_list, gz, pairs_list = [], [], {}
     for filename in os.listdir(project_dir):
-        if filename == barcodes_file:
+        if filename == os.path.basename(barcodes_index):
+            pass
+        elif project_dir + '/' + filename in barcodes_dict.values():
             pass
         else:
             try:
@@ -113,7 +136,7 @@ def input_sort(paired, pairs_list):
             input_paired(values, input1_list, input2_list)
         elif paired == True and len(values) != 2:
             sys.exit("paired forward and reverse reads don't match expected number" + "\n" +
-                    "check the naming conventions of the barcodes_file")
+                    "check the naming conventions of the barcodes_index match barcode keyfiles")
         if paired == False:
             input_single(values, input1_list, input2_list)
     return input1_list, input2_list
@@ -164,7 +187,7 @@ def trim_muliproc(project_dir, threads, front_trim, back_trim, fastq_list):
     project_dir_current = project_dir + '/trim'    
     os.mkdir(project_dir_current)
     trim_part = partial(trimmer_pipeline, front_trim, back_trim, project_dir_current)
-    pool = Pool(threads)        
+    pool = Pool(threads)
     pool.map(trim_part, fastq_list)
     pool.close()
     for i, filename in enumerate(input1_list):
@@ -179,24 +202,22 @@ def anemone_multiproc():
     '''
     project_dir_current = project_dir + '/demulti'
     os.mkdir(project_dir_current)
-    comp_part = partial(anemone_pipeline, input1_list, input2_list, paired, mismatch, barcodes_index, project_dir_current)
+    comp_part = partial(anemone_pipeline, input1_list, input2_list, paired, mismatch, barcodes_dict, project_dir_current)
     pool = Pool(threads)
     pool.map(comp_part, input1_list)
-    pool.close()    
+    pool.close()
 
 
 if __name__ == '__main__':
     if barcodes_index:
         barcodes_index = project_dir + '/' + barcodes_index
-        #TODO open barcodes_index and create list of files to ignore/inspect
-    input1_list, input2_list, fastq_list, pairs_list = initialize(project_dir, paired)
+        barcodes_dict = index_reader(barcodes_index)
+    input1_list, input2_list, fastq_list, pairs_list = initialize(project_dir, paired, barcodes_dict)
+    #TODO add qc step here and let users know where to find its output
     if front_trim > 0:
         trim_muliproc(project_dir, threads, front_trim, 0, fastq_list)
-    if barcodes_file:
+    if barcodes_dict:
         anemone_multiproc()
-
-
-
   
     # if overhang_list:
         # os.mkdir(project_dir + '/overhang')

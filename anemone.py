@@ -16,11 +16,16 @@ def anemone_main():
         pass
     chunk = 3000000 # how many reads to process before writing
     project_dir = os.getcwd()
-    barcodes_matrix, R1_barcodes, R2_barcodes = barcode_reader(barcodes_file)
+    barcodes_matrix, R1_barcodes, R2_barcodes, dual_index = barcode_reader(barcodes_file)
     anemone_init(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir, paired)
 
 
-def anemone_pipeline(input1_list, input2_list, paired, mismatch, barcodes_index, project_dir, input1):
+def anemone_pipeline(input1_list, input2_list, paired, mismatch, barcodes_dict, project_dir, input1):
+    for k, v in barcodes_dict.items():
+        if k == os.path.basename(input1):
+            barcodes_file = v
+    project_dir = project_dir + '/' + os.path.basename(input1)
+    os.mkdir(project_dir)
     if paired == True:
         input2 = input2_list[input1_list.index(input1)]
         output2 = os.path.basename(input2)
@@ -29,8 +34,7 @@ def anemone_pipeline(input1_list, input2_list, paired, mismatch, barcodes_index,
         output2 = False
     output1 = os.path.basename(input1)
     chunk = 3000000
-    #TODO get barcodes_file based on barcodes_index matching input1
-    barcodes_matrix, R1_barcodes, R2_barcodes = barcode_reader(barcodes_file)
+    barcodes_matrix, R1_barcodes, R2_barcodes, dual_index = barcode_reader(barcodes_file)
     anemone_init(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir, paired)
 
 
@@ -41,10 +45,10 @@ def barcode_reader(barcodes_file):
     '''
     barcodes_matrix = []
     with open(barcodes_file) as f:
-        R2_barcodes = R2_barcodes_maker([], f)
+        R2_barcodes, dual_index = R2_barcodes_maker([], f)
         barcodes_matrix = array_maker(R2_barcodes)
         barcodes_matrix, R1_barcodes = barcodes_matrix_maker([], f, barcodes_matrix)
-    return barcodes_matrix, R1_barcodes, R2_barcodes
+    return barcodes_matrix, R1_barcodes, R2_barcodes, dual_index
 
 
 def R2_barcodes_maker(R2_barcodes, f):
@@ -54,9 +58,11 @@ def R2_barcodes_maker(R2_barcodes, f):
     line = f.readline()
     for item in line.split():
         R2_barcodes.append(item)
-    if len(R2_barcodes) == 1 and dual_index == True:
-        sys.exit("expected barcodes file to have reverse barcodes")
-    return R2_barcodes
+    if len(R2_barcodes) == 1:
+        dual_index = False
+    else:
+        dual_index = True
+    return R2_barcodes, dual_index
 
 
 def array_maker(R2_barcodes):
@@ -82,9 +88,11 @@ def barcodes_matrix_maker(R1_barcodes, f, barcodes_matrix):
     return barcodes_matrix, R1_barcodes
 
 
-def anemone_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):
+def anemone_init(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir, paired):
     #TODO update this to reflect sample ids in matrix
     filename = os.path.basename(input1)
+    print(barcodes_matrix)
+    print(str(len(barcodes_matrix)))
     for i, item in enumerate(barcodes_matrix):
         if item[0] == filename:
             sample_id = barcodes_matrix[i][1:]

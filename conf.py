@@ -1,16 +1,19 @@
 # provide the full path to your fastq files
-project_dir = '/home/ryan/Testing'
+# project_dir = '/home/ryan/Testing'
 # project_dir = '/media/sf_E_DRIVE/Analysis/Testing'
-# project_dir = '/home/rkuster/Desktop/pipeline_test'
+project_dir = '/home/rkuster/Desktop/Testing'
 
 # if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True
 
 # choose number of subprocesses
-threads = 1
+threads = 2
+
+# create initial QC output for reads and pause for user
+initial_qc = False
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
-front_trim = 6
+front_trim = 0
 
 # name of  file with barcodes to demultiplex forward reads
 barcodes_index = 'index.txt'
@@ -20,6 +23,15 @@ mismatch = 1
 
 # list sequences immediately adjacent to barcodes
 overhang_list = ['TCC','TCT']
+
+# quality score minimum (Phred value 0-40)
+q_min = 30
+
+# percentage of reads containing q_min or high quality scores
+q_percent = 95
+
+# pause at QC steps for manual input (overwrites q_min and q_percent)
+manual_entry = True
 
 # optionally remove each intermediate file
 remove_intermediates = True
