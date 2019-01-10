@@ -212,13 +212,16 @@ if __name__ == '__main__':
     if barcodes_index:
         barcodes_index = project_dir + '/' + barcodes_index
         barcodes_dict = index_reader(barcodes_index)
+    else:
+        barcodes_dict = {}
+        barcodes_index = ''
     input1_list, input2_list, fastq_list, pairs_list = initialize(project_dir, paired, barcodes_dict)
     #TODO add qc step here and let users know where to find its output
     if front_trim > 0:
         trim_muliproc(project_dir, threads, front_trim, 0, fastq_list)
-    if barcodes_dict:
+    if barcodes_index:
         anemone_multiproc()
-  
+
     # if overhang_list:
         # os.mkdir(project_dir + '/overhang')
         # inputs_list = []

@@ -1,7 +1,7 @@
-# provide the full path to your fastq files
-# project_dir = '/home/ryan/Testing'
+# provide the full path to your fastq files (only place full path is used)
+project_dir = '/home/ryan/Testing'
 # project_dir = '/media/sf_E_DRIVE/Analysis/Testing'
-project_dir = '/home/rkuster/Desktop/Testing'
+# project_dir = '/home/rkuster/Desktop/Testing'
 
 # if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True
@@ -15,7 +15,7 @@ initial_qc = False
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
 front_trim = 0
 
-# name of  file with barcodes to demultiplex forward reads
+# name of  file with barcodes to demultiplex forward reads (use 'False' if not demultiplexing)
 barcodes_index = 'index.txt'
 
 # number of mismatches (hamming distance) allowed in barcodes

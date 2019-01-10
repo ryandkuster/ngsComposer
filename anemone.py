@@ -16,8 +16,7 @@ def anemone_main():
         pass
     chunk = 3000000 # how many reads to process before writing
     project_dir = os.getcwd()
-    barcodes_matrix, R1_barcodes, R2_barcodes, dual_index = barcode_reader(barcodes_file)
-    anemone_init(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir, paired)
+    anemone_init(input1, input2, output1, output2, mismatch, chunk, barcodes_file, project_dir, paired)
 
 
 def anemone_pipeline(input1_list, input2_list, paired, mismatch, barcodes_dict, project_dir, input1):
@@ -34,8 +33,21 @@ def anemone_pipeline(input1_list, input2_list, paired, mismatch, barcodes_dict, 
         output2 = False
     output1 = os.path.basename(input1)
     chunk = 3000000
+    anemone_init(input1, input2, output1, output2, mismatch, chunk, barcodes_file, project_dir, paired)
+
+
+def anemone_init(input1, input2, output1, output2, mismatch, chunk, barcodes_file, project_dir, paired):
+    #TODO update this to reflect sample ids in matrix
     barcodes_matrix, R1_barcodes, R2_barcodes, dual_index = barcode_reader(barcodes_file)
-    anemone_init(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir, paired)
+    print(barcodes_matrix)
+    row_len = len(R1_barcodes) + 1
+    outfile1_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
+    outfile2_list = [open(project_dir + '/temp_unknown_' + output2, 'w')]
+    for i, item in enumerate(R1_barcodes):
+        outfile1_list.append(open(project_dir + '/' + str(i) + '_' + output1, 'w'))
+        outfile2_list.append(open(project_dir + '/' + str(i) + '_' + output2, 'w'))
+    #TODO call anemone from here, followed by mismatcher, then second pass
+    anemone(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, 3000000, R1_barcodes, project_dir, paired, True)
 
 
 def barcode_reader(barcodes_file):
@@ -46,8 +58,7 @@ def barcode_reader(barcodes_file):
     barcodes_matrix = []
     with open(barcodes_file) as f:
         R2_barcodes, dual_index = R2_barcodes_maker([], f)
-        barcodes_matrix = array_maker(R2_barcodes)
-        barcodes_matrix, R1_barcodes = barcodes_matrix_maker([], f, barcodes_matrix)
+        barcodes_matrix, R1_barcodes = barcodes_matrix_maker([], f, barcodes_matrix, R2_barcodes)
     return barcodes_matrix, R1_barcodes, R2_barcodes, dual_index
 
 
@@ -65,57 +76,26 @@ def R2_barcodes_maker(R2_barcodes, f):
     return R2_barcodes, dual_index
 
 
-def array_maker(R2_barcodes):
-    '''
-    create empty matrix with dimensions 1 by length R2 barcodes 
-    '''
-    barcodes_matrix = [[0] * 1 for i in range(len(R2_barcodes))]
-    for i, x in enumerate(R2_barcodes):
-        barcodes_matrix[i][0] = x
-    return barcodes_matrix
-
-
-def barcodes_matrix_maker(R1_barcodes, f, barcodes_matrix):
+def barcodes_matrix_maker(R1_barcodes, f, barcodes_matrix, R2_barcodes):
     '''
     create a matrix of user-defined sample ids and populate list of R1 barcodes
     '''
+    barcodes_matrix = [[0] * 1 for i in range(len(R2_barcodes))]
     for i, line in enumerate(f):
         for j, item in enumerate(line.split()):
             if j == 0:
                 R1_barcodes.append(item)
             if j > 0:
-                barcodes_matrix[j - 1].append(item)    
+                barcodes_matrix[j - 1].append(item)
+    for i, line in enumerate(barcodes_matrix):
+        del line[0]
     return barcodes_matrix, R1_barcodes
 
 
-def anemone_init(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir, paired):
-    #TODO update this to reflect sample ids in matrix
-    filename = os.path.basename(input1)
-    print(barcodes_matrix)
-    print(str(len(barcodes_matrix)))
-    for i, item in enumerate(barcodes_matrix):
-        if item[0] == filename:
-            sample_id = barcodes_matrix[i][1:]
-            R1_barcodes = barcodes_matrix[0][1:]
-            na_list = []
-    for i, item in enumerate(sample_id):
-        if item == 'na':
-            na_list.append(i)
-    for i in sorted(na_list, reverse=True):
-        del sample_id[i]
-        del R1_barcodes[i]
-    row_len = len(R1_barcodes) + 1
-    outfile1_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
-    outfile2_list = [open(project_dir + '/temp_unknown_' + output2, 'w')]
-    for id in sample_id:
-        outfile1_list.append(open(project_dir + '/' + str(id) + '_' + output1, 'w'))
-        outfile2_list.append(open(project_dir + '/' + str(id) + '_' + output2, 'w'))
-    #TODO call anemone from here, followed by mismatcher, then second pass
-    anemone(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, 3000000, R1_barcodes, project_dir, True)
-
-
-def anemone(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, round_one):
-    #TODO get to work in standard fashion, then break into functions, test speed
+def anemone(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, paired, round_one):
+    #TODO get to work in standard fashion
+    #TODO break into functions, test speed
+    #TODO account for input2 == False
     matrix_one = matrix_maker(row_len)
     matrix_two = matrix_maker(row_len)
     i, y, entry1, entry2 = 0, 0, "", ""
@@ -169,7 +149,7 @@ def anemone(row_len, input1, input2, output1, output2, outfile1_list, outfile2_l
         unload(matrix_two, row_len, outfile2_list)
     if round_one == True:
         if mismatch > 0:
-            mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir)
+            mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, paired)
         else:
             for x in outfile1_list:
                 x.close()
@@ -204,7 +184,7 @@ def unload(matrix, row_len, outfiles):
         fo.write(str(''.join(matrix[x])))
 
 
-def mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir):
+def mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, paired):
     '''
     after the first round of precision demultiplexing, attempt matches of unknown reads
     '''
@@ -217,7 +197,7 @@ def mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch
     input1 = project_dir + '/temp_unknown_' + output1
     if paired == True:
         input2 = project_dir + '/temp_unknown_' + output2
-    anemone(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, False)
+    anemone(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, paired, False)
 
 
 if __name__ == '__main__':
