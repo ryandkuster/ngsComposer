@@ -16,6 +16,8 @@ def anemone_main():
         paired = True
     except:
         paired = False
+        input2 = False
+        output2 = False
         pass
     chunk = 3000000 # how many reads to process before writing
     project_dir = os.getcwd()
@@ -53,13 +55,23 @@ def anemone_init(input1, input2, output1, output2, mismatch, chunk,
     barcodes_matrix, R1_barcodes, R2_barcodes, dual_index = barcode_reader(barcodes_file)
     row_len = len(R1_barcodes) + 1
     outfile1_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
-    outfile2_list = [open(project_dir + '/temp_unknown_' + output2, 'w')]
+    try:
+        outfile2_list = [open(project_dir + '/temp_unknown_' + output2, 'w')]
+    except:
+        outfile2_list = []
     for i, item in enumerate(R1_barcodes):
         outfile1_list.append(open(project_dir + '/' + str(i) + '_' + output1, 'w'))
-        outfile2_list.append(open(project_dir + '/' + str(i) + '_' + output2, 'w'))
-    anemone(row_len, input1, input2, output1, output2, outfile1_list,
-            outfile2_list, mismatch, 3000000, R1_barcodes, project_dir,
-            paired, True)
+        try:
+            outfile2_list.append(open(project_dir + '/' + str(i) + '_' + output2, 'w'))
+        except:
+            pass
+    if paired == True:
+        anemone(row_len, input1, input2, output1, output2, outfile1_list,
+                outfile2_list, mismatch, 3000000, R1_barcodes, project_dir,
+                paired, True)
+    elif paired == False:
+        anemone_single(row_len, input1, output1, outfile1_list, mismatch,
+                       chunk, R1_barcodes, project_dir, paired, True)
     if dual_index == True:
         pass
         #TODO dual_index pass
@@ -115,13 +127,11 @@ def anemone(row_len, input1, input2, output1, output2, outfile1_list,
     '''
     use active 'input1' file to demultiplex in a number of ways
     '''
-    #TODO break into functions
-    #TODO account for input2 == False
     matrix_one = matrix_maker(row_len)
     matrix_two = matrix_maker(row_len)
     i, y, entry1, entry2 = 0, 0, "", ""
     with open(input1) as f1, open(input2) as f2:
-        for line1 in f1:
+        for line1, line2 in zip(f1, f2):
             i += 1
             y += 1
             if y == 2 and round_one == True:
@@ -131,9 +141,7 @@ def anemone(row_len, input1, input2, output1, output2, outfile1_list,
             if y == 2 or y == 4:
                 line1 = line1[z:]
             entry1 = entry1 + line1
-            for line2 in f2:
-                entry2 = entry2 + line2
-                break
+            entry2 = entry2 + line2
             if y == 4:
                 matrix_one[output_prefix].append(entry1)
                 matrix_two[output_prefix].append(entry2)
@@ -164,6 +172,46 @@ def anemone(row_len, input1, input2, output1, output2, outfile1_list,
         for x in outfile1_list:
             x.close()
         for x in outfile2_list:
+            x.close()
+
+
+def anemone_single(row_len, input1, output1, outfile1_list, mismatch, chunk,
+            barcodes, project_dir, paired, round_one):
+    '''
+    use active 'input1' file to demultiplex in a number of ways
+    '''
+    matrix_one = matrix_maker(row_len)
+    i, y, entry1 = 0, 0, ""
+    with open(input1) as f1:
+        for line1 in f1:
+            i += 1
+            y += 1
+            if y == 2 and round_one == True:
+                z, output_prefix = exact_matches(line1, barcodes)
+            if y == 2 and round_one == False:
+                z, output_prefix = mismatches(line1, barcodes, mismatch)
+            if y == 2 or y == 4:
+                line1 = line1[z:]
+            entry1 = entry1 + line1
+            if y == 4:
+                matrix_one[output_prefix].append(entry1)
+                y, entry1 = 0, ""
+            if i == chunk:
+                unload(matrix_one, row_len, outfile1_list)
+                i = 0
+                matrix_one = matrix_maker(row_len)
+        unload(matrix_one, row_len, outfile1_list)
+    if round_one == True:
+        if mismatch > 0:
+            second_pass(row_len, output1, False, outfile1_list, False, mismatch, chunk, barcodes, project_dir, paired)
+        else:
+            for x in outfile1_list:
+                x.close()
+            os.rename(project_dir + '/temp_unknown_' + output1,
+                      project_dir + '/unknown_' + output1)
+    else:
+        os.remove(project_dir + '/temp_unknown_' + output1)
+        for x in outfile1_list:
             x.close()
 
 
@@ -237,8 +285,12 @@ def second_pass(row_len, output1, output2, outfile1_list, outfile2_list, mismatc
     input1 = project_dir + '/temp_unknown_' + output1
     if paired == True:
         input2 = project_dir + '/temp_unknown_' + output2
-    anemone(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, paired, False)
-
+        anemone(row_len, input1, input2, output1, output2, outfile1_list,
+                outfile2_list, mismatch, chunk, barcodes, project_dir, paired,
+                False)
+    else:
+        anemone_single(row_len, input1, output1, outfile1_list, mismatch,
+                       chunk, barcodes, project_dir, paired, False)
 
 if __name__ == '__main__':
     anemone_main()
