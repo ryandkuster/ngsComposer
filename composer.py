@@ -1,286 +1,242 @@
 import sys
 import os
+import gzip
+import shutil
 
 
-def comp_main():
-    mismatch = int(sys.argv[1]) # number of mismatches allowed
-    barcodes_file = sys.argv[2] # barcodes file
-    input1 = sys.argv[3] # R1 reads
-    output1 = os.path.basename(input1)
-    try:
-        input2 = sys.argv[4] # R2 reads
-        output2 = os.path.basename(input2)
-        paired = True
-    except:
-        paired = False
-        pass
-    chunk = 3000000 # how many reads to process before writing
-    project_dir = os.getcwd()
-    barcodes_matrix = barcode_reader(project_dir, barcodes_file)
-    if paired == True:
-        comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir)
-    if paired == False:
-        comp_init_single(input1, output1, mismatch, chunk, barcodes_matrix, project_dir)
-
-        
-def barcode_reader(project_dir, barcodes_file):
-    header = []
-    try:
-        with open(project_dir + '/' +  barcodes_file) as f:
-            for i, line in enumerate(f):
-                if i == 1:
-                    barcodes_matrix = array_maker(header)
-                for j, item in enumerate(line.split()):
-                    if i == 0:
-                        header.append(item)
-                    else:
-                        barcodes_matrix[j].append(item)
-        return barcodes_matrix
-    except FileNotFoundError:
-        sys.exit('''
-based on your configuration file your project
-directory must contain a newline-separated list
-of barcodes named ''' + barcodes_file
-        )
+from multiprocessing import Pool
+from functools import partial
+from conf import *
+from scallop import *
+from anemone import *
+from overhang import overhang
 
 
-def array_maker(header):
-    barcodes_matrix = [[0] * 1 for i in range(len(header))]
-    for i, x in enumerate(header):
-        barcodes_matrix[i][0] = x
-    return barcodes_matrix
-
-    
-def comp_pipeline_pe(input1_list, input2_list, mismatch, barcodes_matrix, project_dir, input1):
-    input2 = input2_list[input1_list.index(input1)]
-    output1 = os.path.basename(input1)
-    output2 = os.path.basename(input2)
-    chunk = 3000000
-    comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir)
+# composer is:
+# scallop - scallop
+# anemone - composer
+# krill - krill
+# rotifer - overhang
+# baleen
 
 
-def comp_pipeline_pe_di(input1_list, input2_list, mismatch, barcodes_matrix, project_dir, input1):
-    input2 = input2_list[input1_list.index(input1)]
-    output1 = os.path.basename(input1)
-    output2 = os.path.basename(input2)
-    chunk = 3000000
-    comp_init_di(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir)
+def index_reader(barcodes_index):
+    '''
+    open barcodes_index and create dictionary of associated barcode keyfiles
+    '''
+    barcodes_dict = {}
+    with open(barcodes_index) as f:
+        for line in f:
+            for j, item in enumerate(line.split()):
+                if j == 0:
+                    key = item
+                if j == 1:
+                    value = item
+                if j == 2:
+                    sys.exit("barcodes_index should only contain forward reads" + "\n" +
+                            "and their respective barcodes key file")
+            barcodes_dict[key] = project_dir + '/' + value
+    return barcodes_dict
 
 
-def comp_init_di(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):
-    print(input1)
-    print(input2)
-    print(output1)
-    print(output2)
-    print(chunk)
-    print(str(mismatch))
-    pass
-
-
-def comp_init_paired(input1, input2, output1, output2, mismatch, chunk, barcodes_matrix, project_dir):
-    filename = os.path.basename(input1)
-    for i, item in enumerate(barcodes_matrix):
-        if item[0] == filename:
-            sample_id = barcodes_matrix[i][1:]
-            R1_barcodes = barcodes_matrix[0][1:]
-            na_list = []
-    for i, item in enumerate(sample_id):
-        if item == 'na':
-            na_list.append(i)
-    for i in sorted(na_list, reverse=True):
-        del sample_id[i]
-        del R1_barcodes[i]
-    row_len = len(R1_barcodes) + 1
-    outfile1_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
-    outfile2_list = [open(project_dir + '/temp_unknown_' + output2, 'w')]
-    for id in sample_id:
-        outfile1_list.append(open(project_dir + '/' + str(id) + '_' + output1, 'w'))
-        outfile2_list.append(open(project_dir + '/' + str(id) + '_' + output2, 'w'))
-    composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, 3000000, R1_barcodes, project_dir, True)
-
-
-def composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, round_one):
-    matrix_one = matrix_maker(row_len)
-    matrix_two = matrix_maker(row_len)
-    i, y, entry1, entry2 = 0, 0, "", ""
-    with open(input1) as f1, open(input2) as f2:
-        for line1 in f1:
-            i += 1
-            y += 1
-            if y == 2 and round_one == True:
-                for file_prefix, x in enumerate(barcodes):
-                    if line1.startswith(x): 
-                        output_prefix = file_prefix + 1
-                        z = len(x)
-                        break
-                    else:
-                        z = 0
-                        output_prefix = 0
-            if y == 2 and round_one == False:
-                z, multi, output_prefix = 0, 0, 0
-                for file_prefix, x in enumerate(barcodes):
-                    hamm = 0
-                    for j in range(len(x)):
-                        if x[j] != line1[j]:
-                            hamm = hamm + 1
-                            if hamm > mismatch:
-                                break
-                    if hamm <= mismatch:        
-                        output_prefix = file_prefix + 1
-                        z = len(x)
-                        multi += 1
-                    if multi > 1:
-                        z = 0
-                        output_prefix = 0
-                        break
-            if y == 2 or y == 4:
-                line1 = line1[z:]
-            entry1 = entry1 + line1
-            for line2 in f2:
-                entry2 = entry2 + line2
-                break
-            if y == 4:
-                matrix_one[output_prefix].append(entry1)
-                matrix_two[output_prefix].append(entry2)
-                y, entry1, entry2 = 0, "", ""
-            if i == chunk:
-                unload(matrix_one, row_len, outfile1_list)
-                unload(matrix_two, row_len, outfile2_list)
-                i = 0
-                matrix_one = matrix_maker(row_len)
-                matrix_two = matrix_maker(row_len)
-        unload(matrix_one, row_len, outfile1_list)
-        unload(matrix_two, row_len, outfile2_list)
-    if round_one == True:
-        if mismatch > 0:
-            mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir)
-        else:
-            for x in outfile1_list:
-                x.close()
-            for x in outfile2_list:
-                x.close()
-            os.rename(project_dir + '/temp_unknown_' + output1, project_dir + '/unknown_' + output1)
-            os.rename(project_dir + '/temp_unknown_' + output2, project_dir + '/unknown_' + output2)
+def initialize(project_dir, paired, barcodes_dict):
+    '''
+    check files in project_dir for completeness
+    '''
+    if os.path.exists(project_dir) == True:
+        project_dir = os.path.abspath(project_dir)
     else:
-        os.remove(project_dir + '/temp_unknown_' + output1)
-        os.remove(project_dir + '/temp_unknown_' + output2)
-        for x in outfile1_list:
-            x.close()
-        for x in outfile2_list:
-            x.close()
+        sys.exit('project directory not found')
+    fastq_list, gz, pairs_list = fastq_reader(project_dir, barcodes_dict)
+    input1_list, input2_list = input_sort(paired, pairs_list)
+    return input1_list, input2_list, fastq_list, pairs_list
 
 
-def comp_pipeline_se(mismatch, barcodes_matrix, project_dir, input1):
-    output1 = os.path.basename(input1)
-    chunk = 3000000
-    comp_init_single(input1, output1, mismatch, chunk, barcodes_matrix, project_dir)
-
-
-def comp_init_single(input1, output1, mismatch, chunk, barcodes_matrix, project_dir):
-    filename = os.path.basename(input1)
-    for i, item in enumerate(barcodes_matrix):
-        if item[0] == filename:
-            sample_id = barcodes_matrix[i][1:]
-            R1_barcodes = barcodes_matrix[0][1:]
-            na_list = []
-    for i, item in enumerate(sample_id):
-        if item == 'na':
-            na_list.append(i)
-    for i in sorted(na_list, reverse=True):
-        del sample_id[i]
-        del R1_barcodes[i]
-    row_len = len(R1_barcodes) + 1
-    outfile1_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
-    for id in sample_id:
-        outfile1_list.append(open(project_dir + '/' + str(id) + '_' + output1, 'w'))
-    composer_single(row_len, input1, output1, outfile1_list, mismatch, 3000000, R1_barcodes, project_dir, True)
-            
-
-def composer_single(row_len, input1, output1, outfile1_list, mismatch, chunk, barcodes, project_dir, round_one):
-    matrix_one = matrix_maker(row_len)
-    i, y, entry1 = 0, 0, ""
-    with open(input1) as f1:
-        for line1 in f1:
-            i += 1
-            y += 1
-            if y == 2 and round_one == True:
-                for file_prefix, x in enumerate(barcodes):
-                    if line1.startswith(x): 
-                        output_prefix = file_prefix + 1
-                        z = len(x)
-                        break
-                    else:
-                        z = 0
-                        output_prefix = 0
-            if y == 2 and round_one == False:
-                z, multi, output_prefix = 0, 0, 0
-                for file_prefix, x in enumerate(barcodes):
-                    hamm = 0
-                    for j in range(len(x)):
-                        if x[j] != line1[j]:
-                            hamm = hamm + 1
-                            if hamm > mismatch:
-                                break
-                    if hamm <= mismatch:        
-                        output_prefix = file_prefix + 1
-                        z = len(x)
-                        multi += 1
-                    if multi > 1:
-                        z = 0
-                        output_prefix = 0
-                        break
-            if y == 2 or y == 4:
-                line1 = line1[z:]
-            entry1 = entry1 + line1
-            if y == 4:
-                matrix_one[output_prefix].append(entry1)
-                y, entry1 = 0, ""
-            if i == chunk:
-                unload(matrix_one, row_len, outfile1_list)
-                i = 0
-                matrix_one = matrix_maker(row_len)
-        unload(matrix_one, row_len, outfile1_list)
-    if round_one == True:
-        if mismatch > 0:
-            mismatcher_single(row_len, output1, outfile1_list, mismatch, chunk, barcodes, project_dir)
+def fastq_reader(project_dir, barcodes_dict):
+    '''
+    bypass recognized barcode files, open fastqs, test first read structure, create file lists
+    '''
+    fastq_list, gz, pairs_list = [], [], {}
+    for filename in os.listdir(project_dir):
+        if filename == os.path.basename(barcodes_index):
+            pass
+        elif project_dir + '/' + filename in barcodes_dict.values():
+            pass
         else:
-            for x in outfile1_list:
-                x.close()
-            os.rename(project_dir + '/temp_unknown_' + output1, project_dir + '/unknown_' + output1)
+            try:
+                fastq_test, pairs_list = is_fq(project_dir + '/' + filename, pairs_list)
+                gz.append(0)
+            except UnicodeDecodeError:
+                fastq_test, pairs_list = is_gz(project_dir + '/' + filename, pairs_list)
+                gz.append(1)
+            if fastq_test is None:
+                raise TypeError
+            fastq_list.append(project_dir + '/' + filename)
+    return fastq_list, gz, pairs_list
+
+
+def is_fq(filename, pairs_list):
+    '''
+    test first read structure if fastq
+    '''
+    with open(filename) as f:
+        for i, line in enumerate(f):
+            if i == 1 and line[0] != '@':
+                return
+            else:
+                pairs_list = is_paired(filename, line, pairs_list)
+            if i == 3 and line[0] != '+':
+                return
+            if i == 5 and line[0] != '@':
+                return
+            else:
+                return True, pairs_list
+
+
+def is_gz(filename, pairs_list):
+    '''
+    test first read structure if fastq.gz
+    '''
+    with gzip.open(filename, 'rt') as f:
+        for i, line in enumerate(f):
+            if i == 1 and line[0] != '@':
+                return
+            else:
+                pairs_list = is_paired(filename, line, pairs_list)
+            if i == 3 and line[0] != '+':
+                return
+            if i == 5 and line[0] != '@':
+                return
+            else:
+                sys.exit("sorry, gzipped functionality is not currently supported")
+
+
+def is_paired(filename, line, pairs_list):
+    '''
+    use header info to match paired ends, if present
+    '''
+    for i, x in enumerate(line):
+        if x == ' ':
+            space_pos = i
+    header = line[:space_pos]
+    if header in pairs_list:
+        pairs_list[header].append(filename)
     else:
-        os.remove(project_dir + '/temp_unknown_' + output1)
-        for x in outfile1_list:
-            x.close()
+        pairs_list[header] = [filename]
+    return pairs_list  
 
 
-def matrix_maker(row_len):
-    matrix = [[0] * 1 for i in range(row_len)]
-    for i in range(row_len):
-        matrix[i][0] = ''
-    return matrix
+def input_sort(paired, pairs_list):
+    '''
+    if paired headers present, input1 and input2 lists ordered to keep pairs sequential
+    '''
+    input1_list, input2_list = [], []
+    for values in pairs_list.values():
+        if paired == True and len(values) == 2:
+            input_paired(values, input1_list, input2_list)
+        elif paired == True and len(values) != 2:
+            sys.exit("paired forward and reverse reads don't match expected number" + "\n" +
+                    "check the naming conventions of the barcodes_index match barcode keyfiles")
+        if paired == False:
+            input_single(values, input1_list, input2_list)
+    return input1_list, input2_list
 
 
-def unload(matrix, row_len, outfiles):
-    for x, fo in enumerate(outfiles):
-        fo.write(str(''.join(matrix[x])))
+def input_paired(values, input1_list, input2_list):
+    '''
+    form list if paired is True
+    '''
+    for filename in values:
+        with open(filename) as f:
+            header = f.readline()
+            for i, x in enumerate(header):
+                if x == ' ':
+                    space_pos = i
+            end = header[space_pos+1]
+            if int(end) == 1:
+                input1_list.append(filename)
+            if int(end) == 2:
+                input2_list.append(filename)
+    return input1_list, input2_list
 
 
-def mismatcher(row_len, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir):
-    outfile1_list[0].close()
-    outfile2_list[0].close()
-    outfile1_list[0] = open(project_dir + '/unknown_' + output1, 'w')
-    outfile2_list[0] = open(project_dir + '/unknown_' + output2, 'w')
-    input1 = project_dir + '/temp_unknown_' + output1
-    input2 = project_dir + '/temp_unknown_' + output2
-    composer(row_len, input1, input2, output1, output2, outfile1_list, outfile2_list, mismatch, chunk, barcodes, project_dir, False)
+def input_single(values, input1_list, input2_list):
+    '''
+    form list if paired is False, with user input if paired detection
+    '''
+    ignore = False
+    if len(values) == 1:
+        for filename in values:
+            input1_list.append(filename)
+    elif ignore == True:
+        for filename in values:
+            input1_list.append(filename)
+    else:
+        print("unexpected paired libraries found")
+        answer = input("continue treating all files as single-end libraries?\n")
+        ignore = True if answer in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
+        for filename in values:
+            input1_list.append(filename)
+    return input1_list, input2_list
 
 
-def mismatcher_single(row_len, output1, outfile1_list, mismatch, chunk, barcodes, project_dir):
-    outfile1_list[0].close()
-    outfile1_list[0] = open(project_dir + '/unknown_' + output1, 'w')
-    input1 = project_dir + '/temp_unknown_' + output1
-    composer_single(row_len, input1, output1, outfile1_list, mismatch, chunk, barcodes, project_dir, False)
+def trim_muliproc(project_dir, threads, front_trim, back_trim, fastq_list):
+    '''
+    create user-defined number of subprocesses to trim every file in fastq_list
+    '''
+    project_dir_current = project_dir + '/trim'    
+    os.mkdir(project_dir_current)
+    trim_part = partial(scallop_pipeline, front_trim, back_trim, project_dir_current)
+    pool = Pool(threads)
+    pool.map(trim_part, fastq_list)
+    pool.close()
+    for i, filename in enumerate(input1_list):
+        input1_list[i] = project_dir_current + '/' + os.path.basename(filename)
+    for i, filename in enumerate(input2_list):
+        input2_list[i] = project_dir_current + '/' + os.path.basename(filename) 
+
+
+def anemone_multiproc():
+    '''
+    create user-defined number of subprocesses to demultiplex
+    '''
+    project_dir_current = project_dir + '/demulti'
+    os.mkdir(project_dir_current)
+    comp_part = partial(anemone_pipeline, input1_list, input2_list, paired, mismatch, barcodes_dict, project_dir_current)
+    pool = Pool(threads)
+    pool.map(comp_part, input1_list)
+    pool.close()
 
 
 if __name__ == '__main__':
-    comp_main()
+    if barcodes_index:
+        barcodes_index = project_dir + '/' + barcodes_index
+        barcodes_dict = index_reader(barcodes_index)
+    else:
+        barcodes_dict = {}
+        barcodes_index = ''
+    input1_list, input2_list, fastq_list, pairs_list = initialize(project_dir, paired, barcodes_dict)
+    #TODO add qc step here and let users know where to find its output
+    if front_trim > 0:
+        trim_muliproc(project_dir, threads, front_trim, 0, fastq_list)
+    if barcodes_index:
+        anemone_multiproc()
+
+    # if overhang_list:
+        # os.mkdir(project_dir + '/overhang')
+        # inputs_list = []
+        # try:
+            # for filename in os.listdir(project_dir_current):
+                # inputs_list.append(project_dir_current + '/' + filename)
+        # except:
+            # inputs_list = fastq_list
+        # project_dir_current = project_dir + '/overhang'
+        # hang_part = partial(overhang, project_dir_current, overhang_list)
+        # pool = Pool(threads)
+        # pool.map(hang_part, inputs_list)
+        # pool.close()
+
+
+    # shutil.rmtree(project_dir + '/demulti')
+    # shutil.rmtree(project_dir + '/trim')
+    # shutil.rmtree(project_dir + '/overhang')

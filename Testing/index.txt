@@ -1,2 +1,0 @@
-fake1_R1.fastq  barcodes_1.txt
-fake2_R1.fastq  barcodes_2.txt
