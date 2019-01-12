@@ -13,11 +13,10 @@ from overhang import overhang
 
 
 # composer is:
-# scallop - scallop
-# anemone - composer
-# krill - krill
-# rotifer - overhang
-# baleen
+# scallop - remove buffer sequences
+# anemone - demultiplex based on barcodes
+# krill - filter base calling with custom cutoffs
+# rotifer - remove sequence artifacts from library prep
 
 
 def index_reader(barcodes_index):
@@ -231,7 +230,7 @@ if __name__ == '__main__':
         # except:
             # inputs_list = fastq_list
         # project_dir_current = project_dir + '/overhang'
-        # hang_part = partial(overhang, project_dir_current, overhang_list)
+        # hang_part = partial(rotifer, project_dir_current, overhang_list)
         # pool = Pool(threads)
         # pool.map(hang_part, inputs_list)
         # pool.close()

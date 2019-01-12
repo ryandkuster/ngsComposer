@@ -1,7 +1,25 @@
 import sys
 import os
 
-def overhang(project_dir, overhang_list, input1):
+
+def rotifer_main():
+    '''
+    standalone, command line entry point to rotifer using stdin
+    '''
+    input1 = sys.argv[1] # name of input file (these MUST be identical in length)
+    project_dir = os.path.dirname(os.path.abspath(input1))
+    overhang_list = ['TCC','TCT']
+    rotifer(project_dir, overhang_list, input1)
+
+
+def rotifer_pipeline():
+    '''
+    composer entry point to rotifer
+    '''
+    pass
+
+
+def rotifer(project_dir, overhang_list, input1):
     with open(input1) as s:
         line1 = s.readline()
         line2 = s.readline()
@@ -25,8 +43,6 @@ def overhang(project_dir, overhang_list, input1):
                 o2.write(entry)
                 y, test, entry = 0, 0, ""
 
+
 if __name__ == "__main__":
-    input1 = sys.argv[1] # name of input file (these MUST be identical in length)
-    project_dir = os.path.dirname(os.path.abspath(input1))
-    overhang_list = ['TCC','TCT']
-    overhang(project_dir, overhang_list, input1)
+    rotifer_main()

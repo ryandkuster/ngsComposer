@@ -2,6 +2,9 @@ import sys
 import os
 
 def scallop_main():
+    '''
+    standalone, command line entry point to scallop using stdin
+    '''
     input1 = sys.argv[1] # name of input fastq file
     front_trim = int(sys.argv[2]) # bases to remove from beginning of sequence
     back_trim = int(sys.argv[3]) # bases to remove from end of sequence
@@ -11,6 +14,9 @@ def scallop_main():
 
 
 def scallop(input1, front_trim, back_trim, project_dir, output1):
+    '''
+    composer entry point to scallop
+    '''
     with open(input1) as f, \
         open(project_dir + '/' + output1, 'w') as o:
         for i, line in enumerate(f):
