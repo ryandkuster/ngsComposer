@@ -33,8 +33,6 @@ def anemone_pipeline(input1_list, input2_list, paired, mismatch,
     for k, v in barcodes_dict.items():
         if k == os.path.basename(input1):
             barcodes_file = v
-    project_dir = project_dir + '/' + os.path.basename(input1)
-    os.mkdir(project_dir)
     if paired == True:
         input2 = input2_list[input1_list.index(input1)]
         output2 = os.path.basename(input2)
@@ -52,6 +50,8 @@ def anemone_init(input1, input2, output1, output2, mismatch, chunk,
     '''
     extract barcodes from barcodes_file and detect dual-indexing
     '''
+    project_dir = project_dir + '/' + os.path.basename(input1)
+    os.mkdir(project_dir)
     barcodes_matrix, R1_barcodes, R2_barcodes, dual_index = barcode_reader(barcodes_file)
     row_len = len(R1_barcodes) + 1
     outfile1_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
@@ -73,9 +73,21 @@ def anemone_init(input1, input2, output1, output2, mismatch, chunk,
         anemone_single(row_len, input1, output1, outfile1_list, mismatch,
                        chunk, R1_barcodes, project_dir, paired, True)
     if dual_index == True:
-        pass
-        #TODO dual_index pass
+        dual_indexer(project_dir, outfile1_list, outfile2_list)
+    elif dual_index == False:
+        for i, filename in enumerate(outfile1_list[1:]):
+            os.rename(filename.name, project_dir + '/' + barcodes_matrix[0][i])
 
+
+def dual_indexer(project_dir, outfile1_list, outfile2_list):
+    for i, filename in enumerate(outfile2_list[1:]):
+        input1 = filename.name
+        output1 = os.path.basename(input1)
+    # output1 = 
+    # output2 = 
+    # outfile1_final_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
+    # outfile2_final_list = [open(project_dir + '/temp_unknown_' + output2, 'w')]
+    
 
 def barcode_reader(barcodes_file):
     '''
@@ -163,9 +175,9 @@ def anemone(row_len, input1, input2, output1, output2, outfile1_list,
             for x in outfile2_list:
                 x.close()
             os.rename(project_dir + '/temp_unknown_' + output1,
-                      project_dir + '/unknown_' + output1)
+                      project_dir + '/unknown_1_' + output1)
             os.rename(project_dir + '/temp_unknown_' + output2,
-                      project_dir + '/unknown_' + output2)
+                      project_dir + '/unknown_1_' + output2)
     else:
         os.remove(project_dir + '/temp_unknown_' + output1)
         os.remove(project_dir + '/temp_unknown_' + output2)
