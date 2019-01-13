@@ -30,6 +30,8 @@ def anemone_pipeline(input1_list, input2_list, paired, mismatch,
     '''
     composer entry point to anemone
     '''
+    project_dir = project_dir + '/' + os.path.basename(input1)
+    os.mkdir(project_dir)
     for k, v in barcodes_dict.items():
         if k == os.path.basename(input1):
             barcodes_file = v
@@ -50,8 +52,6 @@ def anemone_init(input1, input2, output1, output2, mismatch, chunk,
     '''
     extract barcodes from barcodes_file and detect dual-indexing
     '''
-    project_dir = project_dir + '/' + os.path.basename(input1)
-    os.mkdir(project_dir)
     barcodes_matrix, R1_barcodes, R2_barcodes, dual_index = barcode_reader(barcodes_file)
     row_len = len(R1_barcodes) + 1
     outfile1_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
@@ -83,6 +83,7 @@ def dual_indexer(project_dir, outfile1_list, outfile2_list):
     for i, filename in enumerate(outfile2_list[1:]):
         input1 = filename.name
         output1 = os.path.basename(input1)
+        #TODO create binned barcodes list and write to sep folders per input
     # output1 = 
     # output2 = 
     # outfile1_final_list = [open(project_dir + '/temp_unknown_' + output1, 'w')]
@@ -97,8 +98,8 @@ def barcode_reader(barcodes_file):
     '''
     barcodes_matrix = []
     with open(barcodes_file) as f:
-        R2_barcodes, dual_index = R2_barcodes_maker([], f)
-        barcodes_matrix, R1_barcodes = barcodes_matrix_maker([], f, barcodes_matrix, R2_barcodes)
+        R2_barcodes, dual_index = R2_barcodes_maker({}, f)
+        barcodes_matrix, R1_barcodes = barcodes_matrix_maker({}, f, barcodes_matrix, R2_barcodes)
     return barcodes_matrix, R1_barcodes, R2_barcodes, dual_index
 
 
@@ -107,8 +108,8 @@ def R2_barcodes_maker(R2_barcodes, f):
     populate list of R2 barcodes
     '''
     line = f.readline()
-    for item in line.split():
-        R2_barcodes.append(item)
+    for i, item in enumerate(line.split()): #
+        R2_barcodes[item] = i #
     if len(R2_barcodes) == 1:
         dual_index = False
     else:
@@ -125,7 +126,7 @@ def barcodes_matrix_maker(R1_barcodes, f, barcodes_matrix, R2_barcodes):
     for i, line in enumerate(f):
         for j, item in enumerate(line.split()):
             if j == 0:
-                R1_barcodes.append(item)
+                R1_barcodes[item] = i #
             if j > 0:
                 barcodes_matrix[j - 1].append(item)
     for i, line in enumerate(barcodes_matrix):
@@ -241,7 +242,7 @@ def exact_matches(line1, barcodes):
     '''
     write to file only barcodes with 100 percent match in first pass
     '''
-    for file_prefix, x in enumerate(barcodes):
+    for x, file_prefix in barcodes.items():
         if line1.startswith(x): 
             output_prefix = file_prefix + 1
             z = len(x)
@@ -257,7 +258,7 @@ def mismatches(line1, barcodes, mismatch):
     if mismatch > 0 write to file barcodes with leniency
     '''
     z, multi, output_prefix = 0, 0, 0
-    for file_prefix, x in enumerate(barcodes):
+    for x, file_prefix in barcodes.items():
         hamm = 0
         for j in range(len(x)):
             if x[j] != line1[j]:
