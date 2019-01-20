@@ -201,7 +201,7 @@ def anemone_multiproc():
     '''
     project_dir_current = project_dir + '/demulti'
     os.mkdir(project_dir_current)
-    comp_part = partial(anemone_pipeline, input1_list, input2_list, paired, mismatch, barcodes_dict, project_dir_current)
+    comp_part = partial(anemone_pipeline, input1_list, input2_list, mismatch, barcodes_dict, project_dir_current)
     pool = Pool(threads)
     pool.map(comp_part, input1_list)
     pool.close()
@@ -236,6 +236,7 @@ if __name__ == '__main__':
         # pool.close()
 
 
-    # shutil.rmtree(project_dir + '/demulti')
+    shutil.rmtree(project_dir + '/demulti')
+    print('\n composer is removing the dir, FYI \n')
     # shutil.rmtree(project_dir + '/trim')
     # shutil.rmtree(project_dir + '/overhang')
