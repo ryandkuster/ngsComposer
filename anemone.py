@@ -51,6 +51,7 @@ def anemone_init(input1, input2, output1, output2, mismatch, chunk,
                  barcodes_file, project_dir, paired):
     '''
     extract barcodes from barcodes_file and detect dual-indexing
+    call paired-end or single-end anemone
     '''
     barcodes_matrix, R1_barcodes, R2_barcodes, dual_index = barcode_reader(barcodes_file)
     row_len = len(R1_barcodes) + 1
@@ -83,6 +84,8 @@ def dual_indexer(project_dir, outfile1_list, outfile2_list):
     for i, filename in enumerate(outfile2_list[1:]):
         input1 = filename.name
         output1 = os.path.basename(input1)
+        print(input1)
+        print(output1)
         #TODO create binned barcodes list and write to sep folders per input
     # output1 = 
     # output2 = 
