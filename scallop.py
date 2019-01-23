@@ -17,12 +17,16 @@ def scallop(input1, front_trim, back_trim, project_dir, output1):
     '''
     composer entry point to scallop
     '''
+    if back_trim == 0:
+        back_trim = None
+    else:
+        back_trim = - back_trim
     with open(input1) as f, \
         open(project_dir + '/' + output1, 'w') as o:
         for i, line in enumerate(f):
             i += 1
             if i%2 == 0:
-                line = line[front_trim:-(back_trim+1)] + "\n"
+                line = line.rstrip()[front_trim:back_trim] + "\n"
                 o.write(line)
             else:
                 o.write(line)
