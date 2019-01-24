@@ -205,6 +205,7 @@ def anemone_multiproc():
     pool = Pool(threads)
     pool.map(comp_part, input1_list)
     pool.close()
+    print(project_dir_current)
 
 
 if __name__ == '__main__':
@@ -235,9 +236,9 @@ if __name__ == '__main__':
         # pool.map(hang_part, inputs_list)
         # pool.close()
 
-
-    # shutil.rmtree(project_dir + '/demulti')
-    # print('\n composer is removing the dir, FYI \n')
+    shutil.rmtree(project_dir + '/trim')
+    shutil.rmtree(project_dir + '/demulti')
+    print('\n composer is removing the dir, FYI \n')
     
     # shutil.rmtree(project_dir + '/trim')
     # shutil.rmtree(project_dir + '/overhang')

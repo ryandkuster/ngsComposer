@@ -1,6 +1,6 @@
 import sys
 import os
-
+import shutil
 
 def anemone_main():
     '''
@@ -69,7 +69,7 @@ def anemone_init(
             input1, input2, output1, output2, outfile1_list,
             outfile2_list, mismatch, 3000000, R1_barcodes, project_dir, True)
         if dual_index == True:
-            dual_indexer(
+            outfile1_dict, outfile2_dict = dual_indexer(
                 barcodes_matrix, R2_barcodes, project_dir,
                 outfile1_list, outfile2_list, mismatch)
         elif dual_index == False:
@@ -79,6 +79,7 @@ def anemone_init(
         anemone_single(
             input1, output1, outfile1_list, mismatch,
             chunk, R1_barcodes, project_dir, True)
+    concatenate_files(project_dir, outfile1_dict, outfile2_dict)
 
 
 def barcode_reader(barcodes_file):
@@ -112,8 +113,8 @@ def barcode_reader(barcodes_file):
 def dual_indexer(
         barcodes_matrix, R2_barcodes, project_dir,
         outfile1_list, outfile2_list, mismatch):
-    outfile1_master = []
-    outfile2_master = []
+    outfile1_master, outfile2_master = [], []
+    outfile1_dict, outfile2_dict = {}, {}
     for file1, file2 in zip(outfile1_list[1:], outfile2_list[1:]):
         input2 = file1.name
         input1 = file2.name # the outfile2 results become input1...
@@ -124,8 +125,8 @@ def dual_indexer(
         for i, item in enumerate(R2_barcodes):
             outfile1_final_list.append(open(project_dir + '/' + str(i) + '.' + output1, 'w'))
             outfile2_final_list.append(open(project_dir + '/' + str(i) + '.' + output2, 'w'))
-            outfile1_master.append(open(project_dir + '/' + str(i) + '.' + output1, 'w'))
-            outfile2_master.append(open(project_dir + '/' + str(i) + '.' + output2, 'w'))
+            outfile1_master.append(project_dir + '/' + str(i) + '.' + output1)
+            outfile2_master.append(project_dir + '/' + str(i) + '.' + output2)
         anemone(
             input1, input2, output1, output2, outfile1_final_list,
             outfile2_final_list, mismatch, 3000000, R2_barcodes, project_dir,
@@ -133,42 +134,38 @@ def dual_indexer(
         os.remove(input1)
         os.remove(input2)
         
-    for file1, file2 in zip(outfile2_master, outfile1_master):
-        for i, element in enumerate(os.path.basename(file1.name).split('.')):
-            if i == 0:
+    for i, (file1, file2) in enumerate(zip(outfile2_master, outfile1_master)):
+        for j, element in enumerate(os.path.basename(file1).split('.')):
+            if j == 0:
                 x = element
-            if i == 1:
+            if j == 1:
                 y = element
-            if i > 1:
-                print(element)
-        print(x, y)
-        print(barcodes_matrix[int(x)][int(y)])
+        sample_id = barcodes_matrix[int(x)][int(y)]
+        os.rename(file1, project_dir + '/' + sample_id + '.' + os.path.basename(file1))
+        os.rename(file2, project_dir + '/' + sample_id + '.' + os.path.basename(file2))
+        outfile1_master[i] = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
+        outfile2_master[i] = project_dir + '/' + sample_id + '.' + os.path.basename(file2)
+        if sample_id in outfile1_dict:
+            outfile1_dict[sample_id].append(file1)
+            outfile2_dict[sample_id].append(file2)
+        else:
+            outfile1_dict[sample_id] = [file1]
+            outfile2_dict[sample_id] = [file2]     
+    return outfile1_dict, outfile2_dict
 
-#
-# KEEP THIS FUNCTION IN CASE BINNING BY SAMPLE ID BECOMES RELEVANT
-#
-# def dual_indexer(barcodes_matrix, R1_barcodes, R2_barcodes, project_dir, infile1_list, infile2_list):
-    # '''
-    # handles each R2 output from first round of demultiplexing as new input
-    # creates new subdir and avoids sample id redundancies
-    # '''
-    # print('project dir is ' + project_dir)
-    # for i, filename in enumerate(infile2_list[1:]):
-        # #TODO account for input2...
-        # input1 = filename.name
-        # final_dir = project_dir + '/' + os.path.basename(input1)
-        # print(final_dir)
-        # pre_output, counter = [], 0
-        # for index, key in enumerate(R2_barcodes):
-            # if barcodes_matrix[index][i] not in pre_output:
-                # pre_output.append(barcodes_matrix[index][i])
-                # counter += 1
-            # R2_barcodes[key] = counter
-        # print(R2_barcodes)
-        # print(pre_output)
-        # #TODO create binned barcodes list and write to sep folders per input
-        # for j in pre_output:
-            # pass
+
+def concatenate_files(project_dir, outfile1_dict, outfile2_dict):
+    '''
+    combine files with identical sample ids
+    '''
+    for sample_id, file_lists in outfile1_dict.items():
+        # files = ' '.join(files)
+        # print(files)
+        # print(sample_id)
+        for file_id in file_lists:
+            # print(file)
+            shutil.copyfileobj(file_id, project_dir + '/' + sample_id, 100000000)
+        
 
 
 def anemone(
