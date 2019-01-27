@@ -1,5 +1,5 @@
 # provide the full path to your fastq files (only place full path is used)
-project_dir = '/media/sf_E_DRIVE/Analysis/Testing/Project1'
+project_dir = '/home/ryan/Testing/project2'
 
 # if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True

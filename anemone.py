@@ -141,16 +141,18 @@ def dual_indexer(
             if j == 1:
                 y = element
         sample_id = barcodes_matrix[int(x)][int(y)]
-        os.rename(file1, project_dir + '/' + sample_id + '.' + os.path.basename(file1))
-        os.rename(file2, project_dir + '/' + sample_id + '.' + os.path.basename(file2))
-        outfile1_master[i] = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
-        outfile2_master[i] = project_dir + '/' + sample_id + '.' + os.path.basename(file2)
+        rename1 = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
+        rename2 = project_dir + '/' + sample_id + '.' + os.path.basename(file2)
+        os.rename(file1, rename1)
+        os.rename(file2, rename2)
+        outfile1_master[i] = rename1
+        outfile2_master[i] = rename2
         if sample_id in outfile1_dict:
-            outfile1_dict[sample_id].append(file1)
-            outfile2_dict[sample_id].append(file2)
+            outfile1_dict[sample_id].append(rename1)
+            outfile2_dict[sample_id].append(rename2)
         else:
-            outfile1_dict[sample_id] = [file1]
-            outfile2_dict[sample_id] = [file2]     
+            outfile1_dict[sample_id] = [rename1]
+            outfile2_dict[sample_id] = [rename2]     
     return outfile1_dict, outfile2_dict
 
 
@@ -158,14 +160,20 @@ def concatenate_files(project_dir, outfile1_dict, outfile2_dict):
     '''
     combine files with identical sample ids
     '''
-    for sample_id, file_lists in outfile1_dict.items():
-        # files = ' '.join(files)
-        # print(files)
-        # print(sample_id)
-        for file_id in file_lists:
-            # print(file)
-            shutil.copyfileobj(file_id, project_dir + '/' + sample_id, 100000000)
-        
+    #TODO compare to os.system(cat file1 file2 > outfile)
+    for sample_id in outfile1_dict.keys():
+        with open(project_dir + '/' + sample_id + '.forward.fastq', 'w') as o1:
+            for i in outfile1_dict[sample_id]:
+                with open (i) as obj1:
+                    shutil.copyfileobj(obj1, o1)
+                os.remove(i)
+                    
+    for sample_id in outfile2_dict.keys():
+        with open(project_dir + '/' + sample_id + '.reverse.fastq', 'w') as o2:
+            for i in outfile2_dict[sample_id]:
+                with open (i) as obj2:
+                    shutil.copyfileobj(obj2, o2)
+                os.remove(i)
 
 
 def anemone(

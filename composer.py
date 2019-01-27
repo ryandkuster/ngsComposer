@@ -237,7 +237,7 @@ if __name__ == '__main__':
         # pool.close()
 
     shutil.rmtree(project_dir + '/trim')
-    shutil.rmtree(project_dir + '/demulti')
+    # shutil.rmtree(project_dir + '/demulti')
     print('\n composer is removing the dir, FYI \n')
     
     # shutil.rmtree(project_dir + '/trim')
