@@ -73,12 +73,42 @@ def anemone_init(
                 barcodes_matrix, R2_barcodes, project_dir,
                 outfile1_list, outfile2_list, mismatch)
         elif dual_index == False:
-            for i, filename in enumerate(outfile1_list[1:]):
-                os.rename(filename.name, project_dir + '/' + barcodes_matrix[0][i])                
+            outfile1_dict, outfile2_dict = {}, {}
+            for file1, file2 in zip(outfile1_list[1:], outfile2_list[1:]):
+                file1 = file1.name
+                file2 = file2.name
+                for j, element in enumerate(os.path.basename(file1).split('.')):
+                    if j == 0:
+                        x = element
+                sample_id = barcodes_matrix[0][int(x)]
+                rename1 = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
+                rename2 = project_dir + '/' + sample_id + '.' + os.path.basename(file2)
+                os.rename(file1, rename1)
+                os.rename(file2, rename2)
+                if sample_id in outfile1_dict:
+                    outfile1_dict[sample_id].append(rename1)
+                    outfile2_dict[sample_id].append(rename2)
+                else:
+                    outfile1_dict[sample_id] = [rename1]
+                    outfile2_dict[sample_id] = [rename2]
     elif input2 == False:
+        outfile1_dict, outfile2_dict = {}, None
+        #TODO make output1_dict for single ends
         anemone_single(
             input1, output1, outfile1_list, mismatch,
             chunk, R1_barcodes, project_dir, True)
+        for file1 in outfile1_list[1:]:
+                        file1 = file1.name
+                        for j, element in enumerate(os.path.basename(file1).split('.')):
+                            if j == 0:
+                                x = element
+                        sample_id = barcodes_matrix[0][int(x)]
+                        rename1 = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
+                        os.rename(file1, rename1)
+                        if sample_id in outfile1_dict:
+                            outfile1_dict[sample_id].append(rename1)
+                        else:
+                            outfile1_dict[sample_id] = [rename1]
     concatenate_files(project_dir, outfile1_dict, outfile2_dict)
 
 
@@ -113,6 +143,11 @@ def barcode_reader(barcodes_file):
 def dual_indexer(
         barcodes_matrix, R2_barcodes, project_dir,
         outfile1_list, outfile2_list, mismatch):
+    '''
+    create outfile1/2_final_lists to direct output for final iteration
+    create outfile1/2_masters to keep track of ALL output files in directory
+    create outfile1/2_dicts finds common sample ids associated with outputs
+    '''
     outfile1_master, outfile2_master = [], []
     outfile1_dict, outfile2_dict = {}, {}
     for file1, file2 in zip(outfile1_list[1:], outfile2_list[1:]):
@@ -160,20 +195,21 @@ def concatenate_files(project_dir, outfile1_dict, outfile2_dict):
     '''
     combine files with identical sample ids
     '''
-    #TODO compare to os.system(cat file1 file2 > outfile)
     for sample_id in outfile1_dict.keys():
         with open(project_dir + '/' + sample_id + '.forward.fastq', 'w') as o1:
             for i in outfile1_dict[sample_id]:
                 with open (i) as obj1:
                     shutil.copyfileobj(obj1, o1)
                 os.remove(i)
-                    
-    for sample_id in outfile2_dict.keys():
-        with open(project_dir + '/' + sample_id + '.reverse.fastq', 'w') as o2:
-            for i in outfile2_dict[sample_id]:
-                with open (i) as obj2:
-                    shutil.copyfileobj(obj2, o2)
-                os.remove(i)
+    try:
+        for sample_id in outfile2_dict.keys():
+            with open(project_dir + '/' + sample_id + '.reverse.fastq', 'w') as o2:
+                for i in outfile2_dict[sample_id]:
+                    with open (i) as obj2:
+                        shutil.copyfileobj(obj2, o2)
+                    os.remove(i)
+    except AttributeError:
+        pass        
 
 
 def anemone(
