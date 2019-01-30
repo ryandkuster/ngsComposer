@@ -69,22 +69,31 @@ def anemone_init(
             input1, input2, output1, output2, outfile1_list,
             outfile2_list, mismatch, 3000000, R1_barcodes, project_dir, True)
         if dual_index == True:
+            outfile1_master = [project_dir + '/unknown.' + os.path.basename(input2)]
+            outfile2_master = [project_dir + '/unknown.' + os.path.basename(input1)]
             outfile1_dict, outfile2_dict = dual_indexer(
                 barcodes_matrix, R2_barcodes, project_dir,
-                outfile1_list, outfile2_list, mismatch)
+                outfile1_list, outfile2_list, mismatch,
+                outfile1_master, outfile2_master)
         elif dual_index == False:
+        #TODO make output1_dict function
             outfile1_dict, outfile2_dict = {}, {}
-            for file1, file2 in zip(outfile1_list[1:], outfile2_list[1:]):
+            for file1, file2 in zip(outfile1_list, outfile2_list):
                 file1 = file1.name
                 file2 = file2.name
                 for j, element in enumerate(os.path.basename(file1).split('.')):
                     if j == 0:
                         x = element
-                sample_id = barcodes_matrix[0][int(x)]
-                rename1 = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
-                rename2 = project_dir + '/' + sample_id + '.' + os.path.basename(file2)
-                os.rename(file1, rename1)
-                os.rename(file2, rename2)
+                if x == 'unknown':
+                    sample_id = 'unknown'
+                    rename1 = file1
+                    rename2 = file2
+                else:
+                    sample_id = barcodes_matrix[0][int(x)]
+                    rename1 = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
+                    rename2 = project_dir + '/' + sample_id + '.' + os.path.basename(file2)
+                    os.rename(file1, rename1)
+                    os.rename(file2, rename2)
                 if sample_id in outfile1_dict:
                     outfile1_dict[sample_id].append(rename1)
                     outfile2_dict[sample_id].append(rename2)
@@ -93,22 +102,27 @@ def anemone_init(
                     outfile2_dict[sample_id] = [rename2]
     elif input2 == False:
         outfile1_dict, outfile2_dict = {}, None
-        #TODO make output1_dict for single ends
+        #TODO make output1_dict function
         anemone_single(
             input1, output1, outfile1_list, mismatch,
             chunk, R1_barcodes, project_dir, True)
         for file1 in outfile1_list[1:]:
-                        file1 = file1.name
-                        for j, element in enumerate(os.path.basename(file1).split('.')):
-                            if j == 0:
-                                x = element
-                        sample_id = barcodes_matrix[0][int(x)]
-                        rename1 = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
-                        os.rename(file1, rename1)
-                        if sample_id in outfile1_dict:
-                            outfile1_dict[sample_id].append(rename1)
-                        else:
-                            outfile1_dict[sample_id] = [rename1]
+            file1 = file1.name
+            for j, element in enumerate(os.path.basename(file1).split('.')):
+                if j == 0:
+                    x = element
+            if x == 'unknown':
+                sample_id = 'unknown'
+                rename1 = file1
+                rename2 = file2
+            else:
+                sample_id = barcodes_matrix[0][int(x)]
+                rename1 = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
+                os.rename(file1, rename1)
+            if sample_id in outfile1_dict:
+                outfile1_dict[sample_id].append(rename1)
+            else:
+                outfile1_dict[sample_id] = [rename1]
     concatenate_files(project_dir, outfile1_dict, outfile2_dict)
 
 
@@ -142,13 +156,13 @@ def barcode_reader(barcodes_file):
 
 def dual_indexer(
         barcodes_matrix, R2_barcodes, project_dir,
-        outfile1_list, outfile2_list, mismatch):
+        outfile1_list, outfile2_list, mismatch,
+        outfile1_master, outfile2_master):
     '''
     create outfile1/2_final_lists to direct output for final iteration
     create outfile1/2_masters to keep track of ALL output files in directory
     create outfile1/2_dicts finds common sample ids associated with outputs
     '''
-    outfile1_master, outfile2_master = [], []
     outfile1_dict, outfile2_dict = {}, {}
     for file1, file2 in zip(outfile1_list[1:], outfile2_list[1:]):
         input2 = file1.name
@@ -157,6 +171,8 @@ def dual_indexer(
         output2 = os.path.basename(input2)
         outfile1_final_list = [open(project_dir + '/temp_unknown.' + output1, 'w')]
         outfile2_final_list = [open(project_dir + '/temp_unknown.' + output2, 'w')]
+        outfile1_master.append(project_dir + '/unknown.' + output1)
+        outfile2_master.append(project_dir + '/unknown.' + output2)
         for i, item in enumerate(R2_barcodes):
             outfile1_final_list.append(open(project_dir + '/' + str(i) + '.' + output1, 'w'))
             outfile2_final_list.append(open(project_dir + '/' + str(i) + '.' + output2, 'w'))
@@ -168,26 +184,31 @@ def dual_indexer(
             True)
         os.remove(input1)
         os.remove(input2)
-        
+
     for i, (file1, file2) in enumerate(zip(outfile2_master, outfile1_master)):
         for j, element in enumerate(os.path.basename(file1).split('.')):
             if j == 0:
                 x = element
             if j == 1:
                 y = element
-        sample_id = barcodes_matrix[int(x)][int(y)]
-        rename1 = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
-        rename2 = project_dir + '/' + sample_id + '.' + os.path.basename(file2)
-        os.rename(file1, rename1)
-        os.rename(file2, rename2)
-        outfile1_master[i] = rename1
-        outfile2_master[i] = rename2
+        if x == 'unknown':
+            sample_id = 'unknown'
+            rename1 = file1
+            rename2 = file2
+        else:
+            sample_id = barcodes_matrix[int(x)][int(y)]
+            rename1 = project_dir + '/' + sample_id + '.' + os.path.basename(file1)
+            rename2 = project_dir + '/' + sample_id + '.' + os.path.basename(file2)
+            os.rename(file1, rename1)
+            os.rename(file2, rename2)
+            outfile1_master[i] = rename1
+            outfile2_master[i] = rename2
         if sample_id in outfile1_dict:
             outfile1_dict[sample_id].append(rename1)
             outfile2_dict[sample_id].append(rename2)
         else:
             outfile1_dict[sample_id] = [rename1]
-            outfile2_dict[sample_id] = [rename2]     
+            outfile2_dict[sample_id] = [rename2]
     return outfile1_dict, outfile2_dict
 
 
@@ -196,20 +217,20 @@ def concatenate_files(project_dir, outfile1_dict, outfile2_dict):
     combine files with identical sample ids
     '''
     for sample_id in outfile1_dict.keys():
-        with open(project_dir + '/' + sample_id + '.forward.fastq', 'w') as o1:
+        with open(project_dir + '/' + sample_id + '.R1.fastq', 'w') as o1:
             for i in outfile1_dict[sample_id]:
                 with open (i) as obj1:
                     shutil.copyfileobj(obj1, o1)
                 os.remove(i)
     try:
         for sample_id in outfile2_dict.keys():
-            with open(project_dir + '/' + sample_id + '.reverse.fastq', 'w') as o2:
+            with open(project_dir + '/' + sample_id + '.R2.fastq', 'w') as o2:
                 for i in outfile2_dict[sample_id]:
                     with open (i) as obj2:
                         shutil.copyfileobj(obj2, o2)
                     os.remove(i)
     except AttributeError:
-        pass        
+        pass
 
 
 def anemone(
