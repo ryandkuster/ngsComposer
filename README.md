@@ -1,4 +1,4 @@
-# composer: a deep QC aventure!
+# COMPOSER: a deep QC aventure!
 
 Base-calling, error-filtering read preprocessing designed by biologists
 
@@ -16,7 +16,7 @@ Base-calling, error-filtering read preprocessing designed by biologists
 Clone or download the Git repository to your desired tool folder
 
 ```bash
-$ git clone git@github.com:ryandkuster/composer.git
+$ git clone https://github.com/ryandkuster/Composer.git
 ```
 
 ## Usage
@@ -31,9 +31,9 @@ Set up your project directory containing the following files:
 
 ***
 
-barcodes_1.txt
+barcodes_1.txt (tab or space delimited)
 ```
-	A	    C	    G	    T
+	A	C	G	T
 A	sample1	sample5	sample6	sample10
 C	sample2	sample5	sample7	sample10
 G	sample3	sample5	sample8	sample10
@@ -51,7 +51,7 @@ index.txt
 
 From command line, run composer with the specified directory of your project
 ```bash
-$ python3 composer.py <path_to_directory> # outputs .gitignore file for java to stdout
+$ python3 composer.py <path_to_directory>
 ```
 
 ## License
