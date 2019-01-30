@@ -23,8 +23,7 @@ def anemone_main():
 
 
 def anemone_pipeline(
-        input1_ls, input2_ls, mismatch,
-        bcs_dict, proj_dir, input1):
+        input1_ls, input2_ls, mismatch, bcs_dict, proj_dir, input1):
     '''
     composer entry point to anemone
     '''
@@ -46,8 +45,7 @@ def anemone_pipeline(
 
 
 def anemone_init(
-        input1, input2, output1, output2, mismatch, chunk,
-        bcs_file, proj_dir):
+        input1, input2, output1, output2, mismatch, chunk, bcs_file, proj_dir):
     '''
     extract bcs from bcs_file and detect dual-indexing
     call paired-end or single-end anemone
@@ -153,9 +151,8 @@ def bc_reader(bcs_file):
 
 
 def dual_indexer(
-        bcs_matrix, R2_bcs, proj_dir,
-        of1_ls, of2_ls, mismatch,
-        of1_master, of2_master):
+        bcs_matrix, R2_bcs, proj_dir, of1_ls, of2_ls, mismatch, of1_master,
+        of2_master):
     '''
     create of1/2_final_lss to direct output for final iteration
     create of1/2_masters to keep track of ALL output files in directory
@@ -232,8 +229,8 @@ def concatenate_files(proj_dir, of1_dict, of2_dict):
 
 
 def anemone(
-        input1, input2, output1, output2, of1_ls,
-        of2_ls, mismatch, chunk, bcs, proj_dir, round_one):
+        input1, input2, output1, output2, of1_ls, of2_ls, mismatch, chunk, bcs,
+        proj_dir, round_one):
     '''
     use active 'input1' file to demultiplex in a number of ways
     '''
@@ -289,8 +286,7 @@ def anemone(
 
 
 def anemone_single(
-        input1, output1, of1_ls, mismatch, chunk,
-        bcs, proj_dir, round_one):
+        input1, output1, of1_ls, mismatch, chunk, bcs, proj_dir, round_one):
     '''
     use active 'input1' file to demultiplex in a number of ways
     '''
@@ -389,8 +385,7 @@ def unload(matrix, ofs):
 
 
 def second_pass(
-        output1, output2, of1_ls, of2_ls, mismatch,
-        chunk, bcs, proj_dir):
+        output1, output2, of1_ls, of2_ls, mismatch, chunk, bcs, proj_dir):
     '''
     after the first round of precision demultiplexing, attempt matches
     of unknown reads

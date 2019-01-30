@@ -1,5 +1,5 @@
 # provide the full path to your fastq files (only place full path is used)
-project_dir = '/home/ryan/Testing/project2'
+proj_dir = '/home/descartes/Testing'
 
 # if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True
@@ -14,13 +14,13 @@ initial_qc = False
 front_trim = 6
 
 # name of  file with barcodes to demultiplex forward reads (use 'False' if not demultiplexing)
-barcodes_index = 'index.txt'
+bcs_index = 'index.txt'
 
 # number of mismatches (hamming distance) allowed in barcodes
 mismatch = 1
 
 # list sequences immediately adjacent to barcodes
-overhang_list = ['TCC','TCT']
+overhang_ls = ['TCC','TCT']
 
 # quality score minimum (Phred value 0-40)
 q_min = 30

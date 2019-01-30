@@ -8,8 +8,8 @@ def rotifer_main():
     '''
     input1 = sys.argv[1] # name of input file (these MUST be identical in length)
     project_dir = os.path.dirname(os.path.abspath(input1))
-    overhang_list = ['TCC','TCT']
-    rotifer(project_dir, overhang_list, input1)
+    overhang_ls = ['TCC','TCT']
+    rotifer(project_dir, overhang_ls, input1)
 
 
 def rotifer_pipeline():
@@ -19,7 +19,7 @@ def rotifer_pipeline():
     pass
 
 
-def rotifer(project_dir, overhang_list, input1):
+def rotifer(project_dir, overhang_ls, input1):
     with open(input1) as s:
         line1 = s.readline()
         line2 = s.readline()
@@ -32,7 +32,7 @@ def rotifer(project_dir, overhang_list, input1):
             y += 1
             if y == 2:
                 test = 0
-                for seq in overhang_list:
+                for seq in overhang_ls:
                     if line.startswith(seq):
                         test = 1
             entry = entry + line

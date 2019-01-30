@@ -9,11 +9,11 @@ def scallop_main():
     front_trim = int(sys.argv[2]) # bases to remove from beginning of sequence
     back_trim = int(sys.argv[3]) # bases to remove from end of sequence
     output1 = int(sys.argv[4]) # name of output file
-    project_dir = os.path.abspath(input1)
-    scallop(input1, front_trim, back_trim, project_dir, output1)
+    proj_dir = os.path.abspath(input1)
+    scallop(input1, front_trim, back_trim, proj_dir, output1)
 
 
-def scallop(input1, front_trim, back_trim, project_dir, output1):
+def scallop(input1, front_trim, back_trim, proj_dir, output1):
     '''
     composer entry point to scallop
     '''
@@ -22,7 +22,7 @@ def scallop(input1, front_trim, back_trim, project_dir, output1):
     else:
         back_trim = - back_trim
     with open(input1) as f, \
-        open(project_dir + '/' + output1, 'w') as o:
+        open(proj_dir + '/' + output1, 'w') as o:
         for i, line in enumerate(f):
             i += 1
             if i%2 == 0:
@@ -32,9 +32,9 @@ def scallop(input1, front_trim, back_trim, project_dir, output1):
                 o.write(line)
 
 
-def scallop_pipeline(front_trim, back_trim, project_dir, input1):
+def scallop_pipeline(front_trim, back_trim, proj_dir, input1):
     output1 = os.path.basename(input1)
-    scallop(input1, front_trim, back_trim, project_dir, output1)
+    scallop(input1, front_trim, back_trim, proj_dir, output1)
 
 
 if __name__ == '__main__':
