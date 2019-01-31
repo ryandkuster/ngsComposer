@@ -186,7 +186,7 @@ def trim_muliproc(proj_dir, threads, front_trim, back_trim, fastq_ls):
     '''
     create user-defined number of subprocesses to trim every file in fastq_ls
     '''
-    proj_dir_current = proj_dir + '/trim'
+    proj_dir_current = proj_dir + '/trimmed'
     os.mkdir(proj_dir_current)
     trim_part = partial(scallop_comp, front_trim, back_trim, proj_dir_current)
     pool = Pool(threads)
@@ -202,19 +202,32 @@ def anemone_multiproc():
     '''
     create user-defined number of subprocesses to demultiplex
     '''
-    proj_dir_current = proj_dir + '/demulti'
+    proj_dir_current = proj_dir + '/demultiplexed'
     os.mkdir(proj_dir_current)
     comp_part = partial(anemone_comp, in1_ls, in2_ls, mismatch, bcs_dict,
                         proj_dir_current)
     pool = Pool(threads)
     pool.map(comp_part, in1_ls)
     pool.close()
-    for folder in os.listdir(proj_dir_current):
-        for file in os.listdir(proj_dir_current + '/' + folder):
-            if file.startswith('unknown.'):
+
+    demulti_dict = {}
+    for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
+        for i in files:
+            if i.startswith('unknown.'):
                 pass
             else:
-                print(file)
+                if i in demulti_dict:
+                    demulti_dict[i].append(os.path.join(root, i))
+                else:
+                    demulti_dict[i] = [os.path.join(root, i)]
+    print(demulti_dict)
+
+    for filename in demulti_dict.keys():
+        with open(proj_dir_current + '/' + filename, 'w') as o1:
+            for i in demulti_dict[filename]:
+                with open(i) as obj1:
+                    shutil.copyfileobj(obj1, o1)
+                os.remove(i)
 
 
 if __name__ == '__main__':
@@ -231,9 +244,11 @@ if __name__ == '__main__':
     if bcs_index:
         anemone_multiproc()
 
-    shutil.rmtree(proj_dir + '/trim')
-    # shutil.rmtree(proj_dir + '/demulti')
-    print('\n composer is removing the trim dir, FYI \n')
+
+    shutil.rmtree(proj_dir + '/trimmed')
+    # shutil.rmtree(proj_dir + '/demultiplexed')
+    print('\n composer is removing the trimmed dir, FYI \n')
+
 
     # if overhang_ls:
         # os.mkdir(proj_dir + '/overhang')

@@ -1,11 +1,11 @@
 # provide the full path to your fastq files (only place full path is used)
-proj_dir = '/home/rkuster/Desktop/demultiplexing/composer_test'
+proj_dir = '/home/descartes/Testing'
 
 # if fastq files should be treated as paired ends, use 'True', else 'False'
-paired = False
+paired = True
 
 # choose number of subprocesses
-threads = 12
+threads = 2
 
 # create initial QC output for reads and pause for user
 initial_qc = False
