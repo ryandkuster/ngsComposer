@@ -32,8 +32,8 @@ def index_reader(bcs_index):
                 if j == 1:
                     value = item
                 if j == 2:
-                    sys.exit("bcs_index should only contain forward reads" + "\n" +
-                            "and their respective bcs key file")
+                    sys.exit("bcs_index should only contain forward reads\n" +
+                             "and their respective bcs key file")
             bcs_dict[key] = proj_dir + '/' + value
     return bcs_dict
 
@@ -42,18 +42,19 @@ def initialize(proj_dir, paired, bcs_dict):
     '''
     check files in proj_dir for completeness
     '''
-    if os.path.exists(proj_dir) == True:
+    if os.path.exists(proj_dir) is True:
         proj_dir = os.path.abspath(proj_dir)
     else:
         sys.exit('project directory not found')
     fastq_ls, gz, pairs_ls = fastq_reader(proj_dir, bcs_dict)
-    input1_ls, input2_ls = input_sort(paired, pairs_ls)
-    return input1_ls, input2_ls, fastq_ls, pairs_ls
+    in1_ls, in2_ls = input_sort(paired, pairs_ls)
+    return in1_ls, in2_ls, fastq_ls, pairs_ls
 
 
 def fastq_reader(proj_dir, bcs_dict):
     '''
-    bypass recognized bc files, open fastqs, test first read structure, create file lists
+    bypass recognized bc files, open fastqs, test first read structure
+    create file lists and test for pairs
     '''
     fastq_ls, gz, pairs_ls = [], [], {}
     for filename in os.listdir(proj_dir):
@@ -63,10 +64,12 @@ def fastq_reader(proj_dir, bcs_dict):
             pass
         else:
             try:
-                fastq_test, pairs_ls = is_fq(proj_dir + '/' + filename, pairs_ls)
+                fastq_test, pairs_ls = is_fq(proj_dir + '/' + filename,
+                                             pairs_ls)
                 gz.append(0)
             except UnicodeDecodeError:
-                fastq_test, pairs_ls = is_gz(proj_dir + '/' + filename, pairs_ls)
+                fastq_test, pairs_ls = is_gz(proj_dir + '/' + filename,
+                                             pairs_ls)
                 gz.append(1)
             if fastq_test is None:
                 raise TypeError
@@ -107,7 +110,7 @@ def is_gz(filename, pairs_ls):
             if i == 5 and line[0] != '@':
                 return
             else:
-                sys.exit("sorry, gzipped functionality is not currently supported")
+                sys.exit("sorry, .gz functionality is not currently supported")
 
 
 def is_paired(filename, line, pairs_ls):
@@ -122,26 +125,26 @@ def is_paired(filename, line, pairs_ls):
         pairs_ls[header].append(filename)
     else:
         pairs_ls[header] = [filename]
-    return pairs_ls  
+    return pairs_ls
 
 
 def input_sort(paired, pairs_ls):
     '''
-    if paired headers present, input1 and input2 lists ordered to keep pairs sequential
+    if headers identical, in1 and in2 lists ordered to keep pairing
     '''
-    input1_ls, input2_ls = [], []
+    in1_ls, in2_ls = [], []
     for values in pairs_ls.values():
-        if paired == True and len(values) == 2:
-            input_paired(values, input1_ls, input2_ls)
-        elif paired == True and len(values) != 2:
-            sys.exit("paired forward and reverse reads don't match expected number" + "\n" +
-                    "check the naming conventions of the bcs_index match bc keyfiles")
-        if paired == False:
-            input_single(values, input1_ls, input2_ls)
-    return input1_ls, input2_ls
+        if paired is True and len(values) == 2:
+            input_paired(values, in1_ls, in2_ls)
+        elif paired is True and len(values) != 2:
+            sys.exit("paired R1 and R2 reads don't match expected number\n"
+                     + "check the naming conventions of the bcs_index")
+        if paired is False:
+            input_single(values, in1_ls, in2_ls)
+    return in1_ls, in2_ls
 
 
-def input_paired(values, input1_ls, input2_ls):
+def input_paired(values, in1_ls, in2_ls):
     '''
     form list if paired is True
     '''
@@ -153,46 +156,46 @@ def input_paired(values, input1_ls, input2_ls):
                     space_pos = i
             end = header[space_pos+1]
             if int(end) == 1:
-                input1_ls.append(filename)
+                in1_ls.append(filename)
             if int(end) == 2:
-                input2_ls.append(filename)
-    return input1_ls, input2_ls
+                in2_ls.append(filename)
+    return in1_ls, in2_ls
 
 
-def input_single(values, input1_ls, input2_ls):
+def input_single(values, in1_ls, in2_ls):
     '''
     form list if paired is False, with user input if paired detection
     '''
     ignore = False
     if len(values) == 1:
         for filename in values:
-            input1_ls.append(filename)
-    elif ignore == True:
+            in1_ls.append(filename)
+    elif ignore is True:
         for filename in values:
-            input1_ls.append(filename)
+            in1_ls.append(filename)
     else:
         print("unexpected paired libraries found")
-        answer = input("continue treating all files as single-end libraries?\n")
-        ignore = True if answer in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
+        ans = input("continue treating files as single-end libraries?\n")
+        ignore = True if ans in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
         for filename in values:
-            input1_ls.append(filename)
-    return input1_ls, input2_ls
+            in1_ls.append(filename)
+    return in1_ls, in2_ls
 
 
 def trim_muliproc(proj_dir, threads, front_trim, back_trim, fastq_ls):
     '''
     create user-defined number of subprocesses to trim every file in fastq_ls
     '''
-    proj_dir_current = proj_dir + '/trim'    
+    proj_dir_current = proj_dir + '/trim'
     os.mkdir(proj_dir_current)
-    trim_part = partial(scallop_pipeline, front_trim, back_trim, proj_dir_current)
+    trim_part = partial(scallop_comp, front_trim, back_trim, proj_dir_current)
     pool = Pool(threads)
     pool.map(trim_part, fastq_ls)
     pool.close()
-    for i, filename in enumerate(input1_ls):
-        input1_ls[i] = proj_dir_current + '/' + os.path.basename(filename)
-    for i, filename in enumerate(input2_ls):
-        input2_ls[i] = proj_dir_current + '/' + os.path.basename(filename) 
+    for i, filename in enumerate(in1_ls):
+        in1_ls[i] = proj_dir_current + '/' + os.path.basename(filename)
+    for i, filename in enumerate(in2_ls):
+        in2_ls[i] = proj_dir_current + '/' + os.path.basename(filename)
 
 
 def anemone_multiproc():
@@ -201,9 +204,10 @@ def anemone_multiproc():
     '''
     proj_dir_current = proj_dir + '/demulti'
     os.mkdir(proj_dir_current)
-    comp_part = partial(anemone_pipeline, input1_ls, input2_ls, mismatch, bcs_dict, proj_dir_current)
+    comp_part = partial(anemone_comp, in1_ls, in2_ls, mismatch, bcs_dict,
+                        proj_dir_current)
     pool = Pool(threads)
-    pool.map(comp_part, input1_ls)
+    pool.map(comp_part, in1_ls)
     pool.close()
     for folder in os.listdir(proj_dir_current):
         for file in os.listdir(proj_dir_current + '/' + folder):
@@ -220,8 +224,8 @@ if __name__ == '__main__':
     else:
         bcs_dict = {}
         bcs_index = ''
-    input1_ls, input2_ls, fastq_ls, pairs_ls = initialize(proj_dir, paired, bcs_dict)
-    #TODO add qc step here and let users know where to find its output
+    in1_ls, in2_ls, fastq_ls, pairs_ls = initialize(proj_dir, paired, bcs_dict)
+    # TODO add qc step here and let users know where to find its output
     if front_trim > 0:
         trim_muliproc(proj_dir, threads, front_trim, 0, fastq_ls)
     if bcs_index:
