@@ -55,13 +55,13 @@ def anemone_init(
     of1_ls = [open(proj_dir + '/temp_unknown.' + out1, 'w')]
     try:
         of2_ls = [open(proj_dir + '/temp_unknown.' + out2, 'w')]
-    except:
+    except TypeError:
         of2_ls = []
     for i, item in enumerate(R1_bcs):
         of1_ls.append(open(proj_dir + '/' + str(i) + '.' + out1, 'w'))
         try:
             of2_ls.append(open(proj_dir + '/' + str(i) + '.' + out2, 'w'))
-        except:
+        except TypeError:
             pass
     if in2:
         anemone(

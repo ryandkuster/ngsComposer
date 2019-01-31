@@ -1,11 +1,11 @@
 # provide the full path to your fastq files (only place full path is used)
-proj_dir = '/home/descartes/Testing'
+proj_dir = '/home/rkuster/Desktop/demultiplexing/composer_test'
 
 # if fastq files should be treated as paired ends, use 'True', else 'False'
-paired = True
+paired = False
 
 # choose number of subprocesses
-threads = 2
+threads = 12
 
 # create initial QC output for reads and pause for user
 initial_qc = False
@@ -21,6 +21,9 @@ mismatch = 1
 
 # list sequences immediately adjacent to barcodes
 overhang_ls = ['TCC','TCT']
+
+# additional, non-genomic base not found in barcode sequence
+non_genomic = 'T'
 
 # quality score minimum (Phred value 0-40)
 q_min = 30
