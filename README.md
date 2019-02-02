@@ -1,5 +1,4 @@
-https://imgur.com/Nm1Goq1
-<img src="/images/logo/re-frame_128w.png?raw=true">
+<img src="https://imgur.com/Nm1Goq1">
 
 # COMPOSER: a deep QC aventure!
 
