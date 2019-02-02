@@ -1,4 +1,4 @@
-<img src="[Imgur](https://i.imgur.com/Nm1Goq1.png)">
+<a href="https://imgur.com/Nm1Goq1"><img src="https://i.imgur.com/Nm1Goq1.png" title="source: imgur.com" /></a>
 
 # COMPOSER: a deep QC aventure!
 
