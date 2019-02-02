@@ -1,3 +1,5 @@
+https://imgur.com/Nm1Goq1
+
 # COMPOSER: a deep QC aventure!
 
 Base-calling, error-filtering read preprocessing designed by biologists
