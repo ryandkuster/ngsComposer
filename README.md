@@ -12,7 +12,7 @@ Base-calling, error-filtering read preprocessing designed by biologists
 - Trims buffer sequences and quality filters on a read-by-read basis
 - Accepts project directory of multiple libraries
 - Designed by biologists (please don't run away!)
-<a href="https://imgur.com/WJ4AeA5"><img src="https://i.imgur.com/WJ4AeA5.png" title="source: imgur.com" /></a>
+
 ## Installation
 
 Clone or download the Git repository to your desired tool folder
@@ -20,7 +20,7 @@ Clone or download the Git repository to your desired tool folder
 ```bash
 $ git clone https://github.com/ryandkuster/Composer.git
 ```
-<a href="https://imgur.com/WJ4AeA5"><img src="https://i.imgur.com/WJ4AeA5.png" title="source: imgur.com" /></a>
+
 ## Usage
 
 ### Basic usage
@@ -55,7 +55,7 @@ From command line, run composer with the specified directory of your project
 ```bash
 $ python3 composer.py <path_to_directory>
 ```
-<a href="https://imgur.com/WJ4AeA5"><img src="https://i.imgur.com/WJ4AeA5.png" title="source: imgur.com" /></a>
+
 ## License
 
 MIT
