@@ -1,4 +1,4 @@
-<a href="https://imgur.com/v88ofuO"><img src="https://i.imgur.com/v88ofuO.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/gYTN9Hv"><img src="https://i.imgur.com/gYTN9Hv.png" title="source: imgur.com" /></a>
 
 # COMPOSER: a deep QC aventure!
 
@@ -12,7 +12,7 @@ Base-calling, error-filtering read preprocessing designed by biologists
 - Trims buffer sequences and quality filters on a read-by-read basis
 - Accepts project directory of multiple libraries
 - Designed by biologists (please don't run away!)
-
+<a href="https://imgur.com/WJ4AeA5"><img src="https://i.imgur.com/WJ4AeA5.png" title="source: imgur.com" /></a>
 ## Installation
 
 Clone or download the Git repository to your desired tool folder
@@ -20,7 +20,7 @@ Clone or download the Git repository to your desired tool folder
 ```bash
 $ git clone https://github.com/ryandkuster/Composer.git
 ```
-
+<a href="https://imgur.com/WJ4AeA5"><img src="https://i.imgur.com/WJ4AeA5.png" title="source: imgur.com" /></a>
 ## Usage
 
 ### Basic usage
@@ -55,9 +55,9 @@ From command line, run composer with the specified directory of your project
 ```bash
 $ python3 composer.py <path_to_directory>
 ```
-
+<a href="https://imgur.com/WJ4AeA5"><img src="https://i.imgur.com/WJ4AeA5.png" title="source: imgur.com" /></a>
 ## License
 
 MIT
 
-<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/uQ0kCRk"><img src="https://i.imgur.com/uQ0kCRk.png" title="source: imgur.com" /></a>
