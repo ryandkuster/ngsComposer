@@ -1,4 +1,4 @@
-<a href="https://imgur.com/p2WMHcw"><img src="https://i.imgur.com/p2WMHcw.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/v88ofuO"><img src="https://i.imgur.com/v88ofuO.png" title="source: imgur.com" /></a>
 
 # COMPOSER: a deep QC aventure!
 
