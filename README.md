@@ -23,6 +23,8 @@ Clone or download the Git repository to your desired tool folder
 $ git clone https://github.com/ryandkuster/Composer.git
 ```
 
+<a href="https://imgur.com/4PCWSwp"><img src="https://i.imgur.com/4PCWSwp.png" title="source: imgur.com" /></a>
+
 ## Usage
 
 ### Basic usage
