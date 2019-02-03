@@ -13,7 +13,6 @@ Base-calling, error-filtering read preprocessing designed by biologists
 - Accepts project directory of multiple libraries
 - Designed by biologists (please don't run away!)
 
-<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
 ## Installation
 
 Clone or download the Git repository to your desired tool folder
@@ -21,8 +20,6 @@ Clone or download the Git repository to your desired tool folder
 ```bash
 $ git clone https://github.com/ryandkuster/Composer.git
 ```
-
-<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
 
 ## Usage
 
@@ -62,3 +59,7 @@ $ python3 composer.py <path_to_directory>
 ## License
 
 MIT
+
+<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
