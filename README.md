@@ -61,5 +61,3 @@ $ python3 composer.py <path_to_directory>
 MIT
 
 <a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
-<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
-<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
