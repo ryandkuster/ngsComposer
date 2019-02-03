@@ -13,8 +13,7 @@ Base-calling, error-filtering read preprocessing designed by biologists
 - Accepts project directory of multiple libraries
 - Designed by biologists (please don't run away!)
 
-<a href="https://imgur.com/zajIpq4"><img src="https://i.imgur.com/zajIpq4.png" title="source: imgur.com" /></a>
-
+<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
 ## Installation
 
 Clone or download the Git repository to your desired tool folder
@@ -23,7 +22,7 @@ Clone or download the Git repository to your desired tool folder
 $ git clone https://github.com/ryandkuster/Composer.git
 ```
 
-<a href="https://imgur.com/4PCWSwp"><img src="https://i.imgur.com/4PCWSwp.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/rTPylfm"><img src="https://i.imgur.com/rTPylfm.png" title="source: imgur.com" /></a>
 
 ## Usage
 
