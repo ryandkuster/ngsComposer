@@ -18,7 +18,7 @@ Base-calling, error-filtering read preprocessing designed by biologists
 Clone or download the Git repository to your desired tool folder
 
 ```bash
-$ git clone https://github.com/ryandkuster/Composer.git
+$ git clone https://github.com/ryandkuster/composer.git
 ```
 
 ## Usage
