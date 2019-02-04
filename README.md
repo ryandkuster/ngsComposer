@@ -58,6 +58,6 @@ $ python3 composer.py <path_to_directory>
 
 ## License
 
-MIT
+Apache License Version 2.0
 
 <a href="https://imgur.com/uQ0kCRk"><img src="https://i.imgur.com/uQ0kCRk.png" title="source: imgur.com" /></a>
