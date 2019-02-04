@@ -1,6 +1,6 @@
 <a href="https://imgur.com/gYTN9Hv"><img src="https://i.imgur.com/gYTN9Hv.png" title="source: imgur.com" /></a>
 
-# COMPOSER: a deep QC aventure!
+# Composer: a deep QC aventure!
 
 Base-calling, error-filtering read preprocessing designed by biologists
 
