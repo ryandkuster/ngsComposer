@@ -58,6 +58,6 @@ $ python3 composer.py <path_to_directory>
 
 ## License
 
-Apache License Version 2.0
+<a href="https://github.com/ryandkuster/Pipeline/blob/master/LICENSE">Apache License Version 2.0</a>
 
 <a href="https://imgur.com/uQ0kCRk"><img src="https://i.imgur.com/uQ0kCRk.png" title="source: imgur.com" /></a>
