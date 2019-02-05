@@ -2,14 +2,14 @@ import sys
 import os
 import gzip
 import shutil
-
-
 from multiprocessing import Pool
 from functools import partial
+
+
 from conf import *
-from scallop import *
-from anemone import *
-from rotifer import *
+from scallop import scallop_comp
+from anemone import anemone_comp
+from rotifer import rotifer_comp
 
 
 # composer is:
@@ -32,9 +32,11 @@ def index_reader(bcs_index):
                 if j == 1:
                     value = item
                 if j == 2:
-                    sys.exit("bcs_index should only contain forward reads\n" +
-                             "and their respective bcs key file")
+                    sys.exit("bcs_index should only contain forward read(s)\n" +
+                             "and their respective barcodes key file(s) tab\n" +
+                             "in tab-delimited format")
             bcs_dict[key] = proj_dir + '/' + value
+    print(bcs_dict)
     return bcs_dict
 
 
@@ -46,9 +48,7 @@ def initialize(proj_dir, paired, bcs_dict):
         proj_dir = os.path.abspath(proj_dir)
     else:
         sys.exit('project directory not found')
-    fastq_ls, gz, pairs_ls = fastq_reader(proj_dir, bcs_dict)
-    in1_ls, in2_ls = input_sort(paired, pairs_ls)
-    return in1_ls, in2_ls, fastq_ls, pairs_ls
+    return proj_dir
 
 
 def fastq_reader(proj_dir, bcs_dict):
@@ -237,7 +237,9 @@ if __name__ == '__main__':
     else:
         bcs_dict = {}
         bcs_index = ''
-    in1_ls, in2_ls, fastq_ls, pairs_ls = initialize(proj_dir, paired, bcs_dict)
+    proj_dir = initialize(proj_dir, paired, bcs_dict)
+    fastq_ls, gz, pairs_ls = fastq_reader(proj_dir, bcs_dict)
+    in1_ls, in2_ls = input_sort(paired, pairs_ls)
     # TODO add qc step here and let users know where to find its output
     if front_trim > 0:
         trim_muliproc(proj_dir, threads, front_trim, 0, fastq_ls)
@@ -246,8 +248,8 @@ if __name__ == '__main__':
 
 
     shutil.rmtree(proj_dir + '/trimmed')
-    # shutil.rmtree(proj_dir + '/demultiplexed')
-    print('\n composer is removing the trimmed dir, FYI \n')
+    shutil.rmtree(proj_dir + '/demultiplexed')
+    print('\n composer is removing directories, FYI \n')
 
 
     # if overhang_ls:
