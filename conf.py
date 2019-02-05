@@ -1,5 +1,5 @@
 # provide the full path to your fastq files (only place full path is used)
-proj_dir = '/home/descartes/Testing'
+proj_dir = '/home/descartes/GitHub/composer/examples/project2'
 
 # if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True

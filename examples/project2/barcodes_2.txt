@@ -1,0 +1,5 @@
+	A	C	G	T
+A	sample11	sample15	sample16	sample20
+C	sample12	sample15	sample17	sample20
+G	sample13	sample15	sample18	sample20
+T	sample14	sample15	sample19	sample20
