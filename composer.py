@@ -19,6 +19,17 @@ from rotifer import rotifer_comp
 # rotifer - remove sequence artifacts from library prep
 
 
+def initialize(proj_dir):
+    '''
+    check files in proj_dir for completeness
+    '''
+    if os.path.exists(proj_dir) is True:
+        proj_dir = os.path.abspath(proj_dir)
+    else:
+        sys.exit('project directory not found')
+    return proj_dir
+
+
 def index_reader(bcs_index):
     '''
     open bcs_index and create dictionary of associated bc keyfiles
@@ -36,19 +47,7 @@ def index_reader(bcs_index):
                              "and their respective barcodes key file(s) tab\n" +
                              "in tab-delimited format")
             bcs_dict[key] = proj_dir + '/' + value
-    print(bcs_dict)
     return bcs_dict
-
-
-def initialize(proj_dir, paired, bcs_dict):
-    '''
-    check files in proj_dir for completeness
-    '''
-    if os.path.exists(proj_dir) is True:
-        proj_dir = os.path.abspath(proj_dir)
-    else:
-        sys.exit('project directory not found')
-    return proj_dir
 
 
 def fastq_reader(proj_dir, bcs_dict):
@@ -56,7 +55,7 @@ def fastq_reader(proj_dir, bcs_dict):
     bypass recognized bc files, open fastqs, test first read structure
     create file lists and test for pairs
     '''
-    fastq_ls, gz, pairs_ls = [], [], {}
+    fastq_ls, gz = [], []
     for filename in os.listdir(proj_dir):
         if filename == os.path.basename(bcs_index):
             pass
@@ -64,20 +63,18 @@ def fastq_reader(proj_dir, bcs_dict):
             pass
         else:
             try:
-                fastq_test, pairs_ls = is_fq(proj_dir + '/' + filename,
-                                             pairs_ls)
+                fastq_test = is_fq(proj_dir + '/' + filename)
                 gz.append(0)
             except UnicodeDecodeError:
-                fastq_test, pairs_ls = is_gz(proj_dir + '/' + filename,
-                                             pairs_ls)
+                fastq_test = is_gz(proj_dir + '/' + filename)
                 gz.append(1)
             if fastq_test is None:
                 raise TypeError
             fastq_ls.append(proj_dir + '/' + filename)
-    return fastq_ls, gz, pairs_ls
+    return fastq_ls, gz
 
 
-def is_fq(filename, pairs_ls):
+def is_fq(filename):
     '''
     test first read structure if fastq
     '''
@@ -85,17 +82,15 @@ def is_fq(filename, pairs_ls):
         for i, line in enumerate(f):
             if i == 1 and line[0] != '@':
                 return
-            else:
-                pairs_ls = is_paired(filename, line, pairs_ls)
             if i == 3 and line[0] != '+':
                 return
             if i == 5 and line[0] != '@':
                 return
             else:
-                return True, pairs_ls
+                return True
 
 
-def is_gz(filename, pairs_ls):
+def is_gz(filename):
     '''
     test first read structure if fastq.gz
     '''
@@ -103,8 +98,6 @@ def is_gz(filename, pairs_ls):
         for i, line in enumerate(f):
             if i == 1 and line[0] != '@':
                 return
-            else:
-                pairs_ls = is_paired(filename, line, pairs_ls)
             if i == 3 and line[0] != '+':
                 return
             if i == 5 and line[0] != '@':
@@ -113,27 +106,30 @@ def is_gz(filename, pairs_ls):
                 sys.exit("sorry, .gz functionality is not currently supported")
 
 
-def is_paired(filename, line, pairs_ls):
+def is_paired(fastq_ls):
     '''
     use header info to match paired ends, if present
     '''
-    for i, x in enumerate(line):
-        if x == ' ':
-            space_pos = i
-    header = line[:space_pos]
-    if header in pairs_ls:
-        pairs_ls[header].append(filename)
-    else:
-        pairs_ls[header] = [filename]
-    return pairs_ls
+    pairs_dict = {}
+    for filename in fastq_ls:
+        with open(filename) as f:
+            header = f.readline()
+            for i, x in enumerate(header.split(' ')):
+                if i == 0:
+                    header_id = x
+            if header_id in pairs_dict:
+                pairs_dict[header_id].append(filename)
+            else:
+                pairs_dict[header_id] = [filename]
+    return pairs_dict
 
 
-def input_sort(paired, pairs_ls):
+def input_sort(paired, pairs_dict):
     '''
     if headers identical, in1 and in2 lists ordered to keep pairing
     '''
     in1_ls, in2_ls = [], []
-    for values in pairs_ls.values():
+    for values in pairs_dict.values():
         if paired is True and len(values) == 2:
             input_paired(values, in1_ls, in2_ls)
         elif paired is True and len(values) != 2:
@@ -151,13 +147,12 @@ def input_paired(values, in1_ls, in2_ls):
     for filename in values:
         with open(filename) as f:
             header = f.readline()
-            for i, x in enumerate(header):
-                if x == ' ':
-                    space_pos = i
-            end = header[space_pos+1]
-            if int(end) == 1:
+            for i, x in enumerate(header.split(' ')):
+                if i == 1:
+                    end = x
+            if end.startswith('1'):
                 in1_ls.append(filename)
-            if int(end) == 2:
+            if end.startswith('2'):
                 in2_ls.append(filename)
     return in1_ls, in2_ls
 
@@ -182,14 +177,14 @@ def input_single(values, in1_ls, in2_ls):
     return in1_ls, in2_ls
 
 
-def trim_muliproc(proj_dir, threads, front_trim, back_trim, fastq_ls):
+def trim_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls):
     '''
     create user-defined number of subprocesses to trim every file in fastq_ls
     '''
     proj_dir_current = proj_dir + '/trimmed'
     os.mkdir(proj_dir_current)
     trim_part = partial(scallop_comp, front_trim, back_trim, proj_dir_current)
-    pool = Pool(threads)
+    pool = Pool(procs)
     pool.map(trim_part, fastq_ls)
     pool.close()
     for i, filename in enumerate(in1_ls):
@@ -198,7 +193,7 @@ def trim_muliproc(proj_dir, threads, front_trim, back_trim, fastq_ls):
         in2_ls[i] = proj_dir_current + '/' + os.path.basename(filename)
 
 
-def anemone_multiproc():
+def anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls):
     '''
     create user-defined number of subprocesses to demultiplex
     '''
@@ -206,11 +201,12 @@ def anemone_multiproc():
     os.mkdir(proj_dir_current)
     comp_part = partial(anemone_comp, in1_ls, in2_ls, mismatch, bcs_dict,
                         proj_dir_current)
-    pool = Pool(threads)
+    pool = Pool(procs)
     pool.map(comp_part, in1_ls)
     pool.close()
 
-    demulti_dict = {}
+#TODO make the following a generalized function for collapsing folders
+    demulti_dict, fastq_ls, in1_ls, in2_ls = {}, [], [], []
     for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
         for i in files:
             if i.startswith('unknown.'):
@@ -220,39 +216,43 @@ def anemone_multiproc():
                     demulti_dict[i].append(os.path.join(root, i))
                 else:
                     demulti_dict[i] = [os.path.join(root, i)]
-    print(demulti_dict)
-
     for filename in demulti_dict.keys():
         with open(proj_dir_current + '/' + filename, 'w') as o1:
+            fastq_ls.append(o1.name)
             for i in demulti_dict[filename]:
                 with open(i) as obj1:
                     shutil.copyfileobj(obj1, o1)
                 os.remove(i)
+    pairs_dict = is_paired(fastq_ls)
+    in1_ls, in2_ls = input_sort(paired, pairs_dict)
+    return in1_ls, in2_ls
 
 
 if __name__ == '__main__':
+    proj_dir = initialize(proj_dir)
     if bcs_index:
         bcs_index = proj_dir + '/' + bcs_index
         bcs_dict = index_reader(bcs_index)
     else:
         bcs_dict = {}
         bcs_index = ''
-    proj_dir = initialize(proj_dir, paired, bcs_dict)
-    fastq_ls, gz, pairs_ls = fastq_reader(proj_dir, bcs_dict)
-    in1_ls, in2_ls = input_sort(paired, pairs_ls)
-    # TODO add qc step here and let users know where to find its output
-    if front_trim > 0:
-        trim_muliproc(proj_dir, threads, front_trim, 0, fastq_ls)
-    if bcs_index:
-        anemone_multiproc()
+    fastq_ls, gz = fastq_reader(proj_dir, bcs_dict)
+    pairs_dict = is_paired(fastq_ls)
+    in1_ls, in2_ls = input_sort(paired, pairs_dict)
 
+    # TODO add qc step here and let users know where to find its output
+
+    if front_trim > 0:
+        trim_muliproc(proj_dir, procs, front_trim, 0, fastq_ls)
+    if bcs_index:
+        in1_ls, in2_ls = anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls)
 
     shutil.rmtree(proj_dir + '/trimmed')
     shutil.rmtree(proj_dir + '/demultiplexed')
     print('\n composer is removing directories, FYI \n')
 
 
-    # if overhang_ls:
+    # if bases_ls:
         # os.mkdir(proj_dir + '/overhang')
         # inputs_ls = []
         # try:
@@ -262,7 +262,7 @@ if __name__ == '__main__':
             # inputs_ls = fastq_ls
         # proj_dir_current = proj_dir + '/overhang'
         # hang_part = partial(rotifer, proj_dir_current, overhang_ls)
-        # pool = Pool(threads)
+        # pool = Pool(procs)
         # pool.map(hang_part, inputs_ls)
         # pool.close()
 

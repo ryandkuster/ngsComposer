@@ -4,8 +4,8 @@ proj_dir = '/home/descartes/GitHub/composer/examples/project2'
 # if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True
 
-# choose number of subprocesses
-threads = 2
+# choose number of subprocesses that can run simultaneously
+procs = 2
 
 # create initial QC output for reads and pause for user
 initial_qc = False
@@ -20,9 +20,9 @@ bcs_index = 'index.txt'
 mismatch = 1
 
 # list sequences immediately adjacent to barcodes
-overhang_ls = ['TCC','TCT']
+bases_ls = ['TCC','TCT']
 
-# additional, non-genomic base not found in barcode sequence
+# additional, non-genomic base not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
 non_genomic = 'T'
 
 # quality score minimum (Phred value 0-40)
@@ -32,7 +32,7 @@ q_min = 30
 q_percent = 95
 
 # pause at QC steps for manual input (overwrites q_min and q_percent)
-manual_entry = True
+walkthrough = True
 
 # optionally remove each intermediate file
 remove_intermediates = True
