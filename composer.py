@@ -10,7 +10,7 @@ from conf import *
 from scallop import scallop_comp
 from anemone import anemone_comp
 from rotifer import rotifer_comp
-
+from krill import krill_comp
 
 # composer is:
 # scallop - remove buffer sequences
@@ -177,9 +177,9 @@ def input_single(values, in1_ls, in2_ls):
     return in1_ls, in2_ls
 
 
-def trim_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls):
+def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls):
     '''
-    create user-defined number of subprocesses to trim every file in fastq_ls
+    create user-defined subprocesses to trim every file in fastq_ls
     '''
     proj_dir_current = proj_dir + '/trimmed'
     os.mkdir(proj_dir_current)
@@ -195,14 +195,14 @@ def trim_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls):
 
 def anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls):
     '''
-    create user-defined number of subprocesses to demultiplex
+    create user-defined subprocesses to demultiplex
     '''
     proj_dir_current = proj_dir + '/demultiplexed'
     os.mkdir(proj_dir_current)
-    comp_part = partial(anemone_comp, in1_ls, in2_ls, mismatch, bcs_dict,
+    anemone_part = partial(anemone_comp, in1_ls, in2_ls, mismatch, bcs_dict,
                         proj_dir_current)
     pool = Pool(procs)
-    pool.map(comp_part, in1_ls)
+    pool.map(anemone_part, in1_ls)
     pool.close()
 
 #TODO make the following a generalized function for collapsing folders
@@ -228,6 +228,18 @@ def anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls):
     return in1_ls, in2_ls
 
 
+def rotifer_multiproc(in1_ls, in2_ls):
+    '''
+    create user-defined subprocesses to parse based on expected sequences
+    '''
+    proj_dir_current = proj_dir + '/parsed'
+    os.mkdir(proj_dir_current)
+    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, q_min, q_percent, proj_dir_current)
+    pool = Pool(procs)
+    pool.map(rotifer_part, in1_ls)
+    pool.close()
+
+
 if __name__ == '__main__':
     proj_dir = initialize(proj_dir)
     if bcs_index:
@@ -243,12 +255,16 @@ if __name__ == '__main__':
     # TODO add qc step here and let users know where to find its output
 
     if front_trim > 0:
-        trim_muliproc(proj_dir, procs, front_trim, 0, fastq_ls)
+        scallop_muliproc(proj_dir, procs, front_trim, 0, fastq_ls)
     if bcs_index:
         in1_ls, in2_ls = anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls)
+    if bases_ls:
+        rotifer_multiproc(in1_ls, in2_ls)
+    
 
     shutil.rmtree(proj_dir + '/trimmed')
     shutil.rmtree(proj_dir + '/demultiplexed')
+    shutil.rmtree(proj_dir + '/parsed')
     print('\n composer is removing directories, FYI \n')
 
 

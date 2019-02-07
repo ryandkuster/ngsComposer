@@ -12,10 +12,16 @@ def rotifer_main():
     rotifer(proj_dir, overhang_ls, in1)
 
 
-def rotifer_comp():
+def rotifer_comp(in1_ls, in2_ls, q_min, q_percent, proj_dir_current, in1):
     '''
     composer entry point to rotifer
     '''
+    try:
+        in2 = in2_ls[in1_ls.index(in1)]
+
+    except IndexError:
+        in2 = False
+    print(in1 + ' is paired with ' + in2)
     pass
 
 
