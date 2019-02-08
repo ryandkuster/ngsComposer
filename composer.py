@@ -205,17 +205,23 @@ def anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls):
     pool.map(anemone_part, in1_ls)
     pool.close()
 
-#TODO make the following a generalized function for collapsing folders
+    #TODO make unknowns folder for anemone then make below a reusable func
+
     demulti_dict, fastq_ls, in1_ls, in2_ls = {}, [], [], []
     for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
         for i in files:
+            fullname = os.path.join(root, i)
             if i.startswith('unknown.'):
                 pass
             else:
-                if i in demulti_dict:
-                    demulti_dict[i].append(os.path.join(root, i))
+                if os.path.getsize(fullname) == 0:
+#                    os.remove(fullname)
+                    pass
+                elif i in demulti_dict:
+                    demulti_dict[i].append(fullname)
                 else:
-                    demulti_dict[i] = [os.path.join(root, i)]
+                    demulti_dict[i] = [fullname]
+
     for filename in demulti_dict.keys():
         with open(proj_dir_current + '/' + filename, 'w') as o1:
             fastq_ls.append(o1.name)
@@ -234,13 +240,30 @@ def rotifer_multiproc(proj_dir, in1_ls, in2_ls, bases_ls, non_genomic):
     '''
     proj_dir_current = proj_dir + '/parsed'
     os.mkdir(proj_dir_current)
+    os.mkdir(proj_dir_current + '/single')
+    os.mkdir(proj_dir_current + '/paired')
     rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, bases_ls, non_genomic, proj_dir_current)
     pool = Pool(procs)
     pool.map(rotifer_part, in1_ls)
     pool.close()
 
+    singles_ls, fastq_ls, in1_ls, in2_ls = [], [], [], []
+    for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
+        for i in files:
+            fullname = os.path.join(root, i)
+            if os.path.getsize(fullname) == 0:
+#                os.remove(fullname)
+                pass
+            elif root == str(proj_dir_current + '/single'):
+                singles_ls.append(fullname)
+            else:
+                fastq_ls.append(fullname)
+    pairs_dict = is_paired(fastq_ls)
+    in1_ls, in2_ls = input_sort(paired, pairs_dict)
+    return in1_ls, in2_ls, singles_ls
 
-def krill_multiproc(in1_ls, in2_ls):
+
+def krill_multiproc(in1_ls, in2_ls, singles_ls, q_min, q_percent):
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
@@ -271,27 +294,13 @@ if __name__ == '__main__':
     if bcs_index:
         in1_ls, in2_ls = anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls)
     if bases_ls:
-        rotifer_multiproc(proj_dir, in1_ls, in2_ls, bases_ls, non_genomic)
+        in1_ls, in2_ls, singles_ls = rotifer_multiproc(proj_dir, in1_ls, in2_ls, bases_ls, non_genomic)
+    if q_min and q_percent:
+        krill_multiproc(in1_ls, in2_ls, singles_ls, q_min, q_percent)
+
 
 
     shutil.rmtree(proj_dir + '/trimmed')
     shutil.rmtree(proj_dir + '/demultiplexed')
-#    shutil.rmtree(proj_dir + '/parsed')
+    shutil.rmtree(proj_dir + '/parsed')
     print('\n composer is removing directories, FYI \n')
-
-
-    # if bases_ls:
-        # os.mkdir(proj_dir + '/overhang')
-        # inputs_ls = []
-        # try:
-            # for filename in os.listdir(proj_dir_current):
-                # inputs_ls.append(proj_dir_current + '/' + filename)
-        # except:
-            # inputs_ls = fastq_ls
-        # proj_dir_current = proj_dir + '/overhang'
-        # hang_part = partial(rotifer, proj_dir_current, bases_ls)
-        # pool = Pool(procs)
-        # pool.map(hang_part, inputs_ls)
-        # pool.close()
-
-    # shutil.rmtree(proj_dir + '/overhang')

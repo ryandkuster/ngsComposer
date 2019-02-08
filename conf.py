@@ -1,5 +1,5 @@
 # provide the full path to your fastq files (only place full path is used)
-proj_dir = '/home/ryan/Delete_me/project1'
+proj_dir = '/home/ryan/Delete_me/project2'
 
 # if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True
@@ -25,10 +25,10 @@ bases_ls = ['TCC','TCT']
 # additional, non-genomic base not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
 non_genomic = 'T'
 
-# quality score minimum (Phred value 0-40)
+# quality score minimum (Phred value 0-40)(use 'False' to skip)
 q_min = 20
 
-# percentage of reads containing q_min or high quality scores
+# percentage of reads >/= q_min quality scores (use 'False' to skip)
 q_percent = 95
 
 # pause at QC steps for manual input (overwrites q_min and q_percent)
@@ -36,6 +36,3 @@ walkthrough = True
 
 # optionally remove each intermediate file
 remove_intermediates = True
-
-# optionally remove files that do not successfully match desired characteristics
-remove_fail = True
