@@ -228,15 +228,27 @@ def anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls):
     return in1_ls, in2_ls
 
 
-def rotifer_multiproc(in1_ls, in2_ls):
+def rotifer_multiproc(proj_dir, in1_ls, in2_ls, bases_ls, non_genomic):
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
     proj_dir_current = proj_dir + '/parsed'
     os.mkdir(proj_dir_current)
-    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, q_min, q_percent, proj_dir_current)
+    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, bases_ls, non_genomic, proj_dir_current)
     pool = Pool(procs)
     pool.map(rotifer_part, in1_ls)
+    pool.close()
+
+
+def krill_multiproc(in1_ls, in2_ls):
+    '''
+    create user-defined subprocesses to parse based on expected sequences
+    '''
+    proj_dir_current = proj_dir + '/filtered'
+    os.mkdir(proj_dir_current)
+    krill_part = partial(krill_comp, in1_ls, in2_ls, q_min, q_percent, proj_dir_current)
+    pool = Pool(procs)
+    pool.map(krill_part, in1_ls)
     pool.close()
 
 
@@ -259,12 +271,12 @@ if __name__ == '__main__':
     if bcs_index:
         in1_ls, in2_ls = anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls)
     if bases_ls:
-        rotifer_multiproc(in1_ls, in2_ls)
-    
+        rotifer_multiproc(proj_dir, in1_ls, in2_ls, bases_ls, non_genomic)
+
 
     shutil.rmtree(proj_dir + '/trimmed')
     shutil.rmtree(proj_dir + '/demultiplexed')
-    shutil.rmtree(proj_dir + '/parsed')
+#    shutil.rmtree(proj_dir + '/parsed')
     print('\n composer is removing directories, FYI \n')
 
 
@@ -277,7 +289,7 @@ if __name__ == '__main__':
         # except:
             # inputs_ls = fastq_ls
         # proj_dir_current = proj_dir + '/overhang'
-        # hang_part = partial(rotifer, proj_dir_current, overhang_ls)
+        # hang_part = partial(rotifer, proj_dir_current, bases_ls)
         # pool = Pool(procs)
         # pool.map(hang_part, inputs_ls)
         # pool.close()

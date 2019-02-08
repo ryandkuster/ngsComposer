@@ -26,7 +26,7 @@ bases_ls = ['TCC','TCT']
 non_genomic = 'T'
 
 # quality score minimum (Phred value 0-40)
-q_min = 30
+q_min = 20
 
 # percentage of reads containing q_min or high quality scores
 q_percent = 95

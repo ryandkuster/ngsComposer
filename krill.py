@@ -23,8 +23,8 @@ def krill_comp():
 
 def krill(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2):
 
-    #TODO implement single version
-    
+    #TODO implement single version; create in-line description
+
     with open(in1) as f1, open(in2) as f2,\
             open(pe_1, "w") as pe_o1,\
             open(pe_2, "w") as pe_o2,\
@@ -41,8 +41,8 @@ def krill(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2):
             entry1 = entry1 + line1 + "\n"
             entry2 = entry2 + line2 + "\n"
             if y == 4:
-                krill1 = score_eval(line1, q_min, q_percent, val)
-                krill2 = score_eval(line2, q_min, q_percent, val)
+                krill1 = krill_test(line1, q_min, q_percent, val)
+                krill2 = krill_test(line2, q_min, q_percent, val)
                 if krill1 is False and krill2 is False:
                     pe_o1.write(entry1)
                     pe_o2.write(entry2)
@@ -57,7 +57,7 @@ def krill(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2):
                     y, entry1, entry2 = 0, "", ""
 
 
-def score_eval(line, q_min, q_percent, val):
+def krill_test(line, q_min, q_percent, val):
     x, fail_count, krill = 0, 0, False
     fail_base = ((100-q_percent)/100)*(len(line))
     for x in range((len(line) - 1),-1,-1):
