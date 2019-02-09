@@ -2,7 +2,7 @@
 
 # composer: a deep QC aventure!
 
-Base-calling, error-filtering read preprocessing designed by biologists
+Base-call error-filtering and read preprocessing pipeline designed by biologists
 
 ## Features
 
