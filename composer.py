@@ -177,6 +177,29 @@ def input_single(values, in1_ls, in2_ls):
     return in1_ls, in2_ls
 
 
+def concater(concat_dict, proj_dir_current, fastq_ls):
+    for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
+        for i in files:
+            fullname = os.path.join(root, i)
+            if i.startswith('unknown.'):
+                pass
+            else:
+                if os.path.getsize(fullname) == 0:
+                    os.remove(fullname)
+#                    pass
+                elif i in concat_dict:
+                    concat_dict[i].append(fullname)
+                else:
+                    concat_dict[i] = [fullname]
+    for filename in concat_dict.keys():
+        with open(proj_dir_current + '/' + filename, 'w') as o1:
+            fastq_ls.append(o1.name)
+            for i in concat_dict[filename]:
+                with open(i) as obj1:
+                    shutil.copyfileobj(obj1, o1)
+                os.remove(i)
+    return fastq_ls
+
 def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls):
     '''
     create user-defined subprocesses to trim every file in fastq_ls
@@ -205,30 +228,8 @@ def anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls):
     pool.map(anemone_part, in1_ls)
     pool.close()
 
-    #TODO make unknowns folder for anemone then make below a reusable func
-
-    demulti_dict, fastq_ls, in1_ls, in2_ls = {}, [], [], []
-    for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
-        for i in files:
-            fullname = os.path.join(root, i)
-            if i.startswith('unknown.'):
-                pass
-            else:
-                if os.path.getsize(fullname) == 0:
-#                    os.remove(fullname)
-                    pass
-                elif i in demulti_dict:
-                    demulti_dict[i].append(fullname)
-                else:
-                    demulti_dict[i] = [fullname]
-
-    for filename in demulti_dict.keys():
-        with open(proj_dir_current + '/' + filename, 'w') as o1:
-            fastq_ls.append(o1.name)
-            for i in demulti_dict[filename]:
-                with open(i) as obj1:
-                    shutil.copyfileobj(obj1, o1)
-                os.remove(i)
+    concat_dict, fastq_ls, in1_ls, in2_ls = {}, [], [], []
+    fastq_ls = concater(concat_dict, proj_dir_current, fastq_ls)
     pairs_dict = is_paired(fastq_ls)
     in1_ls, in2_ls = input_sort(paired, pairs_dict)
     return in1_ls, in2_ls
@@ -252,8 +253,8 @@ def rotifer_multiproc(proj_dir, in1_ls, in2_ls, bases_ls, non_genomic):
         for i in files:
             fullname = os.path.join(root, i)
             if os.path.getsize(fullname) == 0:
-#                os.remove(fullname)
-                pass
+                os.remove(fullname)
+#                pass
             elif root == str(proj_dir_current + '/single'):
                 singles_ls.append(fullname)
             else:
@@ -269,10 +270,34 @@ def krill_multiproc(in1_ls, in2_ls, singles_ls, q_min, q_percent):
     '''
     proj_dir_current = proj_dir + '/filtered'
     os.mkdir(proj_dir_current)
+    os.mkdir(proj_dir_current + '/single')
+    os.mkdir(proj_dir_current + '/single/pe_lib')
+    os.mkdir(proj_dir_current + '/single/se_lib')
+    os.mkdir(proj_dir_current + '/paired')
     krill_part = partial(krill_comp, in1_ls, in2_ls, q_min, q_percent, proj_dir_current)
     pool = Pool(procs)
     pool.map(krill_part, in1_ls)
     pool.close()
+    if singles_ls:
+        krill_part = partial(krill_comp, in1_ls, in2_ls, q_min, q_percent, proj_dir_current)
+        pool = Pool(procs)
+        pool.map(krill_part, singles_ls)
+        pool.close()
+    print(proj_dir_current)
+    concat_dict, singles_ls, fastq_ls, in1_ls, in2_ls = {}, [], [], [], []
+    fastq_ls = concater(concat_dict, proj_dir_current + '/single', fastq_ls)
+
+#    for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
+
+#        for i in files:
+#            fullname = os.path.join(root, i)
+#            if os.path.getsize(fullname) == 0:
+##                os.remove(fullname)
+#                pass
+#            elif root == str(proj_dir_current + '/single'):
+#                singles_ls.append(fullname)
+#            else:
+#                fastq_ls.append(fullname)
 
 
 if __name__ == '__main__':
@@ -300,7 +325,8 @@ if __name__ == '__main__':
 
 
 
-    shutil.rmtree(proj_dir + '/trimmed')
-    shutil.rmtree(proj_dir + '/demultiplexed')
-    shutil.rmtree(proj_dir + '/parsed')
+#    shutil.rmtree(proj_dir + '/trimmed')
+#    shutil.rmtree(proj_dir + '/demultiplexed')
+#    shutil.rmtree(proj_dir + '/parsed')
+#    shutil.rmtree(proj_dir + '/filtered')
     print('\n composer is removing directories, FYI \n')

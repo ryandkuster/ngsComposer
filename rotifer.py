@@ -29,7 +29,7 @@ def rotifer_comp(in1_ls, in2_ls, bases_ls, non_genomic, proj_dir_current, in1):
         in2 = in2_ls[in1_ls.index(in1)]
         pe_2 = proj_dir_current + '/paired/' + os.path.basename(in2)
         se_2 = proj_dir_current + '/single/' + os.path.basename(in2)
-    except IndexError:
+    except ValueError:
         in2 = False
     pe_1 = proj_dir_current + '/paired/' + os.path.basename(in1)
     se_1 = proj_dir_current + '/single/' + os.path.basename(in1)
