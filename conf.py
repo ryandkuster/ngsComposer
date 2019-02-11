@@ -1,5 +1,5 @@
 # provide the full path to your fastq files (only place full path is used)
-proj_dir = '/home/ryan/Delete_me/project2'
+proj_dir = '/home/ryan/Delete_me/project1'
 
 # if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True
@@ -11,7 +11,7 @@ procs = 2
 initial_qc = False
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
-front_trim = 6
+front_trim = 0
 
 # name of  file with barcodes to demultiplex forward reads (use 'False' if not demultiplexing)
 bcs_index = 'index.txt'
@@ -20,16 +20,16 @@ bcs_index = 'index.txt'
 mismatch = 1
 
 # list sequences immediately adjacent to barcodes
-bases_ls = ['TCC','TCT']
+bases_ls = ['A', 'C', 'G', 'T']
 
 # additional, non-genomic base not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
 non_genomic = 'T'
 
 # quality score minimum (Phred value 0-40)(use 'False' to skip)
-q_min = 38
+q_min = 20
 
 # percentage of reads >/= q_min quality scores (use 'False' to skip)
-q_percent = 95
+q_percent = 100
 
 # pause at QC steps for manual input (overwrites q_min and q_percent)
 walkthrough = True

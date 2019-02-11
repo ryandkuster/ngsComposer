@@ -177,7 +177,7 @@ def input_single(values, in1_ls, in2_ls):
     return in1_ls, in2_ls
 
 
-def concater(concat_dict, proj_dir_current, fastq_ls):
+def concater(concat_dict, proj_dir_current, cat_ls):
     for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
         for i in files:
             fullname = os.path.join(root, i)
@@ -193,12 +193,27 @@ def concater(concat_dict, proj_dir_current, fastq_ls):
                     concat_dict[i] = [fullname]
     for filename in concat_dict.keys():
         with open(proj_dir_current + '/' + filename, 'w') as o1:
-            fastq_ls.append(o1.name)
+            cat_ls.append(o1.name)
             for i in concat_dict[filename]:
                 with open(i) as obj1:
                     shutil.copyfileobj(obj1, o1)
                 os.remove(i)
-    return fastq_ls
+    return cat_ls
+
+
+def pathfinder(proj_dir_current, singles_ls, fastq_ls):
+    for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
+        for i in files:
+            fullname = os.path.join(root, i)
+            if os.path.getsize(fullname) == 0:
+                os.remove(fullname)
+#                pass
+            elif root == str(proj_dir_current + '/single'):
+                singles_ls.append(fullname)
+            else:
+                fastq_ls.append(fullname)
+    return singles_ls, fastq_ls
+
 
 def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls):
     '''
@@ -227,7 +242,6 @@ def anemone_multiproc(proj_dir, mismatch, bcs_dict, in1_ls, in2_ls):
     pool = Pool(procs)
     pool.map(anemone_part, in1_ls)
     pool.close()
-
     concat_dict, fastq_ls, in1_ls, in2_ls = {}, [], [], []
     fastq_ls = concater(concat_dict, proj_dir_current, fastq_ls)
     pairs_dict = is_paired(fastq_ls)
@@ -247,18 +261,8 @@ def rotifer_multiproc(proj_dir, in1_ls, in2_ls, bases_ls, non_genomic):
     pool = Pool(procs)
     pool.map(rotifer_part, in1_ls)
     pool.close()
-
     singles_ls, fastq_ls, in1_ls, in2_ls = [], [], [], []
-    for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
-        for i in files:
-            fullname = os.path.join(root, i)
-            if os.path.getsize(fullname) == 0:
-                os.remove(fullname)
-#                pass
-            elif root == str(proj_dir_current + '/single'):
-                singles_ls.append(fullname)
-            else:
-                fastq_ls.append(fullname)
+    singles_ls, fastq_ls = pathfinder(proj_dir_current, singles_ls, fastq_ls)
     pairs_dict = is_paired(fastq_ls)
     in1_ls, in2_ls = input_sort(paired, pairs_dict)
     return in1_ls, in2_ls, singles_ls
@@ -283,21 +287,12 @@ def krill_multiproc(in1_ls, in2_ls, singles_ls, q_min, q_percent):
         pool = Pool(procs)
         pool.map(krill_part, singles_ls)
         pool.close()
-    print(proj_dir_current)
     concat_dict, singles_ls, fastq_ls, in1_ls, in2_ls = {}, [], [], [], []
-    fastq_ls = concater(concat_dict, proj_dir_current + '/single', fastq_ls)
-
-#    for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
-
-#        for i in files:
-#            fullname = os.path.join(root, i)
-#            if os.path.getsize(fullname) == 0:
-##                os.remove(fullname)
-#                pass
-#            elif root == str(proj_dir_current + '/single'):
-#                singles_ls.append(fullname)
-#            else:
-#                fastq_ls.append(fullname)
+    _ = concater(concat_dict, proj_dir_current + '/single', [])
+    singles_ls, fastq_ls = pathfinder(proj_dir_current, singles_ls, fastq_ls)
+    pairs_dict = is_paired(fastq_ls)
+    in1_ls, in2_ls = input_sort(paired, pairs_dict)
+    return in1_ls, in2_ls, singles_ls
 
 
 if __name__ == '__main__':
@@ -321,12 +316,37 @@ if __name__ == '__main__':
     if bases_ls:
         in1_ls, in2_ls, singles_ls = rotifer_multiproc(proj_dir, in1_ls, in2_ls, bases_ls, non_genomic)
     if q_min and q_percent:
-        krill_multiproc(in1_ls, in2_ls, singles_ls, q_min, q_percent)
+        in1_ls, in2_ls, singles_ls = krill_multiproc(in1_ls, in2_ls, singles_ls, q_min, q_percent)
 
 
 
-#    shutil.rmtree(proj_dir + '/trimmed')
-#    shutil.rmtree(proj_dir + '/demultiplexed')
-#    shutil.rmtree(proj_dir + '/parsed')
-#    shutil.rmtree(proj_dir + '/filtered')
+
+#    try:
+#        shutil.rmtree(proj_dir + '/trimmed')
+#    except FileNotFoundError:
+#        pass
+
+#    try:
+#        shutil.rmtree(proj_dir + '/demultiplexed')
+#    except FileNotFoundError:
+#        pass
+
+#    try:
+#        shutil.rmtree(proj_dir + '/parsed')
+#    except FileNotFoundError:
+#        pass
+
+#    try:
+#        shutil.rmtree(proj_dir + '/filtered')
+#    except FileNotFoundError:
+#        pass
     print('\n composer is removing directories, FYI \n')
+
+
+
+
+
+
+
+
+
