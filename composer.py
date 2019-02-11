@@ -15,8 +15,8 @@ from krill import krill_comp
 # composer is:
 # scallop - remove buffer sequences
 # anemone - demultiplex based on bcs
-# krill - filter base calling with custom cutoffs
 # rotifer - remove sequence artifacts from library prep
+# krill - filter base calling with custom cutoffs
 
 
 def initialize(proj_dir):
