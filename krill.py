@@ -74,13 +74,13 @@ def krill(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2):
 
 def krill_single(q_min, q_percent, in1, se_1):
     '''
-    quality filter test for single end reads
+    quality filter test for single-end reads
     '''
     with open(in1) as f1, open(se_1, "w") as se_o1:
         scores = open(os.path.dirname(os.path.abspath(__file__)) +
                       '/scores.txt').read().split()
         val = dict(zip(scores[:int(len(scores)/2)],scores[-int(len(scores)/2):]))
-        y, entry1, entry2 = 0, "", ""
+        y, entry1 = 0, ""
         for line1 in f1:
             y += 1
             line1 = line1.rstrip()
@@ -89,9 +89,9 @@ def krill_single(q_min, q_percent, in1, se_1):
                 krill1 = krill_test(line1, q_min, q_percent, val)
                 if krill1 is False:
                     se_o1.write(entry1)
-                    y, entry1, entry2 = 0, "", ""
+                    y, entry1 = 0, ""
                 elif krill1 is True:
-                    y, entry1, entry2 = 0, "", ""
+                    y, entry1 = 0, ""
 
 
 def krill_test(line, q_min, q_percent, val):

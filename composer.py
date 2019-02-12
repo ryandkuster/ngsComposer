@@ -7,16 +7,14 @@ from functools import partial
 
 
 from conf import *
+
+
 from scallop import scallop_comp
 from anemone import anemone_comp
 from rotifer import rotifer_comp
 from krill import krill_comp
-
-# composer is:
-# scallop - remove buffer sequences
-# anemone - demultiplex based on bcs
-# rotifer - remove sequence artifacts from library prep
-# krill - filter base calling with custom cutoffs
+from porifera import porifera_comp
+from crinoid import crinoid_comp
 
 
 def initialize(proj_dir):
@@ -340,6 +338,7 @@ if __name__ == '__main__':
 #        shutil.rmtree(proj_dir + '/filtered')
 #    except FileNotFoundError:
 #        pass
+
     print('\n composer is removing directories, FYI \n')
 
 
