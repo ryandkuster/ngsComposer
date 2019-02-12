@@ -31,6 +31,8 @@ def max_len_count(in1):
                 len_test = len(line.rstrip())
                 if len_test > max_len:
                     max_len = len_test
+            if y == 4:
+                y = 0
     return max_len
 
 
@@ -48,8 +50,15 @@ def crinoid(in1, out1, out2, max_len, val):
                 for i, base in enumerate(line.rstrip()):
                     score_dict[i][base] +=1
                 y = 0
-        print(base_dict)
-        print(score_dict)
+        output_prep(base_dict)
+
+
+def output_prep(dictionary):
+    for k, v in dictionary.items():
+        if isinstance(v, dict):
+            output_prep(v)
+        else:
+            print(k)
 
 
 if __name__ == "__main__":
