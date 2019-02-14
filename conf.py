@@ -9,6 +9,8 @@ procs = 2
 
 # create initial QC output
 initial_qc = True
+walkthrough = True
+walkaway = True
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
 front_trim = 2
@@ -30,9 +32,6 @@ q_min = 30
 
 # percentage of reads >/= q_min quality scores (use 'False' to skip)
 q_percent = 95
-
-# pause at QC steps for manual input (overwrites q_min and q_percent)
-walkthrough = True
 
 # optionally remove each intermediate file
 remove_intermediates = True
