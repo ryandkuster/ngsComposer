@@ -6,14 +6,11 @@ from multiprocessing import Pool
 from functools import partial
 
 
-from conf import *
-
-
-from scallop import scallop_comp
-from anemone import anemone_comp
-from rotifer import rotifer_comp
-from krill import krill_comp
-from crinoid import crinoid_comp
+from tools.scallop import scallop_comp
+from tools.anemone import anemone_comp
+from tools.rotifer import rotifer_comp
+from tools.krill import krill_comp
+from tools.crinoid import crinoid_comp
 
 
 def initialize(proj_dir):
@@ -40,9 +37,9 @@ def index_reader(bcs_index):
                 if j == 1:
                     value = item
                 if j == 2:
-                    sys.exit("bcs_index should only contain forward read(s)\n" +
-                             "and their respective barcodes key file(s) tab\n" +
-                             "in tab-delimited format")
+                    sys.exit("bcs_index should only contain forward\n" +
+                             "read(s) and their respective barcodes key\n" +
+                             "file(s) in tab-delimited format")
             bcs_dict[key] = proj_dir + '/' + value
     return bcs_dict
 
@@ -57,6 +54,8 @@ def fastq_reader(proj_dir, bcs_dict):
         if filename == os.path.basename(bcs_index):
             pass
         elif proj_dir + '/' + filename in bcs_dict.values():
+            pass
+        elif filename == 'conf.py' or filename == '__pycache__':
             pass
         else:
             try:
@@ -224,11 +223,12 @@ def crinoid_multiproc(proj_dir, fastq_ls):
     pool.close()
 
 
-def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls):
+def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls, rm_dirs):
     '''
     create user-defined subprocesses to trim every file in fastq_ls
     '''
     proj_dir_current = proj_dir + '/trimmed'
+    rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
     scallop_part = partial(scallop_comp, front_trim, back_trim, proj_dir_current)
     pool = Pool(procs)
@@ -240,11 +240,12 @@ def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls):
         in2_ls[i] = proj_dir_current + '/' + os.path.basename(filename)
 
 
-def anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls):
+def anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls, rm_dirs):
     '''
     create user-defined subprocesses to demultiplex
     '''
     proj_dir_current = proj_dir + '/demultiplexed'
+    rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
     anemone_part = partial(anemone_comp, in1_ls, in2_ls, mismatch, bcs_dict,
                         proj_dir_current)
@@ -257,14 +258,17 @@ def anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls)
     in1_ls, in2_ls = input_sort(paired, pairs_dict)
     if walkthrough:
         crinoid_multiproc(proj_dir_current, fastq_ls)
+    if rm_transit is True:
+        dir_del(rm_dirs[:-1])
     return in1_ls, in2_ls
 
 
-def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic):
+def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic, rm_dirs):
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
     proj_dir_current = proj_dir + '/parsed'
+    rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
     os.mkdir(proj_dir_current + '/single')
     os.mkdir(proj_dir_current + '/paired')
@@ -279,14 +283,17 @@ def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genom
     if walkthrough:
         crinoid_multiproc(proj_dir_current + '/single', singles_ls)
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
+    if rm_transit is True:
+        dir_del(rm_dirs[:-1])
     return in1_ls, in2_ls, singles_ls
 
 
-def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent):
+def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs):
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
     proj_dir_current = proj_dir + '/filtered'
+    rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
     os.mkdir(proj_dir_current + '/single')
     os.mkdir(proj_dir_current + '/single/pe_lib')
@@ -311,45 +318,40 @@ def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent):
     if walkthrough:
         crinoid_multiproc(proj_dir_current + '/single', singles_ls)
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
+    if rm_transit is True:
+        dir_del(rm_dirs[:-1])
     return in1_ls, in2_ls, singles_ls
 
 
+def dir_del(rm_dirs):
+    for folder in rm_dirs:
+        try:
+            shutil.rmtree(folder)
+            dir_name = os.path.basename(folder)
+            print('\n composer is removing the ' + dir_name + ' directory')
+        except FileNotFoundError:
+            pass
+
+
+
+
 if __name__ == '__main__':
-    proj_dir = initialize(proj_dir)
+    proj_dir = initialize(sys.argv[1])
+    sys.path.append(proj_dir)
+    from conf import *
+
 
 ######################################################
 #TODO delete the following:
 ######################################################
-    try:
-        shutil.rmtree(proj_dir + '/qc')
-        print('\n composer is removing directories, FYI \n')
-    except FileNotFoundError:
-        pass
-
-    try:
-        shutil.rmtree(proj_dir + '/trimmed')
-        print('\n composer is removing directories, FYI \n')
-    except FileNotFoundError:
-        pass
-
-    try:
-        shutil.rmtree(proj_dir + '/demultiplexed')
-        print('\n composer is removing directories, FYI \n')
-    except FileNotFoundError:
-        pass
-
-    try:
-        shutil.rmtree(proj_dir + '/parsed')
-        print('\n composer is removing directories, FYI \n')
-    except FileNotFoundError:
-        pass
-
-    try:
-        shutil.rmtree(proj_dir + '/filtered')
-        print('\n composer is removing directories, FYI \n')
-    except FileNotFoundError:
-        pass
+    old_dirs = [proj_dir + '/qc',
+                proj_dir + '/trimmed',
+                proj_dir + '/demultiplexed',
+                proj_dir + '/parsed',
+                proj_dir + '/filtered']
+    dir_del(old_dirs)
 ######################################################
+
 
     if bcs_index:
         bcs_index = proj_dir + '/' + bcs_index
@@ -363,65 +365,25 @@ if __name__ == '__main__':
             sys.exit('incorrect number of files based on index.txt')
     pairs_dict = is_paired(fastq_ls)
     in1_ls, in2_ls = input_sort(paired, pairs_dict)
+    rm_dirs = []
     if initial_qc:
         crinoid_multiproc(proj_dir, fastq_ls)
     if front_trim > 0:
-        scallop_muliproc(proj_dir, procs, front_trim, 0, fastq_ls)
+        scallop_muliproc(proj_dir, procs, front_trim, 0, fastq_ls, rm_dirs)
     if bcs_index:
-        in1_ls, in2_ls = anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls)
+        in1_ls, in2_ls = anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls, rm_dirs)
     if bases_ls:
-        in1_ls, in2_ls, singles_ls = rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic)
+        in1_ls, in2_ls, singles_ls = rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic, rm_dirs)
     if q_min and q_percent:
         try:
-            in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent)
+            in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs)
         except NameError:
-            in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, [], q_min, q_percent)
+            in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, [], q_min, q_percent, rm_dirs)
+
+
+
 
 #    for f1, f2 in zip(in1_ls, in2_ls):
 #        print(os.path.basename(f1) + ' is paired with ' + os.path.basename(f2))
 #    for i in singles_ls:
 #        print(os.path.basename(i) + ' is a single end file')
-
-
-
-######################################################
-#TODO delete the following:
-######################################################
-#    try:
-#        shutil.rmtree(proj_dir + '/qc')
-#        print('\n composer is removing directories, FYI \n')
-#    except FileNotFoundError:
-#        pass
-
-#    try:
-#        shutil.rmtree(proj_dir + '/trimmed')
-#        print('\n composer is removing directories, FYI \n')
-#    except FileNotFoundError:
-#        pass
-
-#    try:
-#        shutil.rmtree(proj_dir + '/demultiplexed')
-#        print('\n composer is removing directories, FYI \n')
-#    except FileNotFoundError:
-#        pass
-
-#    try:
-#        shutil.rmtree(proj_dir + '/parsed')
-#        print('\n composer is removing directories, FYI \n')
-#    except FileNotFoundError:
-#        pass
-
-#    try:
-#        shutil.rmtree(proj_dir + '/filtered')
-#        print('\n composer is removing directories, FYI \n')
-#    except FileNotFoundError:
-#        pass
-######################################################
-
-
-
-
-
-
-
-

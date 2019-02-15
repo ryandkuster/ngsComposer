@@ -1,15 +1,16 @@
-# provide the full path to your fastq files (only place full path is used)
-proj_dir = '/home/ryan/Delete_me/project2'
-
 # if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True
 
-# choose number of subprocesses that can run simultaneously
+# choose number of subprocesses that should run simultaneously
 procs = 2
 
 # create initial QC output
 initial_qc = True
+
+# perform qc step at each filtering stage (time-consuming, but informative)
 walkthrough = True
+
+# run from beginning to end without pausing at qc steps
 walkaway = True
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
@@ -33,5 +34,5 @@ q_min = 30
 # percentage of reads >/= q_min quality scores (use 'False' to skip)
 q_percent = 95
 
-# optionally remove each intermediate file
-remove_intermediates = True
+# optionally remove each transitional file folder to save space
+rm_transit = True
