@@ -64,7 +64,7 @@ def anemone_init(
         except TypeError:
             pass
     if in2:
-        anemone(
+        of1_ls, of2_ls = anemone(
             in1, in2, out1, out2, of1_ls,
             of2_ls, mismatch, 3000000, R1_bcs, proj_dir, True)
         if dual_index is True:
@@ -279,6 +279,8 @@ def anemone(
                 x.close()
             for x in of2_ls:
                 x.close()
+            of1_ls[0] = open(proj_dir + '/unknown.' + out1, 'w')
+            of2_ls[0] = open(proj_dir + '/unknown.' + out2, 'w')
             os.rename(proj_dir + '/temp_unknown.' + out1,
                       proj_dir + '/unknown.' + out1)
             os.rename(proj_dir + '/temp_unknown.' + out2,
@@ -290,6 +292,7 @@ def anemone(
             x.close()
         for x in of2_ls:
             x.close()
+    return of1_ls, of2_ls
 
 
 def anemone_single(
@@ -414,3 +417,4 @@ def second_pass(
 
 if __name__ == '__main__':
     anemone_main()
+
