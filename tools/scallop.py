@@ -14,9 +14,17 @@ def scallop_main():
     scallop(in1, front_trim, back_trim, proj_dir, out1)
 
 
+def scallop_comp(front_trim, back_trim, proj_dir, in1):
+    '''
+    composer entry point to scallop
+    '''
+    out1 = proj_dir + '/' + os.path.basename(in1)
+    scallop(in1, front_trim, back_trim, proj_dir, out1)
+
+
 def scallop(in1, front_trim, back_trim, proj_dir, out1):
     '''
-    trim defined base numbers from the front or end of reads
+    trim defined base numbers from the front or from the end of reads
     '''
     if back_trim == 0:
         back_trim = None
@@ -32,12 +40,17 @@ def scallop(in1, front_trim, back_trim, proj_dir, out1):
                 o.write(line)
 
 
-def scallop_comp(front_trim, back_trim, proj_dir, in1):
+def scallop_fixed():
     '''
-    composer entry point to scallop
+    trim defined slice of reads, producing constant read length
     '''
-    out1 = proj_dir + '/' + os.path.basename(in1)
-    scallop(in1, front_trim, back_trim, proj_dir, out1)
+    #TODO open qscores raw file
+    #TODO find point in raw file where read length is not variable
+    #TODO calculate median and corrresponding IQRs
+    #TODO find point at which q30 is acceptable x number of times (1 for now)
+    #TODO run essentially identical function as 'scallop' without negative indexing
+
+
 
 
 if __name__ == '__main__':

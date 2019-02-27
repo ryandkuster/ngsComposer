@@ -374,6 +374,9 @@ if __name__ == '__main__':
         in1_ls, in2_ls = anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls, rm_dirs)
     if bases_ls:
         in1_ls, in2_ls, singles_ls = rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic, rm_dirs)
+    print(in1_ls)
+    print(in2_ls)
+    print(singles_ls)
     if q_min and q_percent:
         try:
             in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs)
