@@ -51,7 +51,5 @@ def scallop_fixed():
     #TODO run essentially identical function as 'scallop' without negative indexing
 
 
-
-
 if __name__ == '__main__':
     scallop_main()
