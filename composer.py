@@ -9,6 +9,7 @@ from functools import partial
 from tools.scallop import scallop_comp
 from tools.anemone import anemone_comp
 from tools.rotifer import rotifer_comp
+from tools.scallop import scallop_end
 from tools.krill import krill_comp
 from tools.crinoid import crinoid_comp
 
@@ -288,6 +289,12 @@ def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genom
     return in1_ls, in2_ls, singles_ls
 
 
+def scallop_end_multiproc(in1_ls, in2_ls, singles_ls, q_min, rm_dirs):
+    proj_dir_current = proj_dir + '/end_trimmed'
+    rm_dirs.append(proj_dir_current)
+    os.mkdir(proj_dir_current)
+
+
 def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs):
     '''
     create user-defined subprocesses to parse based on expected sequences
@@ -299,6 +306,7 @@ def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, r
     os.mkdir(proj_dir_current + '/single/pe_lib')
     os.mkdir(proj_dir_current + '/single/se_lib')
     os.mkdir(proj_dir_current + '/paired')
+    #TODO direct krill directories for in1/2 lists vs. singles_ls (pe_lib)
     krill_part = partial(krill_comp, in1_ls, in2_ls, q_min, q_percent, proj_dir_current)
     pool = Pool(procs)
     pool.map(krill_part, in1_ls)
@@ -374,9 +382,11 @@ if __name__ == '__main__':
         in1_ls, in2_ls = anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls, rm_dirs)
     if bases_ls:
         in1_ls, in2_ls, singles_ls = rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic, rm_dirs)
-    print(in1_ls)
-    print(in2_ls)
-    print(singles_ls)
+    if end_trim is True:
+        try:
+            in1_ls, in2_ls, singles_ls = scallop_end_multiproc(in1_ls, in2_ls, singles_ls, q_min, rm_dirs)
+        except NameError:
+            in1_ls, in2_ls, singles_ls = scallop_end_multiproc(in1_ls, in2_ls, [], q_min, rm_dirs)
     if q_min and q_percent:
         try:
             in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs)
@@ -386,7 +396,15 @@ if __name__ == '__main__':
 
 
 
-#    for f1, f2 in zip(in1_ls, in2_ls):
-#        print(os.path.basename(f1) + ' is paired with ' + os.path.basename(f2))
-#    for i in singles_ls:
-#        print(os.path.basename(i) + ' is a single end file')
+
+
+
+
+
+
+
+
+
+
+
+

@@ -40,15 +40,63 @@ def scallop(in1, front_trim, back_trim, proj_dir, out1):
                 o.write(line)
 
 
-def scallop_fixed():
+def scallop_end(): #TODO modify this to be second composer entry point
+    '''
+    composer entry point for trimming based on qc stats
+    '''
+    in1 = sys.argv[1]
+    qmin = int(sys.argv[2])
+    in1_path, in1_file = os.path.split(in1)
+    in1_scores = in1_path + '/qc/qscores.' + in1_file
+    print(in1_scores)
+    in1_mx = []
+    with open(in1_scores) as f:
+        for i in f:
+            tmp = []
+            i = i.rstrip()
+            for j in i.split(','):
+                tmp.append(int(j))
+            in1_mx.append(tmp)
+    max_len = len(in1_mx)
+    uniform = max_len
+    len_ls = [sum(i) for i in in1_mx]
+    for index, i in enumerate(len_ls):
+        if i != max(len_ls):
+            uniform = index
+            break
+    print(str(uniform) + ' is the last base out of ' + str(max_len) + ' bases to keep for uniform length')
+    for index, i in enumerate(len_ls):
+        len_ls[index] = (i + 1)/2
+        if len_ls[index] % 1 == 0:
+            len_ls[index] = (len_ls[index]/2)
+        else:
+            len_ls[index] = (len_ls[index] - 0.5)/2
+    scallop_uniform(len_ls, in1_mx, uniform, qmin)
+
+
+def scallop_uniform(len_ls, in1_mx, uniform, qmin):
     '''
     trim defined slice of reads, producing constant read length
     '''
-    #TODO open qscores raw file
-    #TODO find point in raw file where read length is not variable
-    #TODO calculate median and corrresponding IQRs
-    #TODO find point at which q30 is acceptable x number of times (1 for now)
     #TODO run essentially identical function as 'scallop' without negative indexing
+    for j in range((uniform - 1), -1, -1):
+        index, x, x_adjust = 0, 0, 0
+        for i in in1_mx[j]:
+            index += i
+            if x_adjust == 0 and index == len_ls[j] - 0.5:
+                x_adjust = x
+            if index >= len_ls[j]:
+                if x_adjust == 0:
+                    target = x
+                    break
+                else:
+                    target = (x + x_adjust)/2
+                    break
+            x += 1
+        if target >= qmin:
+            print(str(j + 1) + ' is score ' + str(target) + ' and is acceptable')
+        else:
+            print(str(j + 1) + ' is score ' + str(target))
 
 
 if __name__ == '__main__':

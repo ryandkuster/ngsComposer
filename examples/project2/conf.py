@@ -34,5 +34,8 @@ q_min = 30
 # percentage of reads >/= q_min quality scores (use 'False' to skip)
 q_percent = 95
 
+# trim read 3' ends based on q_min threshold
+end_trim = True
+
 # optionally remove each transitional file folder to save space
 rm_transit = True

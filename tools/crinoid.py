@@ -5,14 +5,14 @@ import os
 def crinoid_main():
     in1 = sys.argv[1] # input sequences
     proj_dir = os.path.dirname(os.path.abspath(in1))
-    out1 = proj_dir + '/nucleotides_' + os.path.basename(in1) + '.txt'
-    out2 = proj_dir + '/qscores_' + os.path.basename(in1) + '.txt'
+    out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
+    out2 = proj_dir + '/qscores.' + os.path.basename(in1)
     crinoid(in1, out1, out2)
 
 
 def crinoid_comp(proj_dir, in1):
-    out1 = proj_dir + '/nucleotides_' + os.path.basename(in1) + '.txt'
-    out2 = proj_dir + '/qscores_' + os.path.basename(in1) + '.txt'
+    out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
+    out2 = proj_dir + '/qscores.' + os.path.basename(in1)
     crinoid(in1, out1, out2)
 
 
