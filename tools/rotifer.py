@@ -32,8 +32,8 @@ def rotifer_comp(in1_ls, in2_ls, bases_ls, non_genomic, proj_dir_current, in1):
         pe_2 = proj_dir_current + '/paired/' + os.path.basename(in2)
         se_2 = proj_dir_current + '/single/' + os.path.basename(in2)
         rotifer(bases_ls, in1, in2, pe_1, pe_2, se_1, se_2)
-    except ValueError:
-        rotifer(bases_ls, in1, pe_1, se_1)
+    except (IndexError, ValueError) as e:
+        rotifer_single(bases_ls, in1, se_1)
 
 
 def rotifer(bases_ls, in1, in2, pe_1, pe_2, se_1, se_2):
@@ -70,11 +70,11 @@ def rotifer(bases_ls, in1, in2, pe_1, pe_2, se_1, se_2):
                     y, entry1, entry2 = 0, "", ""
 
 
-def rotifer_single(bases_ls, in1, pe_1, se_1):
+def rotifer_single(bases_ls, in1, se_1):
     '''
     parse single-end reads for recognized motifs
     '''
-    with open(in1) as f1, open(pe_1, "w") as pe_o1, open(se_1, "w") as se_o1:
+    with open(in1) as f1, open(se_1, "w") as se_o1:
         y, entry1 = 0, ""
         for line1 in f1:
             y += 1
@@ -84,10 +84,9 @@ def rotifer_single(bases_ls, in1, pe_1, se_1):
                 rotifer1 = rotifer_test(line1, bases_ls)
             if y == 4:
                 if rotifer1 is False:
-                    pe_o1.write(entry1)
+                    se_o1.write(entry1)
                     y, entry1 = 0, ""
                 elif rotifer1 is True:
-                    se_o1.write(entry1)
                     y, entry1 = 0, ""
 
 

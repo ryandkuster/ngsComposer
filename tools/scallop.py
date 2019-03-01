@@ -28,8 +28,6 @@ def scallop(in1, front_trim, back_trim, proj_dir, out1):
     '''
     if back_trim == 0:
         back_trim = None
-    else:
-        back_trim = - back_trim
     with open(in1) as f, open(out1, 'w') as o:
         for i, line in enumerate(f):
             i += 1
@@ -40,15 +38,14 @@ def scallop(in1, front_trim, back_trim, proj_dir, out1):
                 o.write(line)
 
 
-def scallop_end(): #TODO modify this to be second composer entry point
+def scallop_end(proj_dir, q_min, in1):
     '''
     composer entry point for trimming based on qc stats
     '''
-    in1 = sys.argv[1]
-    qmin = int(sys.argv[2])
     in1_path, in1_file = os.path.split(in1)
+    _, in1_pe_se = os.path.split(in1_path)
+    proj_dir += '/' + in1_pe_se
     in1_scores = in1_path + '/qc/qscores.' + in1_file
-    print(in1_scores)
     in1_mx = []
     with open(in1_scores) as f:
         for i in f:
@@ -58,28 +55,29 @@ def scallop_end(): #TODO modify this to be second composer entry point
                 tmp.append(int(j))
             in1_mx.append(tmp)
     max_len = len(in1_mx)
-    uniform = max_len
     len_ls = [sum(i) for i in in1_mx]
-    for index, i in enumerate(len_ls):
-        if i != max(len_ls):
-            uniform = index
-            break
-    print(str(uniform) + ' is the last base out of ' + str(max_len) + ' bases to keep for uniform length')
+#    uniform = max_len
+#    for index, i in enumerate(len_ls):
+#        if i != max(len_ls):
+#            uniform = index
+#            break
+#    print(str(uniform) + ' is the last base out of ' + str(max_len) + ' bases to keep for uniform length')
     for index, i in enumerate(len_ls):
         len_ls[index] = (i + 1)/2
         if len_ls[index] % 1 == 0:
             len_ls[index] = (len_ls[index]/2)
         else:
             len_ls[index] = (len_ls[index] - 0.5)/2
-    scallop_uniform(len_ls, in1_mx, uniform, qmin)
+    back_trim = scallop_auto(len_ls, in1_mx, max_len, q_min)
+    scallop_comp(0, back_trim, proj_dir, in1)
 
 
-def scallop_uniform(len_ls, in1_mx, uniform, qmin):
+def scallop_auto(len_ls, in1_mx, max_len, q_min):
     '''
     trim defined slice of reads, producing constant read length
     '''
-    #TODO run essentially identical function as 'scallop' without negative indexing
-    for j in range((uniform - 1), -1, -1):
+    back_trim = None
+    for j in range((max_len - 1), -1, -1):
         index, x, x_adjust = 0, 0, 0
         for i in in1_mx[j]:
             index += i
@@ -93,10 +91,10 @@ def scallop_uniform(len_ls, in1_mx, uniform, qmin):
                     target = (x + x_adjust)/2
                     break
             x += 1
-        if target >= qmin:
-            print(str(j + 1) + ' is score ' + str(target) + ' and is acceptable')
-        else:
-            print(str(j + 1) + ' is score ' + str(target))
+        if target >= q_min:
+            back_trim = j + 1
+            break
+    return back_trim
 
 
 if __name__ == '__main__':

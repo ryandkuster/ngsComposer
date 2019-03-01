@@ -130,7 +130,7 @@ def input_sort(paired, pairs_dict):
         if paired is True and len(values) == 2:
             input_paired(values, in1_ls, in2_ls)
         elif paired is True and len(values) != 2:
-            sys.exit("paired R1 and R2 reads don't match expected number\n"
+            sys.exit("R1 and R2 pairs not found, expect paired library\n"
                      + "check the naming conventions of the bcs_index")
         if paired is False:
             input_single(values, in1_ls, in2_ls)
@@ -286,13 +286,31 @@ def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genom
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
     if rm_transit is True:
         dir_del(rm_dirs[:-1])
-    return in1_ls, in2_ls, singles_ls
+    return fastq_ls, in1_ls, in2_ls, singles_ls
 
 
-def scallop_end_multiproc(in1_ls, in2_ls, singles_ls, q_min, rm_dirs):
+def scallop_end_multiproc(fastq_ls, singles_ls, q_min, rm_dirs):
     proj_dir_current = proj_dir + '/end_trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
+    os.mkdir(proj_dir_current + '/single')
+    os.mkdir(proj_dir_current + '/paired')
+    scallop_end_part = partial(scallop_end, proj_dir_current, q_min)
+    pool = Pool(procs)
+    pool.map(scallop_end_part, fastq_ls)
+    pool.close()
+    if singles_ls:
+        scallop_end_part = partial(scallop_end, proj_dir_current, q_min)
+        pool = Pool(procs)
+        pool.map(scallop_end_part, singles_ls)
+        pool.close()
+    singles_ls, fastq_ls, in1_ls, in2_ls = [], [], [], []
+    singles_ls, fastq_ls = pathfinder(proj_dir_current, singles_ls, fastq_ls)
+    pairs_dict = is_paired(fastq_ls)
+    in1_ls, in2_ls = input_sort(paired, pairs_dict)
+    if rm_transit is True:
+        dir_del(rm_dirs[:-1])
+    return fastq_ls, in1_ls, in2_ls, singles_ls
 
 
 def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs):
@@ -328,7 +346,7 @@ def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, r
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
     if rm_transit is True:
         dir_del(rm_dirs[:-1])
-    return in1_ls, in2_ls, singles_ls
+    return fastq_ls, in1_ls, in2_ls, singles_ls
 
 
 def dir_del(rm_dirs):
@@ -356,6 +374,7 @@ if __name__ == '__main__':
                 proj_dir + '/trimmed',
                 proj_dir + '/demultiplexed',
                 proj_dir + '/parsed',
+                proj_dir + '/end_trimmed',
                 proj_dir + '/filtered']
     dir_del(old_dirs)
 ######################################################
@@ -381,17 +400,17 @@ if __name__ == '__main__':
     if bcs_index:
         in1_ls, in2_ls = anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls, rm_dirs)
     if bases_ls:
-        in1_ls, in2_ls, singles_ls = rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic, rm_dirs)
+        fastq_ls, in1_ls, in2_ls, singles_ls = rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic, rm_dirs)
     if end_trim is True:
         try:
-            in1_ls, in2_ls, singles_ls = scallop_end_multiproc(in1_ls, in2_ls, singles_ls, q_min, rm_dirs)
+            fastq_ls, in1_ls, in2_ls, singles_ls = scallop_end_multiproc(fastq_ls, singles_ls, q_min, rm_dirs)
         except NameError:
-            in1_ls, in2_ls, singles_ls = scallop_end_multiproc(in1_ls, in2_ls, [], q_min, rm_dirs)
+            fastq_ls, in1_ls, in2_ls, singles_ls = scallop_end_multiproc(fastq_ls, [], q_min, rm_dirs)
     if q_min and q_percent:
         try:
-            in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs)
+            fastq_ls, in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs)
         except NameError:
-            in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, [], q_min, q_percent, rm_dirs)
+            fastq_ls, in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, [], q_min, q_percent, rm_dirs)
 
 
 
