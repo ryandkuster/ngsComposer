@@ -29,11 +29,11 @@ def scallop(in1, front_trim, back_trim, proj_dir, out1):
     if back_trim == 0:
         back_trim = None
     with open(in1) as f, open(out1, 'w') as o:
-        for i, line in enumerate(f):
+        i = 0
+        for line in f:
             i += 1
             if i % 2 == 0:
-                line = line.rstrip()[front_trim:back_trim] + "\n"
-                o.write(line)
+                o.write(line.rstrip()[front_trim:back_trim] + "\n")
             else:
                 o.write(line)
 
@@ -56,12 +56,11 @@ def scallop_end(proj_dir, q_min, in1):
             in1_mx.append(tmp)
     max_len = len(in1_mx)
     len_ls = [sum(i) for i in in1_mx]
-#    uniform = max_len
-#    for index, i in enumerate(len_ls):
-#        if i != max(len_ls):
-#            uniform = index
-#            break
-#    print(str(uniform) + ' is the last base out of ' + str(max_len) + ' bases to keep for uniform length')
+    try:
+        if uniform:
+            max_len = scallop_uniform(len_ls, max_len)
+    except NameError:
+        pass
     for index, i in enumerate(len_ls):
         len_ls[index] = (i + 1)/2
         if len_ls[index] % 1 == 0:
@@ -95,6 +94,15 @@ def scallop_auto(len_ls, in1_mx, max_len, q_min):
             back_trim = j + 1
             break
     return back_trim
+
+
+def scallop_uniform(len_ls, max_len):
+    uniform = max_len
+    for index, i in enumerate(len_ls):
+        if i != max(len_ls):
+            uniform = index
+            break
+    return uniform
 
 
 if __name__ == '__main__':

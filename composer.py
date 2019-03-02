@@ -224,14 +224,24 @@ def crinoid_multiproc(proj_dir, fastq_ls):
     pool.close()
 
 
-def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls, rm_dirs):
+def scallop_muliproc(
+        proj_dir,
+        procs,
+        front_trim,
+        back_trim,
+        fastq_ls,
+        rm_dirs):
     '''
     create user-defined subprocesses to trim every file in fastq_ls
     '''
     proj_dir_current = proj_dir + '/trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
-    scallop_part = partial(scallop_comp, front_trim, back_trim, proj_dir_current)
+    scallop_part = partial(
+            scallop_comp,
+            front_trim,
+            back_trim,
+            proj_dir_current)
     pool = Pool(procs)
     pool.map(scallop_part, fastq_ls)
     pool.close()
@@ -241,15 +251,27 @@ def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls, rm_dirs):
         in2_ls[i] = proj_dir_current + '/' + os.path.basename(filename)
 
 
-def anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls, rm_dirs):
+def anemone_multiproc(
+        walkthrough,
+        proj_dir,
+        mismatch,
+        bcs_dict,
+        in1_ls,
+        in2_ls,
+        rm_dirs):
     '''
     create user-defined subprocesses to demultiplex
     '''
     proj_dir_current = proj_dir + '/demultiplexed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
-    anemone_part = partial(anemone_comp, in1_ls, in2_ls, mismatch, bcs_dict,
-                        proj_dir_current)
+    anemone_part = partial(
+            anemone_comp,
+            in1_ls,
+            in2_ls,
+            mismatch,
+            bcs_dict,
+            proj_dir_current)
     pool = Pool(procs)
     pool.map(anemone_part, in1_ls)
     pool.close()
@@ -264,7 +286,14 @@ def anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls,
     return in1_ls, in2_ls
 
 
-def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic, rm_dirs):
+def rotifer_multiproc(
+        walkthrough,
+        proj_dir,
+        in1_ls,
+        in2_ls,
+        bases_ls,
+        non_genomic,
+        rm_dirs):
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
@@ -273,7 +302,13 @@ def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genom
     os.mkdir(proj_dir_current)
     os.mkdir(proj_dir_current + '/single')
     os.mkdir(proj_dir_current + '/paired')
-    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, bases_ls, non_genomic, proj_dir_current)
+    rotifer_part = partial(
+            rotifer_comp,
+            in1_ls,
+            in2_ls,
+            bases_ls,
+            non_genomic,
+            proj_dir_current)
     pool = Pool(procs)
     pool.map(rotifer_part, in1_ls)
     pool.close()
@@ -289,7 +324,11 @@ def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genom
     return fastq_ls, in1_ls, in2_ls, singles_ls
 
 
-def scallop_end_multiproc(fastq_ls, singles_ls, q_min, rm_dirs):
+def scallop_end_multiproc(
+        fastq_ls,
+        singles_ls,
+        q_min,
+        rm_dirs):
     proj_dir_current = proj_dir + '/end_trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
@@ -313,7 +352,14 @@ def scallop_end_multiproc(fastq_ls, singles_ls, q_min, rm_dirs):
     return fastq_ls, in1_ls, in2_ls, singles_ls
 
 
-def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs):
+def krill_multiproc(
+        walkthrough,
+        in1_ls,
+        in2_ls,
+        singles_ls,
+        q_min,
+        q_percent,
+        rm_dirs):
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
@@ -324,13 +370,24 @@ def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, r
     os.mkdir(proj_dir_current + '/single/pe_lib')
     os.mkdir(proj_dir_current + '/single/se_lib')
     os.mkdir(proj_dir_current + '/paired')
-    #TODO direct krill directories for in1/2 lists vs. singles_ls (pe_lib)
-    krill_part = partial(krill_comp, in1_ls, in2_ls, q_min, q_percent, proj_dir_current)
+    krill_part = partial(
+            krill_comp,
+            in1_ls,
+            in2_ls,
+            q_min,
+            q_percent,
+            proj_dir_current)
     pool = Pool(procs)
     pool.map(krill_part, in1_ls)
     pool.close()
     if singles_ls:
-        krill_part = partial(krill_comp, in1_ls, in2_ls, q_min, q_percent, proj_dir_current)
+        krill_part = partial(
+                krill_comp,
+                in1_ls,
+                in2_ls,
+                q_min,
+                q_percent,
+                proj_dir_current)
         pool = Pool(procs)
         pool.map(krill_part, singles_ls)
         pool.close()
@@ -357,8 +414,6 @@ def dir_del(rm_dirs):
             print('\n composer is removing the ' + dir_name + ' directory')
         except FileNotFoundError:
             pass
-
-
 
 
 if __name__ == '__main__':
@@ -396,34 +451,60 @@ if __name__ == '__main__':
     if initial_qc:
         crinoid_multiproc(proj_dir, fastq_ls)
     if front_trim > 0:
-        scallop_muliproc(proj_dir, procs, front_trim, 0, fastq_ls, rm_dirs)
+        scallop_muliproc(
+            proj_dir,
+            procs,
+            front_trim,
+            0,
+            fastq_ls,
+            rm_dirs)
     if bcs_index:
-        in1_ls, in2_ls = anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls, in2_ls, rm_dirs)
+        in1_ls, in2_ls = anemone_multiproc(
+                walkthrough,
+                proj_dir,
+                mismatch,
+                bcs_dict,
+                in1_ls,
+                in2_ls,
+                rm_dirs)
     if bases_ls:
-        fastq_ls, in1_ls, in2_ls, singles_ls = rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls, non_genomic, rm_dirs)
+        fastq_ls, in1_ls, in2_ls, singles_ls = rotifer_multiproc(
+                walkthrough,
+                proj_dir,
+                in1_ls,
+                in2_ls,
+                bases_ls,
+                non_genomic,
+                rm_dirs)
     if end_trim is True:
         try:
-            fastq_ls, in1_ls, in2_ls, singles_ls = scallop_end_multiproc(fastq_ls, singles_ls, q_min, rm_dirs)
+            fastq_ls, in1_ls, in2_ls, singles_ls = scallop_end_multiproc(
+                fastq_ls,
+                singles_ls,
+                q_min,
+                rm_dirs)
         except NameError:
-            fastq_ls, in1_ls, in2_ls, singles_ls = scallop_end_multiproc(fastq_ls, [], q_min, rm_dirs)
+            fastq_ls, in1_ls, in2_ls, singles_ls = scallop_end_multiproc(
+                fastq_ls,
+                [],
+                q_min,
+                rm_dirs)
     if q_min and q_percent:
         try:
-            fastq_ls, in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs)
+            fastq_ls, in1_ls, in2_ls, singles_ls = krill_multiproc(
+                walkthrough,
+                in1_ls,
+                in2_ls,
+                singles_ls,
+                q_min,
+                q_percent,
+                rm_dirs)
         except NameError:
-            fastq_ls, in1_ls, in2_ls, singles_ls = krill_multiproc(walkthrough, in1_ls, in2_ls, [], q_min, q_percent, rm_dirs)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            fastq_ls, in1_ls, in2_ls, singles_ls = krill_multiproc(
+                walkthrough,
+                in1_ls,
+                in2_ls,
+                [],
+                q_min,
+                q_percent,
+                rm_dirs)

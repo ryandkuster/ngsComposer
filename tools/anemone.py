@@ -417,4 +417,3 @@ def second_pass(
 
 if __name__ == '__main__':
     anemone_main()
-
