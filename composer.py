@@ -283,7 +283,7 @@ def anemone_multiproc(
         crinoid_multiproc(proj_dir_current, fastq_ls)
     if rm_transit is True:
         dir_del(rm_dirs[:-1])
-    return in1_ls, in2_ls
+    return fastq_ls, in1_ls, in2_ls
 
 
 def rotifer_multiproc(
@@ -325,6 +325,7 @@ def rotifer_multiproc(
 
 
 def scallop_end_multiproc(
+        bases_ls,
         fastq_ls,
         singles_ls,
         q_min,
@@ -332,8 +333,9 @@ def scallop_end_multiproc(
     proj_dir_current = proj_dir + '/end_trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
-    os.mkdir(proj_dir_current + '/single')
-    os.mkdir(proj_dir_current + '/paired')
+    if bases_ls:
+        os.mkdir(proj_dir_current + '/single')
+        os.mkdir(proj_dir_current + '/paired')
     scallop_end_part = partial(scallop_end, proj_dir_current, q_min)
     pool = Pool(procs)
     pool.map(scallop_end_part, fastq_ls)
@@ -442,13 +444,13 @@ if __name__ == '__main__':
         bcs_dict = {}
         bcs_index = ''
     fastq_ls, gz = fastq_reader(proj_dir, bcs_dict)
-    if paired:
+    if bcs_index and paired is True:
         if len(fastq_ls)/2 != len(bcs_dict):
             sys.exit('incorrect number of files based on index.txt')
     pairs_dict = is_paired(fastq_ls)
     in1_ls, in2_ls = input_sort(paired, pairs_dict)
     rm_dirs = []
-    if initial_qc:
+    if initial_qc is True:
         crinoid_multiproc(proj_dir, fastq_ls)
     if front_trim > 0:
         scallop_muliproc(
@@ -459,7 +461,7 @@ if __name__ == '__main__':
             fastq_ls,
             rm_dirs)
     if bcs_index:
-        in1_ls, in2_ls = anemone_multiproc(
+        fastq_ls, in1_ls, in2_ls = anemone_multiproc(
                 walkthrough,
                 proj_dir,
                 mismatch,
@@ -479,12 +481,14 @@ if __name__ == '__main__':
     if end_trim is True:
         try:
             fastq_ls, in1_ls, in2_ls, singles_ls = scallop_end_multiproc(
+                bases_ls,
                 fastq_ls,
                 singles_ls,
                 q_min,
                 rm_dirs)
         except NameError:
             fastq_ls, in1_ls, in2_ls, singles_ls = scallop_end_multiproc(
+                bases_ls,
                 fastq_ls,
                 [],
                 q_min,

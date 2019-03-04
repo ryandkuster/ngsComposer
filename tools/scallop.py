@@ -44,9 +44,10 @@ def scallop_end(proj_dir, q_min, in1):
     '''
     in1_path, in1_file = os.path.split(in1)
     _, in1_pe_se = os.path.split(in1_path)
-    proj_dir += '/' + in1_pe_se
+    if in1_pe_se == 'paired' or in1_pe_se == 'single':
+        proj_dir += '/' + in1_pe_se
     in1_scores = in1_path + '/qc/qscores.' + in1_file
-    in1_mx = []
+    in1_mx = []    
     with open(in1_scores) as f:
         for i in f:
             tmp = []
