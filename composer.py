@@ -66,7 +66,7 @@ def fastq_reader(proj_dir, bcs_dict):
                 fastq_test = is_gz(proj_dir + '/' + filename)
                 gz.append(1)
             if fastq_test is None:
-                raise TypeError
+                sys.exit(filename + ' was not expected in project directory')
             fastq_ls.append(proj_dir + '/' + filename)
     return fastq_ls, gz
 
@@ -77,11 +77,11 @@ def is_fq(filename):
     '''
     with open(filename) as f:
         for i, line in enumerate(f):
-            if i == 1 and line[0] != '@':
+            if i == 0 and line[0] != '@':
                 return
-            if i == 3 and line[0] != '+':
+            if i == 2 and line[0] != '+':
                 return
-            if i == 5 and line[0] != '@':
+            if i == 4 and line[0] != '@':
                 return
             else:
                 return True
@@ -93,11 +93,11 @@ def is_gz(filename):
     '''
     with gzip.open(filename, 'rt') as f:
         for i, line in enumerate(f):
-            if i == 1 and line[0] != '@':
+            if i == 0 and line[0] != '@':
                 return
-            if i == 3 and line[0] != '+':
+            if i == 2 and line[0] != '+':
                 return
-            if i == 5 and line[0] != '@':
+            if i == 4 and line[0] != '@':
                 return
             else:
                 sys.exit("sorry, .gz functionality is not currently supported")
