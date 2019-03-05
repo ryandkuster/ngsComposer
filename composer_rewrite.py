@@ -239,8 +239,6 @@ def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls,
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
     if walkthrough:
         crinoid_multiproc(proj_dir_current, fastq_ls)
-    if rm_transit is True:
-        dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
