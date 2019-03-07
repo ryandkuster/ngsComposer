@@ -104,18 +104,18 @@ def is_paired(fastq_ls):
     return pairs_dict
 
 
-def input_sort(paired, pairs_dict):
+def input_sort(pairs_dict):
     '''
     if headers identical, in1 and in2 lists ordered to keep pairing
     '''
     in1_ls, in2_ls = [], []
     for values in pairs_dict.values():
-        if paired is True and len(values) == 2:
+        if cfg.paired is True and len(values) == 2:
             in1_ls, in2_ls = input_paired(values, in1_ls, in2_ls)
-        elif paired is True and len(values) != 2:
+        elif cfg.paired is True and len(values) != 2:
             sys.exit("R1 and R2 pairs not found, expect paired library\n"
                      + "check the naming conventions of the bcs_index")
-        if paired is False:
+        if cfg.paired is False:
             in1_ls, in2_ls = input_single(values, in1_ls, in2_ls)
     return in1_ls, in2_ls
 
@@ -158,6 +158,9 @@ def input_single(values, in1_ls, in2_ls):
 
 
 def dir_del(rm_dirs):
+    '''
+    deletes specified list of folders
+    '''
     for folder in rm_dirs:
         try:
             shutil.rmtree(folder)
@@ -168,14 +171,17 @@ def dir_del(rm_dirs):
 
 
 def pool_multi(pool_part, pool_ls):
-    pool = Pool(procs)
+    '''
+    create n subprocesses of current tool
+    '''
+    pool = Pool(cfg.procs)
     pool.map(pool_part, pool_ls)
     pool.close()
 
 
 def pathfinder(proj_dir_current):
     '''
-    walk current folder and pull files as lists
+    walk current directory and pull files as lists
     '''
     singles_ls, fastq_ls, in1_ls, in2_ls = [], [], [], []
     for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
@@ -188,11 +194,14 @@ def pathfinder(proj_dir_current):
             else:
                 fastq_ls.append(fullname)
     pairs_dict = is_paired(fastq_ls)
-    in1_ls, in2_ls = input_sort(paired, pairs_dict)
+    in1_ls, in2_ls = input_sort(pairs_dict)
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
 def concater(proj_dir_current):
+    '''
+    walk current directory and concatenate files with identical names
+    '''
     concat_dict, cat_ls = {}, []
     for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
         for i in files:
@@ -225,45 +234,41 @@ def crinoid_multiproc(proj_dir, fastq_ls):
     pool_multi(crinoid_part, fastq_ls)
 
 
-def scallop_muliproc(proj_dir, procs, front_trim, back_trim, fastq_ls,
-            rm_dirs):
+def scallop_muliproc(proj_dir, fastq_ls):
     '''
     create user-defined subprocesses to trim every file in fastq_ls
     '''
     proj_dir_current = proj_dir + '/trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
-    scallop_part = partial(scallop_comp, front_trim, back_trim,
-                           proj_dir_current)
+    scallop_part = partial(scallop_comp, cfg.front_trim, 0, proj_dir_current)
     pool_multi(scallop_part, fastq_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
-    if walkthrough:
+    if cfg.walkthrough:
         crinoid_multiproc(proj_dir_current, fastq_ls)
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
-def anemone_multiproc(walkthrough, proj_dir, mismatch, bcs_dict, in1_ls,
-            in2_ls, rm_dirs):
+def anemone_multiproc(proj_dir, bcs_dict, in1_ls, in2_ls):
     '''
     create user-defined subprocesses to demultiplex
     '''
     proj_dir_current = proj_dir + '/demultiplexed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
-    anemone_part = partial(anemone_comp, in1_ls, in2_ls, mismatch, bcs_dict,
-            proj_dir_current)
+    anemone_part = partial(anemone_comp, in1_ls, in2_ls, cfg.mismatch,
+            bcs_dict, proj_dir_current)
     pool_multi(anemone_part, in1_ls)
     concater(proj_dir_current)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
-    if walkthrough:
+    if cfg.walkthrough:
         crinoid_multiproc(proj_dir_current, fastq_ls)
-    if rm_transit is True:
+    if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
-def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls,
-            non_genomic, rm_dirs):
+def rotifer_multiproc(proj_dir, in1_ls, in2_ls):
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
@@ -272,29 +277,29 @@ def rotifer_multiproc(walkthrough, proj_dir, in1_ls, in2_ls, bases_ls,
     os.mkdir(proj_dir_current)
     os.mkdir(proj_dir_current + '/single')
     os.mkdir(proj_dir_current + '/paired')
-    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, bases_ls, non_genomic,
-            proj_dir_current)
+    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, cfg.bases_ls,
+            cfg.non_genomic, proj_dir_current)
     pool_multi(rotifer_part, in1_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
-    if walkthrough:
+    if cfg.walkthrough:
         crinoid_multiproc(proj_dir_current + '/single', singles_ls)
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
-    if rm_transit is True:
+    if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
-def scallop_end_multiproc(bases_ls, fastq_ls, singles_ls, q_min, rm_dirs):
+def scallop_end_multiproc(fastq_ls, singles_ls):
     '''
     automated 3' end read trimming based on q_min value
     '''
     proj_dir_current = proj_dir + '/end_trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
-    if bases_ls:
+    if cfg.bases_ls:
         os.mkdir(proj_dir_current + '/single')
         os.mkdir(proj_dir_current + '/paired')
-    if walkthrough is False and rm_dirs[-2] != proj_dir + '/qc':
+    if cfg.walkthrough is False and rm_dirs[-2] != proj_dir + '/qc':
         try:
             crinoid_multiproc(rm_dirs[-2], fastq_ls)
         except FileNotFoundError:
@@ -307,19 +312,18 @@ def scallop_end_multiproc(bases_ls, fastq_ls, singles_ls, q_min, rm_dirs):
             crinoid_multiproc(rm_dirs[-2] + '/paired', fastq_ls)
         except FileNotFoundError:
             pass
-    scallop_end_part = partial(scallop_end, proj_dir_current, q_min)
+    scallop_end_part = partial(scallop_end, proj_dir_current, cfg.q_min)
     pool_multi(scallop_end_part, fastq_ls)
     if singles_ls:
-        scallop_end_part = partial(scallop_end, proj_dir_current, q_min)
+        scallop_end_part = partial(scallop_end, proj_dir_current, cfg.q_min)
         pool_multi(scallop_end_part, singles_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
-    if rm_transit is True:
+    if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
-def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent,
-            rm_dirs):
+def krill_multiproc(in1_ls, in2_ls, singles_ls):
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
@@ -330,21 +334,21 @@ def krill_multiproc(walkthrough, in1_ls, in2_ls, singles_ls, q_min, q_percent,
     os.mkdir(proj_dir_current + '/single/pe_lib')
     os.mkdir(proj_dir_current + '/single/se_lib')
     os.mkdir(proj_dir_current + '/paired')
-    krill_part = partial(krill_comp, in1_ls, in2_ls, q_min, q_percent,
+    krill_part = partial(krill_comp, in1_ls, in2_ls, cfg.q_min, cfg.q_percent,
             proj_dir_current)
     pool_multi(krill_part, in1_ls)
     if singles_ls:
-        krill_part = partial(krill_comp, in1_ls, in2_ls, q_min, q_percent,
-                proj_dir_current)
+        krill_part = partial(krill_comp, in1_ls, in2_ls, cfg.q_min,
+                cfg.q_percent, proj_dir_current)
         pool_multi(krill_part, singles_ls)
     concater(proj_dir_current + '/single')
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
     shutil.rmtree(proj_dir_current + '/single/pe_lib')
     shutil.rmtree(proj_dir_current + '/single/se_lib')
-    if walkthrough:
+    if cfg.walkthrough:
         crinoid_multiproc(proj_dir_current + '/single', singles_ls)
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
-    if rm_transit is True:
+    if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
@@ -353,10 +357,10 @@ if __name__ == '__main__':
     singles_ls, fastq_ls, in1_ls, in2_ls, rm_dirs = [], [], [], [], []
     proj_dir = initialize(sys.argv[1])
     sys.path.append(proj_dir)
-    from conf import *
+    import conf as cfg
 
 ######################################################
-#TODO delete the following:
+# TODO delete the following:
 ######################################################
     old_dirs = [proj_dir + '/qc',
                 proj_dir + '/trimmed',
@@ -367,8 +371,8 @@ if __name__ == '__main__':
     dir_del(old_dirs)
 ######################################################
 
-    if bcs_index:
-        bcs_index = proj_dir + '/' + bcs_index
+    if cfg.bcs_index:
+        bcs_index = proj_dir + '/' + cfg.bcs_index
         bcs_dict = index_reader(bcs_index)
     else:
         bcs_dict = {}
@@ -384,33 +388,32 @@ if __name__ == '__main__':
         if fastq_test is None:
             sys.exit(filename + ' was not expected in project directory')
 
-    if bcs_index and paired is True and len(fastq_ls)/2 != len(bcs_dict):
+    if cfg.bcs_index and cfg.paired is True and \
+            len(fastq_ls)/2 != len(bcs_dict):
         sys.exit('incorrect number of files based on index.txt')
     pairs_dict = is_paired(fastq_ls)
-    in1_ls, in2_ls = input_sort(paired, pairs_dict)
+    in1_ls, in2_ls = input_sort(pairs_dict)
 
-    if initial_qc is True:
+    if cfg.initial_qc is True:
         crinoid_multiproc(proj_dir, fastq_ls)
         rm_dirs.append(proj_dir + '/qc')
 
-    if front_trim > 0:
+    if cfg.front_trim > 0:
         singles_ls, fastq_ls, in1_ls, in2_ls = scallop_muliproc(proj_dir,
-                procs, front_trim, 0, fastq_ls, rm_dirs)
+                fastq_ls)
 
-    if bcs_index:
-        singles_ls, fastq_ls, in1_ls, in2_ls = anemone_multiproc(walkthrough,
-                proj_dir, mismatch, bcs_dict, in1_ls, in2_ls, rm_dirs)
+    if cfg.bcs_index:
+        singles_ls, fastq_ls, in1_ls, in2_ls = anemone_multiproc(proj_dir,
+                bcs_dict, in1_ls, in2_ls)
 
-    if bases_ls:
-        singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multiproc(walkthrough,
-                proj_dir, in1_ls, in2_ls, bases_ls, non_genomic, rm_dirs)
+    if cfg.bases_ls:
+        singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multiproc(proj_dir,
+                in1_ls, in2_ls)
 
-    if end_trim is True:
-        singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multiproc(bases_ls,
-                fastq_ls, singles_ls, q_min, rm_dirs)
+    if cfg.end_trim is True:
+        singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multiproc(fastq_ls,
+                singles_ls)
 
-    if q_min and q_percent:
-        singles_ls, fastq_ls, in1_ls, in2_ls = krill_multiproc(walkthrough,
-                in1_ls, in2_ls, singles_ls, q_min, q_percent, rm_dirs)
-
-
+    if cfg.q_min and cfg.q_percent:
+        singles_ls, fastq_ls, in1_ls, in2_ls = krill_multiproc(in1_ls, in2_ls,
+                singles_ls)
