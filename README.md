@@ -43,46 +43,46 @@ $ python3 composer.py <path_to_directory>
 Using a text editor, save a file containing the following variables as a python file (inludes '.py' as file extension) and include it in your project directory:
 
 ```
-# if fastq files should be treated as paired ends, use 'True', else 'False'
+# if fastq files should be treated as paired ends (True or False)
 paired = True
 
-# choose number of subprocesses that should run simultaneously
+# choose number of subprocesses that should run simultaneously (1 or greater)
 procs = 2
 
-# create initial QC output
+# create initial QC output (True or False)
 initial_qc = False
 
-# perform qc step at each filtering stage (time-consuming, but informative)
+# perform qc step at each filtering stage (time-consuming, but informative) (True or False)
 walkthrough = False
 
-# run from beginning to end without pausing at qc steps
+# run from beginning to end without pausing at qc steps (True or False)
 walkaway = True
 
-# positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
+# positions to trim from front of read before demultiplexing, (0 if no buffer sequence)
 front_trim = 2
 
-# name of  file with barcodes to demultiplex forward reads (use 'False' if not demultiplexing)
+# name of file associating forward reads with barcode array (False if not demultiplexing)
 bcs_index = 'index.txt'
 
-# number of mismatches (hamming distance) allowed in barcodes
+# number of mismatches allowed in barcodes (hamming distance)
 mismatch = 1
 
-# list sequences immediately adjacent to barcodes
+# list sequences immediately adjacent to barcodes (False if not used)
 bases_ls = ['TCGAG','AGCTT']
 
 # additional, non-genomic base not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
 non_genomic = 'T'
 
-# quality score minimum (Phred value 0-40)(use 'False' to skip)
+# quality score minimum (Phred value 0-40)(use False to skip)
 q_min = 30
 
-# percentage of reads >/= q_min quality scores (use 'False' to skip)
+# percentage of reads >/= q_min quality scores (use False to skip)
 q_percent = 95
 
-# trim read 3' ends based on q_min threshold
+# trim read 3' ends based on q_min threshold (True or False)
 end_trim = True
 
-# optionally remove each transitional file folder to save space
+# optionally remove each transitional file folder to save space (True or False)
 rm_transit = True
 ```
 

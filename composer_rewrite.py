@@ -224,6 +224,11 @@ def concater(proj_dir_current):
                 os.remove(i)
 
 
+def walkaway_opt(folder):
+    ans = input('\n check qc folder(s) for ' + folder + ' - continue? (y/n)\n')
+    ignore = True if ans in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
+
+
 def crinoid_multiproc(proj_dir, fastq_ls):
     '''
     create user-defined subprocesses to produce base-call summary
@@ -246,6 +251,7 @@ def scallop_muliproc(proj_dir, fastq_ls):
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
     if cfg.walkthrough:
         crinoid_multiproc(proj_dir_current, fastq_ls)
+        cfg.walkaway == False and walkaway_opt(rm_dirs[-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
@@ -263,6 +269,7 @@ def anemone_multiproc(proj_dir, bcs_dict, in1_ls, in2_ls):
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
     if cfg.walkthrough:
         crinoid_multiproc(proj_dir_current, fastq_ls)
+        cfg.walkaway == False and walkaway_opt(rm_dirs[-1])
     if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
@@ -284,6 +291,7 @@ def rotifer_multiproc(proj_dir, in1_ls, in2_ls):
     if cfg.walkthrough:
         crinoid_multiproc(proj_dir_current + '/single', singles_ls)
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
+        cfg.walkaway == False and walkaway_opt(rm_dirs[-1])
     if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
@@ -396,7 +404,6 @@ if __name__ == '__main__':
 
     if cfg.initial_qc is True:
         crinoid_multiproc(proj_dir, fastq_ls)
-        rm_dirs.append(proj_dir + '/qc')
 
     if cfg.front_trim > 0:
         singles_ls, fastq_ls, in1_ls, in2_ls = scallop_muliproc(proj_dir,
