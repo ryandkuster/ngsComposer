@@ -2,6 +2,7 @@ import sys
 import os
 import gzip
 import shutil
+import subprocess
 from multiprocessing import Pool
 from functools import partial
 
@@ -225,7 +226,7 @@ def concater(proj_dir_current):
 
 
 def walkaway_opt(folder):
-    ans = input('\n check qc folder(s) for ' + folder + ' - continue? (y/n)\n')
+    ans = input('\n check qc folder(s) in ' + folder + ' - continue? (y/n)\n')
     ignore = True if ans in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
 
 
@@ -237,6 +238,7 @@ def crinoid_multiproc(proj_dir, fastq_ls):
     os.mkdir(proj_dir_current)
     crinoid_part = partial(crinoid_comp, proj_dir_current)
     pool_multi(crinoid_part, fastq_ls)
+    subprocess.check_call(['Rscript', 'test.R'] + [proj_dir + '/qc'], shell=False)
 
 
 def scallop_muliproc(proj_dir, fastq_ls):
