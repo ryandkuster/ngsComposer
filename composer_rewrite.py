@@ -26,6 +26,29 @@ def initialize(proj_dir):
     return proj_dir
 
 
+def conf_confirm():
+    assert cfg.paired == True or cfg.paired == False
+    assert cfg.procs >= 1
+    assert cfg.initial_qc == True or cfg.initial_qc == False
+    assert cfg.walkthrough == True or cfg.walkthrough == False
+    assert cfg.walkaway == True or cfg.walkaway == False
+    assert isinstance(cfg.front_trim, int)
+    assert cfg.bcs_index or cfg.bcs_index == False
+    assert isinstance(cfg.mismatch, int)
+    assert cfg.bases_ls == False or isinstance(cfg.bases_ls, list)
+    if isinstance(cfg.bases_ls, list):
+        for i in cfg.bases_ls:
+            for j in i:
+                assert j in ['A', 'C', 'G', 'T']
+    assert cfg.non_genomic == False or isinstance(cfg.non_genomic, str)
+    if isinstance(cfg.non_genomic, str):
+        assert cfg.non_genomic in ['A', 'C', 'G', 'T']
+    assert cfg.end_trim == True or cfg.end_trim == False
+    assert 0 <= cfg.q_min <= 40
+    assert 0 <= cfg.q_percent <= 100
+    assert cfg.rm_transit == True or cfg.rm_transit == False
+
+
 def index_reader(bcs_index):
     '''
     open bcs_index and create dictionary of associated bc keyfiles
@@ -238,7 +261,9 @@ def crinoid_multiproc(proj_dir, fastq_ls):
     os.mkdir(proj_dir_current)
     crinoid_part = partial(crinoid_comp, proj_dir_current)
     pool_multi(crinoid_part, fastq_ls)
-    subprocess.check_call(['Rscript', 'test.R'] + [proj_dir + '/qc'], shell=False)
+#    subprocess.check_call(['Rscript',
+#            os.path.dirname(os.path.abspath(sys.argv[0])) + '/tools/test.R'] +
+#            [proj_dir + '/qc'], shell=False)
 
 
 def scallop_muliproc(proj_dir, fastq_ls):
@@ -368,6 +393,7 @@ if __name__ == '__main__':
     proj_dir = initialize(sys.argv[1])
     sys.path.append(proj_dir)
     import conf as cfg
+    conf_confirm()
 
 ######################################################
 # TODO delete the following:
