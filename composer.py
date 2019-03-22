@@ -69,6 +69,7 @@ def dir_test(proj_dir, bcs_dict):
     '''
     test project directory for correct structure
     '''
+    #TODO add test for presence of all files in barcodes file
     fastq_ls = []
     for filename in os.listdir(proj_dir):
         if filename == os.path.basename(bcs_index):
@@ -185,6 +186,7 @@ def dir_del(rm_dirs):
     '''
     deletes specified list of folders
     '''
+    #TODO except folder deletion if qc found
     for folder in rm_dirs:
         try:
             shutil.rmtree(folder)
@@ -262,7 +264,7 @@ def crinoid_multiproc(proj_dir, fastq_ls):
     crinoid_part = partial(crinoid_comp, proj_dir_current)
     pool_multi(crinoid_part, fastq_ls)
     subprocess.check_call(['Rscript',
-           os.path.dirname(os.path.abspath(sys.argv[0])) + '/tools/test.R'] +
+           os.path.dirname(os.path.abspath(sys.argv[0])) + '/tools/qc_plots.R'] +
            [proj_dir_current], shell=False)
 
 
