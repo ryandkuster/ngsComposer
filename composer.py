@@ -261,9 +261,9 @@ def crinoid_multiproc(proj_dir, fastq_ls):
     os.mkdir(proj_dir_current)
     crinoid_part = partial(crinoid_comp, proj_dir_current)
     pool_multi(crinoid_part, fastq_ls)
-#    subprocess.check_call(['Rscript',
-#            os.path.dirname(os.path.abspath(sys.argv[0])) + '/tools/test.R'] +
-#            [proj_dir + '/qc'], shell=False)
+    subprocess.check_call(['Rscript',
+           os.path.dirname(os.path.abspath(sys.argv[0])) + '/tools/test.R'] +
+           [proj_dir_current], shell=False)
 
 
 def scallop_muliproc(proj_dir, fastq_ls):
