@@ -2,11 +2,6 @@ library(ggplot2)
 library(reshape)
 
 x <- commandArgs(trailingOnly = TRUE)
-# qscore_files = dir(path=x, pattern="qscores*")
-# for (i in qscore_files){
-#   write(paste(x, "/", i, sep = ""), file = "/home/ryan/testing/composer_test/output.txt",
-#         append = TRUE, sep = " ")
-# }
 
 qscore_files = dir(path=x, pattern="qscores*")
 for (i in qscore_files){
@@ -20,7 +15,6 @@ for (i in qscore_files){
     print(j)
     levels(xyz$ind)[levels(xyz$ind) == i] <- toString(j)
   }
-  
   qc <- reshape(qscores, direction="long", varying=list(c(1:ncol(qscores))), v.names="count")
   qc$score <- qc$time-1
   colnames(qc)[colnames(qc)=="id"] <- "position"
@@ -37,11 +31,30 @@ for (i in qscore_files){
     ylab("Quality Scores (phred+33)")
   ggsave(filename= paste(qscore_path, ".tiff"), plot=boxplot, width=15, height= 5, dpi=600, compression = "lzw")
   gc()
-  
 }
 
-# nuc_files = dir(path=x, pattern="nucleotides*")
-# for (i in nuc_files){
-#   write(paste(x, "/", i, sep = ""), file = "/home/ryan/testing/composer_test/output.txt",
-#         append = TRUE, sep = " ")
-# }
+nuc_files = dir(path=x, pattern="nucleotides*")
+for (i in nuc_files){
+  nucs_path <- paste(x, "/", i, sep = "")
+  nucs <- read.table(nucs_path, header=F, sep=",")
+  names(nucs) <- c("A", "C", "G", "T", "N")
+  # names(nucs) <- gsub("V","", names(nucs))
+  nucsm <- melt(cbind(nucs, ind = rownames(nucs)), id.vars = c('ind'))
+  names(nucsm)[2] <- "Nucleotide"
+  nucsm$ind=as.numeric(levels(nucsm$ind))[nucsm$ind]
+  barplot <- ggplot(nucsm, aes(x = ind, y = value, fill = Nucleotide)) + 
+    geom_bar(position = "fill", width = .75, stat = "identity")+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          panel.background = element_blank(), axis.line = element_line(colour = "black"),
+          legend.title=element_blank())+
+    scale_x_continuous(expand=c(0,0), limit=c(0,nrow(nucs)), breaks=seq(0,nrow(nucs),by=5))+
+    scale_fill_manual("legend", values = c("A" = "gold2",
+                                           "C" = "tomato2",
+                                           "G" = "cornflowerblue",
+                                           "T" = "palegreen2",
+                                           "N" = "pink"))+
+    xlab("Read Position") +
+    ylab("Proportion")
+  ggsave(filename= paste(nucs_path, ".tiff"), plot=barplot, width=15, height= 5, dpi=600, compression = "lzw")
+  gc()
+}
