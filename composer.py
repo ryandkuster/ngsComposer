@@ -188,6 +188,29 @@ def dir_del(rm_dirs):
     '''
     #TODO except folder deletion if qc found
     for folder in rm_dirs:
+        for root, dirs, files in os.walk(os.path.abspath(folder)):
+            for i in files:
+                fullname = os.path.join(root, i)
+                print(fullname + " is in " + os.path.dirname(os.path.join(root, i)))
+
+#            for i in dirs:
+#                if i != "qc":
+#                    for j in os.listdir(os.path.join(root, i)):
+#                        print(j)
+
+
+    #            fullname = os.path.join(root, i)
+    #            if i.startswith('unknown.'):
+    #                os.remove(fullname)
+    #            else:
+    #                if os.path.getsize(fullname) == 0:
+    #                    os.remove(fullname)
+    #                elif i in concat_dict:
+    #                    concat_dict[i].append(fullname)
+    #                else:
+    #                    concat_dict[i] = [fullname]
+
+    for folder in rm_dirs:
         try:
             shutil.rmtree(folder)
             dir_name = os.path.basename(folder)
