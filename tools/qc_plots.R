@@ -1,3 +1,4 @@
+options(warn=-1)
 library(ggplot2)
 library(reshape)
 
@@ -12,7 +13,6 @@ for (i in qscore_files){
   xyz <- stack(qscores)
   for (i in levels(xyz$ind)){
     j = strtoi(i) - 1
-    print(j)
     levels(xyz$ind)[levels(xyz$ind) == i] <- toString(j)
   }
   qc <- reshape(qscores, direction="long", varying=list(c(1:ncol(qscores))), v.names="count")

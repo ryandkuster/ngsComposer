@@ -189,34 +189,12 @@ def dir_del(rm_dirs):
     #TODO except folder deletion if qc found
     for folder in rm_dirs:
         for root, dirs, files in os.walk(os.path.abspath(folder)):
+            if 'qc' in dirs:
+                dirs.remove('qc')
             for i in files:
                 fullname = os.path.join(root, i)
-                print(fullname + " is in " + os.path.dirname(os.path.join(root, i)))
-
-#            for i in dirs:
-#                if i != "qc":
-#                    for j in os.listdir(os.path.join(root, i)):
-#                        print(j)
-
-
-    #            fullname = os.path.join(root, i)
-    #            if i.startswith('unknown.'):
-    #                os.remove(fullname)
-    #            else:
-    #                if os.path.getsize(fullname) == 0:
-    #                    os.remove(fullname)
-    #                elif i in concat_dict:
-    #                    concat_dict[i].append(fullname)
-    #                else:
-    #                    concat_dict[i] = [fullname]
-
-    for folder in rm_dirs:
-        try:
-            shutil.rmtree(folder)
-            dir_name = os.path.basename(folder)
-            print('\n composer is removing the ' + dir_name + ' directory')
-        except FileNotFoundError:
-            pass
+#                print(fullname)
+                os.remove(fullname)
 
 
 def pool_multi(pool_part, pool_ls):
@@ -287,8 +265,8 @@ def crinoid_multiproc(proj_dir, fastq_ls):
     crinoid_part = partial(crinoid_comp, proj_dir_current)
     pool_multi(crinoid_part, fastq_ls)
     subprocess.check_call(['Rscript',
-           os.path.dirname(os.path.abspath(sys.argv[0])) + '/tools/qc_plots.R'] +
-           [proj_dir_current], shell=False)
+           os.path.dirname(os.path.abspath(sys.argv[0])) +
+           '/tools/qc_plots.R'] + [proj_dir_current], shell=False)
 
 
 def scallop_muliproc(proj_dir, fastq_ls):
@@ -421,7 +399,7 @@ if __name__ == '__main__':
     conf_confirm()
 
 ######################################################
-# TODO delete the following:
+# TODO delete the following (for ease of testing):
 ######################################################
     old_dirs = [proj_dir + '/qc',
                 proj_dir + '/trimmed',
@@ -429,7 +407,13 @@ if __name__ == '__main__':
                 proj_dir + '/parsed',
                 proj_dir + '/end_trimmed',
                 proj_dir + '/filtered']
-    dir_del(old_dirs)
+    for folder in old_dirs:
+        try:
+            shutil.rmtree(folder)
+            dir_name = os.path.basename(folder)
+            print('\n composer is removing the ' + dir_name + ' directory')
+        except FileNotFoundError:
+            pass
 ######################################################
 
     if cfg.bcs_index:
