@@ -29,7 +29,7 @@ for (i in qscore_files){
     theme_classic()+
     xlab(paste("Read Position (Total Number of reads = ",sum,")", sep="")) +
     ylab("Quality Scores (phred+33)")
-  ggsave(filename= paste(qscore_path, ".tiff"), plot=boxplot, width=15, height= 5, dpi=600, compression = "lzw")
+  ggsave(filename= paste(qscore_path, ".tiff", sep = ""), plot=boxplot, width=15, height= 5, dpi=600, compression = "lzw")
   gc()
 }
 
@@ -55,6 +55,6 @@ for (i in nuc_files){
                                            "N" = "pink"))+
     xlab("Read Position") +
     ylab("Proportion")
-  ggsave(filename= paste(nucs_path, ".tiff"), plot=barplot, width=15, height= 5, dpi=600, compression = "lzw")
+  ggsave(filename= paste(nucs_path, ".tiff", sep = ""), plot=barplot, width=15, height= 5, dpi=600, compression = "lzw")
   gc()
 }

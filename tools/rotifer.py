@@ -6,6 +6,8 @@ def rotifer_main():
     '''
     standalone, command line entry point to rotifer using stdin
     '''
+    #TODO add R2_bases_ls here
+    #TODO update bases_ls to R1_bases_ls
     in1 = sys.argv[1]
     proj_dir = os.path.dirname(os.path.abspath(in1))
     in1 = sys.argv[2]
@@ -13,15 +15,16 @@ def rotifer_main():
         in2 = sys.argv[3]
     except IndexError:
         in2 = None
-    bases_ls = ['CCC', 'CCT']
+    R1_bases_ls = ['CCC', 'CCT']
     pe_1 = 'pe.' + os.path.basename(in1)
     pe_2 = 'pe.' + os.path.basename(in2)
     se_1 = 'se.' + os.path.basename(in1)
     se_2 = 'se.' + os.path.basename(in2)
-    rotifer(proj_dir, bases_ls, in1, in2, pe_1, pe_2, se_1, se_2)
+    rotifer(proj_dir, R1_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2)
 
 
-def rotifer_comp(in1_ls, in2_ls, bases_ls, non_genomic, proj_dir_current, in1):
+def rotifer_comp(in1_ls, in2_ls, R1_bases_ls, R2_bases_ls, non_genomic,
+            proj_dir_current, in1):
     '''
     composer entry point to rotifer
     '''
@@ -31,12 +34,12 @@ def rotifer_comp(in1_ls, in2_ls, bases_ls, non_genomic, proj_dir_current, in1):
         in2 = in2_ls[in1_ls.index(in1)]
         pe_2 = proj_dir_current + '/paired/' + os.path.basename(in2)
         se_2 = proj_dir_current + '/single/' + os.path.basename(in2)
-        rotifer(bases_ls, in1, in2, pe_1, pe_2, se_1, se_2)
+        rotifer(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2)
     except (IndexError, ValueError) as e:
-        rotifer_single(bases_ls, in1, se_1)
+        rotifer_single(R1_bases_ls, in1, se_1)
 
 
-def rotifer(bases_ls, in1, in2, pe_1, pe_2, se_1, se_2):
+def rotifer(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2):
     '''
     parse single and paired-end reads for recognized motifs
     '''
@@ -53,8 +56,8 @@ def rotifer(bases_ls, in1, in2, pe_1, pe_2, se_1, se_2):
             entry1 = entry1 + line1 + "\n"
             entry2 = entry2 + line2 + "\n"
             if y == 2:
-                rotifer1 = rotifer_test(line1, bases_ls)
-                rotifer2 = rotifer_test(line2, bases_ls)
+                rotifer1 = rotifer_test(line1, R1_bases_ls)
+                rotifer2 = rotifer_test(line2, R2_bases_ls)
             if y == 4:
                 if rotifer1 is False and rotifer2 is False:
                     pe_o1.write(entry1)
@@ -70,7 +73,7 @@ def rotifer(bases_ls, in1, in2, pe_1, pe_2, se_1, se_2):
                     y, entry1, entry2 = 0, "", ""
 
 
-def rotifer_single(bases_ls, in1, se_1):
+def rotifer_single(R1_bases_ls, in1, se_1):
     '''
     parse single-end reads for recognized motifs
     '''
@@ -81,7 +84,7 @@ def rotifer_single(bases_ls, in1, se_1):
             line1 = line1.rstrip()
             entry1 = entry1 + line1 + "\n"
             if y == 2:
-                rotifer1 = rotifer_test(line1, bases_ls)
+                rotifer1 = rotifer_test(line1, R1_bases_ls)
             if y == 4:
                 if rotifer1 is False:
                     se_o1.write(entry1)

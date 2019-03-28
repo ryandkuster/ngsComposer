@@ -35,9 +35,14 @@ def conf_confirm():
     assert isinstance(cfg.front_trim, int)
     assert cfg.bcs_index or cfg.bcs_index == False
     assert isinstance(cfg.mismatch, int)
-    assert cfg.bases_ls == False or isinstance(cfg.bases_ls, list)
-    if isinstance(cfg.bases_ls, list):
-        for i in cfg.bases_ls:
+    assert cfg.R1_bases_ls == False or isinstance(cfg.R1_bases_ls, list)
+    if isinstance(cfg.R1_bases_ls, list):
+        for i in cfg.R1_bases_ls:
+            for j in i:
+                assert j in ['A', 'C', 'G', 'T']
+    assert cfg.R2_bases_ls == False or isinstance(cfg.R2_bases_ls, list)
+    if isinstance(cfg.R2_bases_ls, list):
+        for i in cfg.R2_bases_ls:
             for j in i:
                 assert j in ['A', 'C', 'G', 'T']
     assert cfg.non_genomic == False or isinstance(cfg.non_genomic, str)
@@ -279,9 +284,9 @@ def scallop_muliproc(proj_dir, fastq_ls):
     scallop_part = partial(scallop_comp, cfg.front_trim, 0, proj_dir_current)
     pool_multi(scallop_part, fastq_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
-    if cfg.walkthrough:
-        crinoid_multiproc(proj_dir_current, fastq_ls)
-        cfg.walkaway == False and walkaway_opt(rm_dirs[-1])
+#    if cfg.walkthrough:
+#        crinoid_multiproc(proj_dir_current, fastq_ls)
+#        cfg.walkaway == False and walkaway_opt(rm_dirs[-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
@@ -314,8 +319,8 @@ def rotifer_multiproc(proj_dir, in1_ls, in2_ls):
     os.mkdir(proj_dir_current)
     os.mkdir(proj_dir_current + '/single')
     os.mkdir(proj_dir_current + '/paired')
-    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, cfg.bases_ls,
-            cfg.non_genomic, proj_dir_current)
+    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, cfg.R1_bases_ls,
+            cfg.R2_bases_ls, cfg.non_genomic, proj_dir_current)
     pool_multi(rotifer_part, in1_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
     if cfg.walkthrough:
@@ -334,7 +339,7 @@ def scallop_end_multiproc(fastq_ls, singles_ls):
     proj_dir_current = proj_dir + '/end_trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
-    if cfg.bases_ls:
+    if cfg.R1_bases_ls and cfg.R2_bases_ls:
         os.mkdir(proj_dir_current + '/single')
         os.mkdir(proj_dir_current + '/paired')
     if cfg.walkthrough is False and rm_dirs[-2] != proj_dir + '/qc':
@@ -450,7 +455,7 @@ if __name__ == '__main__':
         singles_ls, fastq_ls, in1_ls, in2_ls = anemone_multiproc(proj_dir,
                 bcs_dict, in1_ls, in2_ls)
 
-    if cfg.bases_ls:
+    if cfg.R1_bases_ls and cfg.R2_bases_ls:
         singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multiproc(proj_dir,
                 in1_ls, in2_ls)
 
