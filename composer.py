@@ -88,6 +88,37 @@ def dir_test(proj_dir, bcs_dict):
     return fastq_ls
 
 
+def bc_test(bcs_file):
+    '''
+    open user-defined bc file and extract forward and reverse
+    bcs and test for redundancy
+    '''
+    #TODO handle identical barcodes...
+    with open(bcs_file) as f:
+        line = f.readline()
+        R1_bcs, R2_bcs = {}, {}
+        for i, item in enumerate(line.split()):
+            R2_bcs[item] = i
+        if len(R2_bcs) == 1:
+            dual_index = False
+        else:
+            dual_index = True
+        for i, line in enumerate(f):
+            for j, item in enumerate(line.split()):
+                if j == 0:
+                    R1_bcs[item] = i
+    for k1, v1 in R1_bcs.items():
+        for k2, v2 in R1_bcs.items():
+            if k2.startswith(k1) and v1 != v2:
+                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
+                        k1 + ' in file ' + bcs_file)
+    for k1, v1 in R2_bcs.items():
+        for k2, v2 in R2_bcs.items():
+            if k2.startswith(k1) and v1 != v2:
+                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
+                        k1 + ' in file ' + bcs_file)
+
+
 def is_fq(filename):
     '''
     test first read structure if fastq
@@ -191,14 +222,12 @@ def dir_del(rm_dirs):
     '''
     deletes specified list of folders
     '''
-    #TODO except folder deletion if qc found
     for folder in rm_dirs:
         for root, dirs, files in os.walk(os.path.abspath(folder)):
             if 'qc' in dirs:
                 dirs.remove('qc')
             for i in files:
                 fullname = os.path.join(root, i)
-#                print(fullname)
                 os.remove(fullname)
 
 
@@ -336,6 +365,7 @@ def scallop_end_multiproc(fastq_ls, singles_ls):
     '''
     automated 3' end read trimming based on q_min value
     '''
+    #TODO adjust for initial_qc == False and walkthrough == False...
     proj_dir_current = proj_dir + '/end_trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
@@ -429,6 +459,9 @@ if __name__ == '__main__':
         bcs_index = ''
 
     fastq_ls = dir_test(proj_dir, bcs_dict)
+
+    for i in bcs_dict.values():
+        bc_test(i)
 
     for filename in fastq_ls:
         try:
