@@ -96,7 +96,7 @@ def bc_test(bcs_file):
     #TODO handle identical barcodes...
     with open(bcs_file) as f:
         line = f.readline()
-        R1_bcs, R2_bcs = {}, {}
+        R1_bcs, R2_bcs, R1_nest, R2_nest = {}, {}, [], []
         for i, item in enumerate(line.split()):
             R2_bcs[item] = i
         if len(R2_bcs) == 1:
@@ -107,17 +107,19 @@ def bc_test(bcs_file):
             for j, item in enumerate(line.split()):
                 if j == 0:
                     R1_bcs[item] = i
-    for k1, v1 in R1_bcs.items():
+    for i, (k1, v1) in enumerate(R1_bcs.items()):
         for k2, v2 in R1_bcs.items():
-            if k2.startswith(k1) and v1 != v2:
-                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
-                        k1 + ' in file ' + bcs_file)
-    for k1, v1 in R2_bcs.items():
+            if k1.startswith(k2) and v1 != v2:
+                R1_nest.append(i)
+#                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
+#                        k1 + ' in file ' + bcs_file)
+    for i, (k1, v1) in enumerate(R2_bcs.items()):
         for k2, v2 in R2_bcs.items():
-            if k2.startswith(k1) and v1 != v2:
-                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
-                        k1 + ' in file ' + bcs_file)
-
+            if k1.startswith(k2) and v1 != v2:
+                R2_next.append(i)
+#                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
+#                        k1 + ' in file ' + bcs_file)
+    return R1_nest, R2_nest
 
 def is_fq(filename):
     '''
@@ -461,7 +463,9 @@ if __name__ == '__main__':
     fastq_ls = dir_test(proj_dir, bcs_dict)
 
     for i in bcs_dict.values():
-        bc_test(i)
+        R1_nest, R2_nest = bc_test(i)
+    print(R1_nest)
+    print(R2_nest)
 
     for filename in fastq_ls:
         try:

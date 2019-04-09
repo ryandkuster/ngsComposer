@@ -23,7 +23,8 @@ bcs_index = 'index.txt'
 mismatch = 1
 
 # list sequences immediately adjacent to barcodes
-bases_ls = ['A', 'C', 'G', 'T']
+R1_bases_ls = ['A', 'C', 'G', 'T']
+R2_bases_ls = ['A', 'C', 'G', 'T']
 
 # additional, non-genomic base not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
 non_genomic = 'T'
