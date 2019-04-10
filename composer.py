@@ -96,7 +96,7 @@ def bc_test(bcs_file):
     #TODO handle identical barcodes...
     with open(bcs_file) as f:
         line = f.readline()
-        R1_bcs, R2_bcs, R1_nest, R2_nest = {}, {}, [], []
+        R1_bcs, R2_bcs, R1_nest, R2_nest = {}, {}, {}, {}
         for i, item in enumerate(line.split()):
             R2_bcs[item] = i
         if len(R2_bcs) == 1:
@@ -108,15 +108,21 @@ def bc_test(bcs_file):
                 if j == 0:
                     R1_bcs[item] = i
     for i, (k1, v1) in enumerate(R1_bcs.items()):
-        for k2, v2 in R1_bcs.items():
-            if k1.startswith(k2) and v1 != v2:
-                R1_nest.append(i)
+        for j, (k2, v2) in enumerate(R1_bcs.items()):
+            if k2.startswith(k1) and v1 != v2:
+                if k1 in R1_nest.keys():
+                    R1_nest[k1].append(k2)
+                else:
+                    R1_nest[k1] = [k1, k2]
 #                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
 #                        k1 + ' in file ' + bcs_file)
     for i, (k1, v1) in enumerate(R2_bcs.items()):
-        for k2, v2 in R2_bcs.items():
-            if k1.startswith(k2) and v1 != v2:
-                R2_next.append(i)
+        for j, (k2, v2) in enumerate(R2_bcs.items()):
+            if k2.startswith(k1) and v1 != v2:
+                if k1 in R2_nest.keys():
+                    R2_nest[k1].append(k2)
+                else:
+                    R2_nest[k1] = [k1, k2]
 #                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
 #                        k1 + ' in file ' + bcs_file)
     return R1_nest, R2_nest
