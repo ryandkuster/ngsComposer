@@ -98,7 +98,10 @@ def bc_test(bcs_file):
         line = f.readline()
         R1_bcs, R2_bcs, R1_nest, R2_nest = {}, {}, {}, {}
         for i, item in enumerate(line.split()):
-            R2_bcs[item] = i
+            if item in R2_bcs.keys():
+                sys.exit(bcs_file + ' contains duplicated R2 barcodes')
+            else:
+                R2_bcs[item] = i
         if len(R2_bcs) == 1:
             dual_index = False
         else:
@@ -106,7 +109,10 @@ def bc_test(bcs_file):
         for i, line in enumerate(f):
             for j, item in enumerate(line.split()):
                 if j == 0:
-                    R1_bcs[item] = i
+                    if item in R1_bcs.keys():
+                        sys.exit(bcs_file + ' contains duplicated R1 barcodes')
+                    else:
+                        R1_bcs[item] = i
     for i, (k1, v1) in enumerate(R1_bcs.items()):
         for j, (k2, v2) in enumerate(R1_bcs.items()):
             if k2.startswith(k1) and v1 != v2:
@@ -125,6 +131,8 @@ def bc_test(bcs_file):
                     R2_nest[k1] = [k1, k2]
 #                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
 #                        k1 + ' in file ' + bcs_file)
+    print(R1_nest)
+    print(R2_nest)
     return R1_nest, R2_nest
 
 def is_fq(filename):
@@ -470,8 +478,6 @@ if __name__ == '__main__':
 
     for i in bcs_dict.values():
         R1_nest, R2_nest = bc_test(i)
-    print(R1_nest)
-    print(R2_nest)
 
     for filename in fastq_ls:
         try:
