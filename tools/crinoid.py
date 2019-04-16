@@ -11,17 +11,24 @@ def crinoid_main():
 
 
 def crinoid_comp(proj_dir, in1):
+    '''
+    composer entry point to crinoid
+    '''
     out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
     out2 = proj_dir + '/qscores.' + os.path.basename(in1)
     crinoid(in1, out1, out2)
 
 
 def crinoid(in1, out1, out2):
+    '''
+    produce raw counts of nucleotide and qscore occurrences
+    '''
+    #TODO avoid using '500' as default max_len
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/scores.txt').read().split()
     score_ref_dt = dict(zip(scores[:41], scores[-int(len(scores)/2):
                         -int(len(scores)/2)+41]))
-    max_len = max_len_count(in1)
+    max_len = 500
     with open(in1) as f, open(out1, "w") as o1, open(out2, "w") as o2:
         y = 0
         base_ref_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
@@ -42,25 +49,16 @@ def crinoid(in1, out1, out2):
         score_mx = [[0] * len(score_dt[0]) for i in range(max_len)]
         base_mx = output_prep(base_dt, base_mx, base_ref_dt, 0)
         score_mx = output_prep(score_dt, score_mx, score_ref_dt, 0)
+        base_mx = matrix_succinct(base_mx)
+        score_mx = matrix_succinct(score_mx)
         matrix_print(base_mx, o1)
         matrix_print(score_mx, o2)
 
 
-def max_len_count(in1):
-    with open(in1) as f:
-        max_len, y = 0, 0
-        for line in f:
-            y += 1
-            if y == 2:
-                len_test = len(line.rstrip())
-                if len_test > max_len:
-                    max_len = len_test
-            if y == 4:
-                y = 0
-    return max_len
-
-
 def output_prep(dt1, mx, dt2, col):
+    '''
+    use recursion to extract counts from nested dictionaries
+    '''
     for k1, v1 in dt1.items():
         if isinstance(v1, dict):
             output_prep(v1, mx, dt2, k1)
@@ -71,7 +69,21 @@ def output_prep(dt1, mx, dt2, col):
     return mx
 
 
+def matrix_succinct(mx):
+    '''
+    identify and rows in matrix containing zeroes
+    '''
+    for i, row in enumerate(mx):
+        if sum(row) == 0:
+            del mx[i:]
+            break
+    return mx
+
+
 def matrix_print(mx, outfile):
+    '''
+    write matrix of raw counts to csv file
+    '''
     for row in mx:
         outfile.write(",".join(str(x) for x in row))
         outfile.write("\n")
