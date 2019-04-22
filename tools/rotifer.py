@@ -1,26 +1,36 @@
-import sys
 import os
+import argparse
+
+
+parser = argparse.ArgumentParser(description='filter fastq reads for motif')
+parser.add_argument('-r1', type=str,
+        help='the full or relative path to R1 fastq file')
+parser.add_argument('-r2', type=str,
+        help='the full or relative path to R2 fastq file')
+parser.add_argument('-m1', type=str, nargs='+',
+        help='space separated list of motifs expected in R1')
+parser.add_argument('-m2', type=str, nargs='+',
+        help='space separated list of motifs expected in R2')
+args = parser.parse_args()
 
 
 def rotifer_main():
     '''
     standalone, command line entry point to rotifer using stdin
     '''
-    #TODO add R2_bases_ls here
-    #TODO update bases_ls to R1_bases_ls
-    in1 = sys.argv[1]
+    in1 = args.r1
     proj_dir = os.path.dirname(os.path.abspath(in1))
-    in1 = sys.argv[2]
-    try:
-        in2 = sys.argv[3]
-    except IndexError:
-        in2 = None
-    R1_bases_ls = ['CCC', 'CCT']
     pe_1 = 'pe.' + os.path.basename(in1)
-    pe_2 = 'pe.' + os.path.basename(in2)
     se_1 = 'se.' + os.path.basename(in1)
-    se_2 = 'se.' + os.path.basename(in2)
-    rotifer(proj_dir, R1_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2)
+    R1_bases_ls = args.m1 if args.m1 else ['A', 'C', 'G', 'T', 'N']
+    R2_bases_ls = args.m2 if args.m2 else ['A', 'C', 'G', 'T', 'N']
+    try:
+        in2 = args.r2
+        pe_2 = 'pe.' + os.path.basename(in2)
+        se_2 = 'se.' + os.path.basename(in2)
+        rotifer(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2)
+    except TypeError:
+        rotifer_single(R1_bases_ls, in1, se_1)
 
 
 def rotifer_comp(in1_ls, in2_ls, R1_bases_ls, R2_bases_ls, non_genomic,

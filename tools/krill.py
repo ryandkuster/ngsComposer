@@ -9,15 +9,15 @@ def krill_main():
     q_min = int(sys.argv[1])
     q_percent = int(sys.argv[2])
     in1 = sys.argv[3]
+    pe_1 = 'pe.' + os.path.basename(in1)
+    se_1 = 'se.' + os.path.basename(in1)
     try:
         in2 = sys.argv[4]
+        pe_2 = 'pe.' + os.path.basename(in2)
+        se_2 = 'se.' + os.path.basename(in2)
+        krill(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2)
     except IndexError:
-        in2 = None
-    pe_1 = 'pe.' + os.path.basename(in1)
-    pe_2 = 'pe.' + os.path.basename(in2)
-    se_1 = 'se.' + os.path.basename(in1)
-    se_2 = 'se.' + os.path.basename(in2)
-    krill(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2)
+        krill_single(q_min, q_percent, in1, se_1)
 
 
 def krill_comp(in1_ls, in2_ls, q_min, q_percent, proj_dir_current, in1):
