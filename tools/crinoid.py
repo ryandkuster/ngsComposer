@@ -1,5 +1,6 @@
 import sys
 import os
+import subprocess
 
 
 def crinoid_main():
@@ -8,6 +9,9 @@ def crinoid_main():
     out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
     out2 = proj_dir + '/qscores.' + os.path.basename(in1)
     crinoid(in1, out1, out2)
+    subprocess.check_call(['Rscript',
+           os.path.dirname(os.path.abspath(sys.argv[0])) +
+           '/qc_plots.R'] + [out1, out2], shell=False)
 
 
 def crinoid_comp(proj_dir, in1):
@@ -17,6 +21,9 @@ def crinoid_comp(proj_dir, in1):
     out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
     out2 = proj_dir + '/qscores.' + os.path.basename(in1)
     crinoid(in1, out1, out2)
+    subprocess.check_call(['Rscript',
+           os.path.dirname(os.path.abspath(sys.argv[0])) +
+           '/tools/qc_plots.R'] + [out1, out2], shell=False)
 
 
 def crinoid(in1, out1, out2):
