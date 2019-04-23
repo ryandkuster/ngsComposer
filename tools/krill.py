@@ -1,22 +1,24 @@
 import sys
 import os
+import argparse
 
 
 def krill_main():
     '''
     standalone, command line entry point to krill using stdin
     '''
-    q_min = int(sys.argv[1])
-    q_percent = int(sys.argv[2])
-    in1 = sys.argv[3]
-    pe_1 = 'pe.' + os.path.basename(in1)
-    se_1 = 'se.' + os.path.basename(in1)
+    q_min = args.q
+    q_percent = args.p
+    in1 = args.r1
+    proj_dir = os.path.dirname(os.path.abspath(in1))
+    pe_1 = proj_dir + '/pe.' + os.path.basename(in1)
+    se_1 = proj_dir + '/se.' + os.path.basename(in1)
     try:
-        in2 = sys.argv[4]
-        pe_2 = 'pe.' + os.path.basename(in2)
-        se_2 = 'se.' + os.path.basename(in2)
+        in2 = args.r2
+        pe_2 = proj_dir + '/pe.' + os.path.basename(in2)
+        se_2 = proj_dir + '/se.' + os.path.basename(in2)
         krill(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2)
-    except IndexError:
+    except TypeError:
         krill_single(q_min, q_percent, in1, se_1)
 
 
@@ -109,4 +111,14 @@ def krill_test(line, q_min, q_percent, val):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='filter fastq reads for quality')
+    parser.add_argument('-r1', type=str,
+            help='the full or relative path to R1 fastq file')
+    parser.add_argument('-r2', type=str,
+            help='the full or relative path to R2 fastq file (optional)')
+    parser.add_argument('-q', type=int,
+            help='the minimum qscore required at a position (integer)')
+    parser.add_argument('-p', type=int,
+            help='the percent frequency minimum qscore must occur per read (integer)')
+    args = parser.parse_args()
     krill_main()

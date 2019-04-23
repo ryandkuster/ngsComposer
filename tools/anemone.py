@@ -1,24 +1,25 @@
 import sys
 import os
 import shutil
+import argparse
 
 
 def anemone_main():
     '''
     standalone, command line entry point to anemone using stdin
     '''
-    mismatch = int(sys.argv[1])
-    bcs_file = sys.argv[2]
-    in1 = sys.argv[3]
+    mismatch = args.m
+    bcs_file = args.c
+    in1 = args.r1
     out1 = os.path.basename(in1)
     try:
-        in2 = sys.argv[4]
+        in2 = args.r2
         out2 = os.path.basename(in2)
-    except IndexError:
+    except TypeError:
         in2 = False
         out2 = False
     chunk = 3000000  # how many reads to process before writing
-    proj_dir = os.getcwd()
+    proj_dir = os.path.dirname(os.path.abspath(in1))
     anemone_init(in1, in2, out1, out2, mismatch, chunk,
                  bcs_file, proj_dir)
 
@@ -416,4 +417,14 @@ def second_pass(
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='demultiplex reads')
+    parser.add_argument('-r1', type=str,
+            help='the full or relative path to R1 fastq file')
+    parser.add_argument('-r2', type=str,
+            help='the full or relative path to R2 fastq file (optional)')
+    parser.add_argument('-c', type=str,
+            help='the full or relative path to barcodes index file')
+    parser.add_argument('-m', type=int,
+            help='mismatch value for barcode hamming distance (integer)')
+    args = parser.parse_args()
     anemone_main()

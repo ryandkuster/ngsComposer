@@ -1,16 +1,17 @@
 import sys
 import os
+import argparse
 
 
 def scallop_main():
     '''
     standalone, command line entry point to scallop using stdin
     '''
-    in1 = sys.argv[1]
-    front_trim = int(sys.argv[2])
-    back_trim = int(sys.argv[3])
-    out1 = sys.argv[4]
-    proj_dir = os.path.abspath(in1)
+    in1 = args.r1
+    front_trim = args.f
+    back_trim = args.b
+    proj_dir = os.path.dirname(in1)
+    out1 = proj_dir + '/trimmed.' + os.path.basename(in1)
     scallop(in1, front_trim, back_trim, proj_dir, out1)
 
 
@@ -107,4 +108,12 @@ def scallop_uniform(len_ls, max_len):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='trim ends of fastq reads')
+    parser.add_argument('-r1', type=str,
+            help='the full or relative path to R1 or R2 fastq file')
+    parser.add_argument('-f', type=int,
+            help='number of bases to remove from beginning of read (integer)')
+    parser.add_argument('-b', type=int,
+            help='final position to keep within a read (integer)')
+    args = parser.parse_args()
     scallop_main()

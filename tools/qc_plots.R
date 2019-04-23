@@ -43,7 +43,7 @@ geom_bar(position = "fill", width = .75, stat = "identity")+
 theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       panel.background = element_blank(), axis.line = element_line(colour = "black"),
       legend.title=element_blank())+
-scale_x_continuous(expand=c(0,0), limit=c(0,nrow(nucs)), breaks=seq(0,nrow(nucs),by=5))+
+scale_x_continuous(expand=c(0,0), limit=c(0,nrow(nucs)+1), breaks=seq(0,nrow(nucs)+1,by=5))+
 scale_fill_manual("legend", values = c("A" = "gold2",
                                        "C" = "tomato2",
                                        "G" = "cornflowerblue",
