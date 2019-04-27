@@ -10,7 +10,7 @@ def scallop_main():
     in1 = args.r1
     front_trim = args.f
     back_trim = args.b
-    proj_dir = os.path.dirname(in1)
+    proj_dir = os.path.dirname(os.path.abspath(in1))
     out1 = proj_dir + '/trimmed.' + os.path.basename(in1)
     scallop(in1, front_trim, back_trim, proj_dir, out1)
 
