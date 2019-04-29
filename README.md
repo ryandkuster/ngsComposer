@@ -1,6 +1,6 @@
 <a href="https://imgur.com/gYTN9Hv"><img src="https://i.imgur.com/gYTN9Hv.png" title="source: imgur.com" /></a>
 
-# composer: a deep QC aventure!
+# composer: a deep QC adventure!
 
 Base-call error-filtering and read preprocessing pipeline designed by biologists
 
