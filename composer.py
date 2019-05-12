@@ -102,10 +102,6 @@ def bc_test(bcs_file):
                 sys.exit(bcs_file + ' contains duplicated R2 barcodes')
             else:
                 R2_bcs[item] = i
-        if len(R2_bcs) == 1:
-            dual_index = False
-        else:
-            dual_index = True
         for i, line in enumerate(f):
             for j, item in enumerate(line.split()):
                 if j == 0:

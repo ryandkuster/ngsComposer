@@ -52,7 +52,7 @@ def anemone_init(
     extract bcs from bcs_file and detect dual-indexing
     call paired-end or single-end anemone
     '''
-    bcs_matrix, R1_bcs, R2_bcs, dual_index = bc_reader(bcs_file)
+    names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(bcs_file)
     of1_ls = [open(proj_dir + '/temp_unknown.' + out1, 'w')]
     try:
         of2_ls = [open(proj_dir + '/temp_unknown.' + out2, 'w')]
@@ -72,7 +72,7 @@ def anemone_init(
             of1_master = [proj_dir + '/unknown.' + os.path.basename(in2)]
             of2_master = [proj_dir + '/unknown.' + os.path.basename(in1)]
             of1_dict, of2_dict = dual_indexer(
-                bcs_matrix, R2_bcs, proj_dir,
+                names_mx, R2_bcs, proj_dir,
                 of1_ls, of2_ls, mismatch,
                 of1_master, of2_master)
         elif dual_index is False:
@@ -89,7 +89,7 @@ def anemone_init(
                     rename1 = file1
                     rename2 = file2
                 else:
-                    sample_id = bcs_matrix[0][int(x)]
+                    sample_id = names_mx[int(x)][0]
                     rename1 = proj_dir + '/' + sample_id + '.' + \
                         os.path.basename(file1)
                     rename2 = proj_dir + '/' + sample_id + '.' + \
@@ -117,7 +117,7 @@ def anemone_init(
                 rename1 = file1
                 rename2 = file2
             else:
-                sample_id = bcs_matrix[0][int(x)]
+                sample_id = names_mx[int(x)][0]
                 rename1 = proj_dir + '/' + sample_id + '.' + \
                     os.path.basename(file1)
                 os.rename(file1, rename1)
@@ -134,30 +134,17 @@ def bc_reader(bcs_file):
     bcs create matrix to pull corresponding sample ids that match
     bcs
     '''
-    bcs_matrix = []
     with open(bcs_file) as f:
-        line = f.readline()
-        R1_bcs, R2_bcs = {}, {}
-        for i, item in enumerate(line.split()):
-            R2_bcs[item] = i
-        if len(R2_bcs) == 1:
-            dual_index = False
-        else:
-            dual_index = True
-        bcs_matrix = [[0] * 1 for i in range(len(R2_bcs))]
-        for i, line in enumerate(f):
-            for j, item in enumerate(line.split()):
-                if j == 0:
-                    R1_bcs[item] = i
-                if j > 0:
-                    bcs_matrix[j - 1].append(item)
-        for i, line in enumerate(bcs_matrix):
-            del line[0]
-    return bcs_matrix, R1_bcs, R2_bcs, dual_index
+        bcs_mx = [line.rstrip().split() for line in f]
+    R2_bcs = {item: i for i, item in enumerate(bcs_mx[0])}
+    R1_bcs = {item[0]: i for i, item in enumerate(bcs_mx[1:])}
+    dual_index = False if len(R2_bcs) == 1 else True
+    names_mx = [item[1:] for item in bcs_mx[1:]]
+    return names_mx, R1_bcs, R2_bcs, dual_index
 
 
 def dual_indexer(
-        bcs_matrix, R2_bcs, proj_dir, of1_ls, of2_ls, mismatch, of1_master,
+        names_mx, R2_bcs, proj_dir, of1_ls, of2_ls, mismatch, of1_master,
         of2_master):
     '''
     create of1/2_di_lss to direct output for final iteration
@@ -197,7 +184,7 @@ def dual_indexer(
             rename1 = file1
             rename2 = file2
         else:
-            sample_id = bcs_matrix[int(x)][int(y)]
+            sample_id = names_mx[int(y)][int(x)]
             rename1 = proj_dir + '/' + sample_id + '.' + \
                 os.path.basename(file1)
             rename2 = proj_dir + '/' + sample_id + '.' + \
