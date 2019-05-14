@@ -7,7 +7,12 @@ def rotifer_main():
     standalone, command line entry point to rotifer using stdin
     '''
     in1 = args.r1
-    proj_dir = os.path.dirname(os.path.abspath(in1))
+    if args.o is None:
+        proj_dir = os.path.dirname(os.path.abspath(in1))
+    elif os.path.exists(args.o) is True:
+        proj_dir = os.path.abspath(args.o)
+    else:
+        sys.exit('directory not found at ' + os.path.abspath(args.o))
     pe_1 = proj_dir + '/pe.' + os.path.basename(in1)
     se_1 = proj_dir + '/se.' + os.path.basename(in1)
     R1_bases_ls = args.m1 if args.m1 else ['A', 'C', 'G', 'T', 'N']
@@ -109,5 +114,7 @@ if __name__ == "__main__":
             help='space separated list of motifs expected in R1')
     parser.add_argument('-m2', type=str, nargs='+',
             help='space separated list of motifs expected in R2')
+    parser.add_argument('-o', type=str,
+            help='the full path to output directory (optional)')
     args = parser.parse_args()
     rotifer_main()

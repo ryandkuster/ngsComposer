@@ -10,7 +10,12 @@ def krill_main():
     q_min = args.q
     q_percent = args.p
     in1 = args.r1
-    proj_dir = os.path.dirname(os.path.abspath(in1))
+    if args.o is None:
+        proj_dir = os.path.dirname(os.path.abspath(in1))
+    elif os.path.exists(args.o) is True:
+        proj_dir = os.path.abspath(args.o)
+    else:
+        sys.exit('directory not found at ' + os.path.abspath(args.o))
     pe_1 = proj_dir + '/pe.' + os.path.basename(in1)
     se_1 = proj_dir + '/se.' + os.path.basename(in1)
     try:
@@ -120,5 +125,7 @@ if __name__ == "__main__":
             help='the minimum qscore required at a position (integer)')
     parser.add_argument('-p', type=int,
             help='the percent frequency minimum qscore must occur per read (integer)')
+    parser.add_argument('-o', type=str,
+            help='the full path to output directory (optional)')
     args = parser.parse_args()
     krill_main()

@@ -8,8 +8,6 @@ def anemone_main():
     '''
     standalone, command line entry point to anemone using stdin
     '''
-    mismatch = args.m
-    bcs_file = args.c
     in1 = args.r1
     out1 = os.path.basename(in1)
     try:
@@ -18,8 +16,15 @@ def anemone_main():
     except TypeError:
         in2 = False
         out2 = False
+    bcs_file = args.c
+    mismatch = args.m
+    if args.o is None:
+        proj_dir = os.path.dirname(os.path.abspath(in1))
+    elif os.path.exists(args.o) is True:
+        proj_dir = os.path.abspath(args.o)
+    else:
+        sys.exit('directory not found at ' + os.path.abspath(args.o))
     chunk = 3000000  # how many reads to process before writing
-    proj_dir = os.path.dirname(os.path.abspath(in1))
     anemone_init(in1, in2, out1, out2, mismatch, chunk,
                  bcs_file, proj_dir)
 
@@ -413,5 +418,7 @@ if __name__ == '__main__':
             help='the full or relative path to barcodes index file')
     parser.add_argument('-m', type=int,
             help='mismatch value for barcode hamming distance (integer)')
+    parser.add_argument('-o', type=str,
+            help='the full path to output directory (optional)')
     args = parser.parse_args()
     anemone_main()

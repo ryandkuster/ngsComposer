@@ -6,7 +6,12 @@ import argparse
 
 def crinoid_main():
     in1 = args.r1
-    proj_dir = os.path.dirname(os.path.abspath(in1))
+    if args.o is None:
+        proj_dir = os.path.dirname(os.path.abspath(in1))
+    elif os.path.exists(args.o) is True:
+        proj_dir = os.path.abspath(args.o)
+    else:
+        sys.exit('directory not found at ' + os.path.abspath(args.o))
     out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
     out2 = proj_dir + '/qscores.' + os.path.basename(in1)
     crinoid(in1, out1, out2)
@@ -101,5 +106,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='qc summary statistics')
     parser.add_argument('-r1', type=str,
             help='the full or relative path to R1 or R2 fastq file')
+    parser.add_argument('-o', type=str,
+            help='the full path to output directory (optional)')
     args = parser.parse_args()
     crinoid_main()

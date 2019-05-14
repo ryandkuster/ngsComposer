@@ -10,7 +10,12 @@ def scallop_main():
     in1 = args.r1
     front_trim = args.f
     back_trim = args.b
-    proj_dir = os.path.dirname(os.path.abspath(in1))
+    if args.o is None:
+        proj_dir = os.path.dirname(os.path.abspath(in1))
+    elif os.path.exists(args.o) is True:
+        proj_dir = os.path.abspath(args.o)
+    else:
+        sys.exit('directory not found at ' + os.path.abspath(args.o))
     out1 = proj_dir + '/trimmed.' + os.path.basename(in1)
     scallop(in1, front_trim, back_trim, proj_dir, out1)
 
@@ -115,5 +120,7 @@ if __name__ == '__main__':
             help='number of bases to remove from beginning of read (integer)')
     parser.add_argument('-b', type=int,
             help='final position to keep within a read (integer)')
+    parser.add_argument('-o', type=str,
+            help='the full path to output directory (optional)')
     args = parser.parse_args()
     scallop_main()
