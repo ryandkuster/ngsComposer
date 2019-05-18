@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 
 
@@ -15,8 +16,10 @@ def rotifer_main():
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     pe_1 = proj_dir + '/pe.' + os.path.basename(in1)
     se_1 = proj_dir + '/se.' + os.path.basename(in1)
-    R1_bases_ls = args.m1 if args.m1 else ['A', 'C', 'G', 'T', 'N']
-    R2_bases_ls = args.m2 if args.m2 else ['A', 'C', 'G', 'T', 'N']
+    R1_bases_ls = args.m1 if args.m1 else None
+    R2_bases_ls = args.m2 if args.m2 else None
+    if R1_bases_ls is None and R2_bases_ls is None:
+        sys.exit('at least one motifs list must be defined')
     try:
         in2 = args.r2
         pe_2 = proj_dir + '/pe.' + os.path.basename(in2)
@@ -59,8 +62,8 @@ def rotifer(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2):
             entry1 = entry1 + line1 + "\n"
             entry2 = entry2 + line2 + "\n"
             if y == 2:
-                rotifer1 = rotifer_test(line1, R1_bases_ls)
-                rotifer2 = rotifer_test(line2, R2_bases_ls)
+                rotifer1 = rotifer_test(line1, R1_bases_ls) if R1_bases_ls else False
+                rotifer2 = rotifer_test(line2, R2_bases_ls) if R2_bases_ls else False
             if y == 4:
                 if rotifer1 is False and rotifer2 is False:
                     pe_o1.write(entry1)
@@ -97,6 +100,9 @@ def rotifer_single(R1_bases_ls, in1, se_1):
 
 
 def rotifer_test(line, bases_ls):
+    '''
+    test for motif at beginning of read sequence
+    '''
     rotifer = True
     for seq in bases_ls:
         if line.startswith(seq):

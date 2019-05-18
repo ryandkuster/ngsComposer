@@ -9,7 +9,7 @@ def scallop_main():
     '''
     in1 = args.r1
     front_trim = args.f
-    back_trim = args.b
+    back_trim = None if args.b == 0 else args.b
     if args.o is None:
         proj_dir = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
@@ -17,7 +17,7 @@ def scallop_main():
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     out1 = proj_dir + '/trimmed.' + os.path.basename(in1)
-    scallop(in1, front_trim, back_trim, proj_dir, out1)
+    scallop(in1, front_trim, back_trim, out1)
 
 
 def scallop_comp(front_trim, back_trim, proj_dir, in1):
@@ -25,15 +25,13 @@ def scallop_comp(front_trim, back_trim, proj_dir, in1):
     composer entry point to scallop
     '''
     out1 = proj_dir + '/' + os.path.basename(in1)
-    scallop(in1, front_trim, back_trim, proj_dir, out1)
+    scallop(in1, front_trim, back_trim, out1)
 
 
-def scallop(in1, front_trim, back_trim, proj_dir, out1):
+def scallop(in1, front_trim, back_trim, out1):
     '''
     trim defined base numbers from the front or from the end of reads
     '''
-    if back_trim == 0:
-        back_trim = None
     with open(in1) as f, open(out1, 'w') as o:
         i = 0
         for line in f:

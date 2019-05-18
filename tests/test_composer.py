@@ -5,6 +5,12 @@ sys.path.append("..")
 import composer
 
 
+'''
+usage:
+python3 -m unittest test_composer.py 
+'''
+
+
 class TestComposer(unittest.TestCase):
 
     def test_initialize(self):
@@ -17,4 +23,3 @@ class TestComposer(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -5,6 +5,9 @@ import argparse
 
 
 def crinoid_main():
+    '''
+    standalone, command line entry point to crinoid using stdin
+    '''
     in1 = args.r1
     if args.o is None:
         proj_dir = os.path.dirname(os.path.abspath(in1))
@@ -36,19 +39,16 @@ def crinoid(in1, out1, out2):
     '''
     produce raw counts of nucleotide and qscore occurrences
     '''
+
     #TODO avoid using '500' as default max_len
-    scores = open(os.path.dirname(os.path.abspath(__file__)) +
-                  '/scores.txt').read().split()
-    score_ref_dt = dict(zip(scores[:41], scores[-int(len(scores)/2):
-                        -int(len(scores)/2)+41]))
+    #TODO add test for presence of R library
+    #TODO add option to evaluate raw file alone (should R fail)
+
     max_len = 500
-    with open(in1) as f, open(out1, "w") as o1, open(out2, "w") as o2:
+    score_ref_dt, score_dt, base_ref_dt, base_dt = dict_maker(max_len)
+
+    with open(in1) as f:
         y = 0
-        base_ref_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
-        base_dt = {i: {j: 0 for j in base_ref_dt.keys()}
-                   for i in range(max_len)}
-        score_dt = {i: {j: 0 for j in score_ref_dt.keys()}
-                    for i in range(max_len)}
         for line in f:
             y += 1
             if y == 2:
@@ -58,6 +58,8 @@ def crinoid(in1, out1, out2):
                 for i, base in enumerate(line.rstrip()):
                     score_dt[i][base] += 1
                 y = 0
+
+    with open(out1, "w") as o1, open(out2, "w") as o2:
         base_mx = [[0] * len(base_dt[0]) for i in range(max_len)]
         score_mx = [[0] * len(score_dt[0]) for i in range(max_len)]
         base_mx = output_prep(base_dt, base_mx, base_ref_dt, 0)
@@ -66,6 +68,19 @@ def crinoid(in1, out1, out2):
         score_mx = matrix_succinct(score_mx)
         matrix_print(base_mx, o1)
         matrix_print(score_mx, o2)
+
+
+def dict_maker(max_len):
+    scores = open(os.path.dirname(os.path.abspath(__file__)) +
+                  '/scores.txt').read().split()
+    score_ref_dt = dict(zip(scores[:41], scores[-int(len(scores)/2):
+                        -int(len(scores)/2)+41]))
+    score_dt = {i: {j: 0 for j in score_ref_dt.keys()}
+                for i in range(max_len)}
+    base_ref_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
+    base_dt = {i: {j: 0 for j in base_ref_dt.keys()}
+               for i in range(max_len)}
+    return score_ref_dt, score_dt, base_ref_dt, base_dt
 
 
 def output_prep(dt1, mx, dt2, col):
