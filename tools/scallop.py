@@ -1,6 +1,7 @@
-import sys
-import os
 import argparse
+import gzip
+import os
+import sys
 
 
 def scallop_main():
@@ -17,7 +18,7 @@ def scallop_main():
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     out1 = proj_dir + '/trimmed.' + os.path.basename(in1)
-    scallop(in1, front_trim, back_trim, out1)
+    scallop_open(in1, front_trim, back_trim, out1)
 
 
 def scallop_comp(front_trim, back_trim, proj_dir, in1):
@@ -25,21 +26,29 @@ def scallop_comp(front_trim, back_trim, proj_dir, in1):
     composer entry point to scallop
     '''
     out1 = proj_dir + '/' + os.path.basename(in1)
-    scallop(in1, front_trim, back_trim, out1)
+    scallop_open(in1, front_trim, back_trim, out1)
 
 
-def scallop(in1, front_trim, back_trim, out1):
+def scallop_open(in1, front_trim, back_trim, out1):
     '''
     trim defined base numbers from the front or from the end of reads
     '''
-    with open(in1) as f, open(out1, 'w') as o:
-        i = 0
-        for line in f:
-            i += 1
-            if i % 2 == 0:
-                o.write(line.rstrip()[front_trim:back_trim] + "\n")
-            else:
-                o.write(line)
+    try:
+        with gzip.open(in1, 'rt') as f, open(out1, 'w') as o:
+            scally(front_trim, back_trim, f, o)
+    except OSError:
+        with open(in1) as f, open(out1, 'w') as o:
+            scally(front_trim, back_trim, f, o)
+
+
+def scally(front_trim, back_trim, f, o):
+    i = 0
+    for line in f:
+        i += 1
+        if i % 2 == 0:
+            o.write(line.rstrip()[front_trim:back_trim] + "\n")
+        else:
+            o.write(line)
 
 
 def scallop_end(proj_dir, q_min, in1):

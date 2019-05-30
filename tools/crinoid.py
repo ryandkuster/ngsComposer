@@ -1,7 +1,8 @@
-import sys
+import argparse
+import gzip
 import os
 import subprocess
-import argparse
+import sys
 
 
 def crinoid_main():
@@ -17,7 +18,7 @@ def crinoid_main():
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
     out2 = proj_dir + '/qscores.' + os.path.basename(in1)
-    crinoid(in1, out1, out2)
+    crinoid_open(in1, out1, out2)
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(sys.argv[0])) +
            '/qc_plots.R'] + [out1, out2], shell=False)
@@ -29,17 +30,25 @@ def crinoid_comp(proj_dir, in1):
     '''
     out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
     out2 = proj_dir + '/qscores.' + os.path.basename(in1)
-    crinoid(in1, out1, out2)
+    crinoid_open(in1, out1, out2)
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(sys.argv[0])) +
            '/tools/qc_plots.R'] + [out1, out2], shell=False)
 
 
-def crinoid(in1, out1, out2):
+def crinoid_open(in1, out1, out2):
     '''
     produce raw counts of nucleotide and qscore occurrences
     '''
+    try:
+        with gzip.open(in1, 'rt') as f:
+            crinoid(f, out1, out2)
+    except OSError:
+        with open(in1) as f:
+            crinoid(f, out1, out2)
 
+
+def crinoid(f, out1, out2):
     #TODO avoid using '500' as default max_len
     #TODO add test for presence of R library
     #TODO add option to evaluate raw file alone (should R fail)
@@ -47,17 +56,17 @@ def crinoid(in1, out1, out2):
     max_len = 500
     score_ref_dt, score_dt, base_ref_dt, base_dt = dict_maker(max_len)
 
-    with open(in1) as f:
-        y = 0
-        for line in f:
-            y += 1
-            if y == 2:
-                for i, base in enumerate(line.rstrip()):
-                    base_dt[i][base] += 1
-            if y == 4:
-                for i, base in enumerate(line.rstrip()):
-                    score_dt[i][base] += 1
-                y = 0
+
+    y = 0
+    for line in f:
+        y += 1
+        if y == 2:
+            for i, base in enumerate(line.rstrip()):
+                base_dt[i][base] += 1
+        if y == 4:
+            for i, base in enumerate(line.rstrip()):
+                score_dt[i][base] += 1
+            y = 0
 
     with open(out1, "w") as o1, open(out2, "w") as o2:
         base_mx = [[0] * len(base_dt[0]) for i in range(max_len)]
