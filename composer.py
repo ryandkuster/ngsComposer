@@ -1,12 +1,11 @@
-import sys
-import os
+import argparse
 import gzip
+import os
 import shutil
 import subprocess
+import sys
 from multiprocessing import Pool
 from functools import partial
-
-
 from tools.scallop import scallop_comp
 from tools.anemone import anemone_comp
 from tools.rotifer import rotifer_comp
@@ -26,14 +25,16 @@ def initialize(proj_dir):
     return proj_dir
 
 
-def conf_confirm():
+def conf_confirm(proj_dir):
     assert cfg.paired == True or cfg.paired == False
     assert cfg.procs >= 1
+    assert os.path.exists(cfg.alt_dir) or cfg.alt_dir == False
     assert cfg.initial_qc == True or cfg.initial_qc == False
     assert cfg.walkthrough == True or cfg.walkthrough == False
     assert cfg.walkaway == True or cfg.walkaway == False
     assert isinstance(cfg.front_trim, int)
-    assert cfg.bcs_index or cfg.bcs_index == False
+    assert os.path.exists(proj_dir + '/' + cfg.bcs_index) or\
+            cfg.bcs_index == False
     assert isinstance(cfg.mismatch, int)
     assert cfg.R1_bases_ls == False or isinstance(cfg.R1_bases_ls, list)
     if isinstance(cfg.R1_bases_ls, list):
@@ -45,12 +46,14 @@ def conf_confirm():
         for i in cfg.R2_bases_ls:
             for j in i:
                 assert j in ['A', 'C', 'G', 'T']
-    assert cfg.non_genomic == False or isinstance(cfg.non_genomic, str)
-    if isinstance(cfg.non_genomic, str):
-        assert cfg.non_genomic in ['A', 'C', 'G', 'T']
-    assert cfg.end_trim == True or cfg.end_trim == False
+    assert cfg.non_genomic == False or isinstance(cfg.non_genomic, int)
     assert 0 <= cfg.q_min <= 40
     assert 0 <= cfg.q_percent <= 100
+    if cfg.q_min and cfg.q_percent:
+        pass
+    else:
+        sys.exit('both q_min and q_percent variables must be defined')
+    assert cfg.end_trim == True or cfg.end_trim == False
     assert cfg.rm_transit == True or cfg.rm_transit == False
 
 
@@ -142,7 +145,7 @@ def is_fq(filename):
             if i == 2 and line[0] != '+':
                 return
             else:
-                return True
+                return 1
 
 
 def is_gz(filename):
@@ -156,7 +159,7 @@ def is_gz(filename):
             if i == 2 and line[0] != '+':
                 return
             else:
-                sys.exit("sorry, .gz functionality is not currently supported")
+                return 0
 
 
 def is_paired(fastq_ls):
@@ -228,6 +231,30 @@ def input_single(values, in1_ls, in2_ls):
         for filename in values:
             in1_ls.append(filename)
     return in1_ls, in2_ls
+
+
+def dir_size(proj_dir, fastq_ls, fastq_test):
+    drive_stats = os.statvfs(proj_dir)
+    drive_free = drive_stats.f_frsize * drive_stats.f_bavail
+    dir_used = 0
+    dir_plan = 0
+    dir_plan = dir_plan + 1 if cfg.front_trim else dir_plan
+    dir_plan = dir_plan + 1 if cfg.bcs_index else dir_plan
+    if cfg.R1_bases_ls:
+        dir_plan += 1
+    elif cfg.R2_bases_ls:
+        dir_plan += 1
+    dir_plan = dir_plan + 1 if cfg.end_trim else dir_plan
+    dir_plan = dir_plan + 1 if cfg.q_min else dir_plan
+    for i in fastq_ls:
+        dir_used += os.path.getsize(i)
+    if cfg.rm_transit:
+        dir_plan = dir_used * 2 if fastq_test else dir_used * 2 * 5
+    else:
+        dir_plan = dir_used * dir_plan if fastq_test else dir_used * dir_plan * 5
+    print(dir_plan)
+    #TODO call exit if size not adequate for project
+    sys.exit()
 
 
 def dir_del(rm_dirs):
@@ -310,9 +337,6 @@ def crinoid_multiproc(proj_dir, fastq_ls):
     os.mkdir(proj_dir_current)
     crinoid_part = partial(crinoid_comp, proj_dir_current)
     pool_multi(crinoid_part, fastq_ls)
-#    subprocess.check_call(['Rscript',
-#           os.path.dirname(os.path.abspath(sys.argv[0])) +
-#           '/tools/qc_plots.R'] + [proj_dir_current], shell=False)
 
 
 def scallop_muliproc(proj_dir, fastq_ls):
@@ -322,12 +346,10 @@ def scallop_muliproc(proj_dir, fastq_ls):
     proj_dir_current = proj_dir + '/trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
-    scallop_part = partial(scallop_comp, cfg.front_trim, 0, proj_dir_current)
+    scallop_part = partial(scallop_comp, cfg.front_trim, None,
+            proj_dir_current)
     pool_multi(scallop_part, fastq_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
-#    if cfg.walkthrough:
-#        crinoid_multiproc(proj_dir_current, fastq_ls)
-#        cfg.walkaway == False and walkaway_opt(rm_dirs[-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
@@ -386,17 +408,10 @@ def scallop_end_multiproc(fastq_ls, singles_ls):
         os.mkdir(proj_dir_current + '/paired')
     if cfg.walkthrough is False and rm_dirs[-2] != proj_dir + '/qc':
         try:
-            crinoid_multiproc(rm_dirs[-2], fastq_ls)
-        except FileNotFoundError:
-            pass
-        try:
             crinoid_multiproc(rm_dirs[-2] + '/single', singles_ls)
-        except FileNotFoundError:
-            pass
-        try:
             crinoid_multiproc(rm_dirs[-2] + '/paired', fastq_ls)
         except FileNotFoundError:
-            pass
+            crinoid_multiproc(rm_dirs[-2], fastq_ls)
     scallop_end_part = partial(scallop_end, proj_dir_current, cfg.q_min)
     pool_multi(scallop_end_part, fastq_ls)
     if singles_ls:
@@ -440,10 +455,17 @@ def krill_multiproc(in1_ls, in2_ls, singles_ls):
 
 if __name__ == '__main__':
     singles_ls, fastq_ls, in1_ls, in2_ls, rm_dirs = [], [], [], [], []
-    proj_dir = initialize(sys.argv[1])
+    parser = argparse.ArgumentParser(description=
+            'composer is a base-call error-filtering and read preprocessing\
+            pipeline for fastq libraries - \
+            see https://github.com/ryandkuster/composer for usage')
+    parser.add_argument('-i', type=str,
+            help='the full or relative path to the project directory')
+    args = parser.parse_args()
+    proj_dir = initialize(args.i)
     sys.path.append(proj_dir)
     import conf as cfg
-    conf_confirm()
+    conf_confirm(proj_dir)
 
 ######################################################
 # TODO delete the following (for ease of testing):
@@ -482,6 +504,8 @@ if __name__ == '__main__':
             fastq_test = is_gz(filename)
         if fastq_test is None:
             sys.exit(filename + ' was not expected in project directory')
+
+    dir_size(proj_dir, fastq_ls, fastq_test)
 
     if cfg.bcs_index and cfg.paired is True and \
             len(fastq_ls)/2 != len(bcs_dict):

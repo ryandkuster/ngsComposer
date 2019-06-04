@@ -11,6 +11,7 @@ def krill_main():
     q_min = args.q
     q_percent = args.p
     in1 = args.r1
+    in2 = args.r2 if args.r2 else None
     if args.o is None:
         proj_dir = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
@@ -19,12 +20,11 @@ def krill_main():
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     pe_1 = proj_dir + '/pe.' + os.path.basename(in1)
     se_1 = proj_dir + '/se.' + os.path.basename(in1)
-    try:
-        in2 = args.r2
+    if in2:
         pe_2 = proj_dir + '/pe.' + os.path.basename(in2)
         se_2 = proj_dir + '/se.' + os.path.basename(in2)
         krill_open(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2)
-    except TypeError:
+    else:
         krill_single_open(q_min, q_percent, in1, se_1)
 
 
