@@ -35,13 +35,13 @@ def scallop_open(in1, front_trim, back_trim, out1):
     '''
     try:
         with gzip.open(in1, 'rt') as f, open(out1, 'w') as o:
-            scally(front_trim, back_trim, f, o)
+            scallop(front_trim, back_trim, f, o)
     except OSError:
         with open(in1) as f, open(out1, 'w') as o:
-            scally(front_trim, back_trim, f, o)
+            scallop(front_trim, back_trim, f, o)
 
 
-def scally(front_trim, back_trim, f, o):
+def scallop(front_trim, back_trim, f, o):
     i = 0
     for line in f:
         i += 1
