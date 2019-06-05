@@ -162,21 +162,32 @@ def is_gz(filename):
                 return 0
 
 
+def gz_header(filename):
+    try:
+        fastq_test = is_fq(filename)
+        with open(filename) as f:
+            header = f.readline()
+            return header
+    except:
+        with gzip.open(filename, 'rt') as f:
+            header = f.readline()
+            return header
+
+
 def is_paired(fastq_ls):
     '''
     use header info to match paired ends, if present
     '''
     pairs_dict = {}
     for filename in fastq_ls:
-        with open(filename) as f:
-            header = f.readline()
-            for i, x in enumerate(header.split(' ')):
-                if i == 0:
-                    header_id = x
-            if header_id in pairs_dict:
-                pairs_dict[header_id].append(filename)
-            else:
-                pairs_dict[header_id] = [filename]
+        header = gz_header(filename)
+        for i, x in enumerate(header.split(' ')):
+            if i == 0:
+                header_id = x
+        if header_id in pairs_dict:
+            pairs_dict[header_id].append(filename)
+        else:
+            pairs_dict[header_id] = [filename]
     return pairs_dict
 
 
@@ -189,8 +200,8 @@ def input_sort(pairs_dict):
         if cfg.paired is True and len(values) == 2:
             in1_ls, in2_ls = input_paired(values, in1_ls, in2_ls)
         elif cfg.paired is True and len(values) != 2:
-            sys.exit("R1 and R2 pairs not found, expect paired library\n"
-                     + "check the naming conventions of the bcs_index")
+            sys.exit('R1 and R2 pairs not found, expect paired library\n'
+                     + 'check the naming conventions of the bcs_index')
         if cfg.paired is False:
             in1_ls, in2_ls = input_single(values, in1_ls, in2_ls)
     return in1_ls, in2_ls
@@ -201,15 +212,14 @@ def input_paired(values, in1_ls, in2_ls):
     form list if paired is True
     '''
     for filename in values:
-        with open(filename) as f:
-            header = f.readline()
-            for i, x in enumerate(header.split(' ')):
-                if i == 1:
-                    end = x
-            if end.startswith('1'):
-                in1_ls.append(filename)
-            if end.startswith('2'):
-                in2_ls.append(filename)
+        header = gz_header(filename)
+        for i, x in enumerate(header.split(' ')):
+            if i == 1:
+                end = x
+        if end.startswith('1'):
+            in1_ls.append(filename)
+        if end.startswith('2'):
+            in2_ls.append(filename)
     return in1_ls, in2_ls
 
 
@@ -225,8 +235,8 @@ def input_single(values, in1_ls, in2_ls):
         for filename in values:
             in1_ls.append(filename)
     else:
-        print("unexpected paired libraries found")
-        ans = input("continue treating files as single-end libraries?\n")
+        print('unexpected paired libraries found')
+        ans = input('continue treating files as single-end libraries?\n')
         ignore = True if ans in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
         for filename in values:
             in1_ls.append(filename)
@@ -251,10 +261,11 @@ def dir_size(proj_dir, fastq_ls, fastq_test):
     if cfg.rm_transit:
         dir_plan = dir_used * 2 if fastq_test else dir_used * 2 * 5
     else:
-        dir_plan = dir_used * dir_plan if fastq_test else dir_used * dir_plan * 5
-    print(dir_plan)
-    #TODO call exit if size not adequate for project
-    sys.exit()
+        dir_plan = dir_used * dir_plan if fastq_test\
+                else dir_used * dir_plan * 5
+    if dir_plan >= drive_free:
+        sys.exit('an estimated # bytes are required to process, consider using\
+                rm_transit or alt_dir variables to manage disk use')
 
 
 def dir_del(rm_dirs):
