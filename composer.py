@@ -130,8 +130,6 @@ def bc_test(bcs_file):
                     R2_nest[k1] = [k1, k2]
 #                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
 #                        k1 + ' in file ' + bcs_file)
-    print(R1_nest)
-    print(R2_nest)
     return R1_nest, R2_nest
 
 def is_fq(filename):
@@ -264,8 +262,8 @@ def dir_size(proj_dir, fastq_ls, fastq_test):
         dir_plan = dir_used * dir_plan if fastq_test\
                 else dir_used * dir_plan * 5
     if dir_plan >= drive_free:
-        sys.exit('an estimated # bytes are required to process, consider using\
-                rm_transit or alt_dir variables to manage disk use')
+        sys.exit('an estimated ' + str(dir_plan) + ' bytes are required to ' +
+                'process, consider rm_transit or alt_dir variables')
 
 
 def dir_del(rm_dirs):
@@ -516,6 +514,11 @@ if __name__ == '__main__':
         if fastq_test is None:
             sys.exit(filename + ' was not expected in project directory')
 
+    if cfg.alt_dir:
+        proj_dir = initialize(cfg.alt_dir)
+        if len(os.listdir(proj_dir)) != 0:
+            sys.exit('alt_dir must be an empty directory')
+
     dir_size(proj_dir, fastq_ls, fastq_test)
 
     if cfg.bcs_index and cfg.paired is True and \
@@ -524,6 +527,9 @@ if __name__ == '__main__':
     pairs_dict = is_paired(fastq_ls)
     in1_ls, in2_ls = input_sort(pairs_dict)
 
+    '''
+    begin calling tools
+    '''
     if cfg.initial_qc is True:
         crinoid_multiproc(proj_dir, fastq_ls)
 
