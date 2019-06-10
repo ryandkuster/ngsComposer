@@ -541,7 +541,7 @@ if __name__ == '__main__':
         singles_ls, fastq_ls, in1_ls, in2_ls = anemone_multiproc(proj_dir,
                 bcs_dict, in1_ls, in2_ls)
 
-    if cfg.R1_bases_ls and cfg.R2_bases_ls:
+    if cfg.R1_bases_ls or cfg.R2_bases_ls:
         singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multiproc(proj_dir,
                 in1_ls, in2_ls)
 

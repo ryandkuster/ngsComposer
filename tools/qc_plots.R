@@ -79,7 +79,6 @@ invisible(gc())
 # create nucleotide distribution visualization
 nucs <- read.table(composer_in[1], header=F, sep=",")
 names(nucs) <- c("A", "C", "G", "T", "N")
-# names(nucs) <- gsub("V","", names(nucs))
 nucsm <- melt(cbind(nucs, ind = rownames(nucs)), id.vars = c('ind'))
 names(nucsm)[2] <- "Nucleotide"
 nucsm$ind=as.numeric(levels(nucsm$ind))[nucsm$ind]
