@@ -33,7 +33,7 @@ def conf_confirm(proj_dir):
     assert cfg.walkthrough == True or cfg.walkthrough == False
     assert cfg.walkaway == True or cfg.walkaway == False
     assert isinstance(cfg.front_trim, int)
-    assert os.path.exists(proj_dir + '/' + cfg.bcs_index) or\
+    assert os.path.exists(proj_dir + '/' + str(cfg.bcs_index)) or\
             cfg.bcs_index == False
     assert isinstance(cfg.mismatch, int)
     assert cfg.R1_bases_ls == False or isinstance(cfg.R1_bases_ls, list)
@@ -408,14 +408,17 @@ def scallop_end_multiproc(fastq_ls, singles_ls):
     '''
     automated 3' end read trimming based on q_min value
     '''
-    #TODO adjust for initial_qc == False and walkthrough == False...
     proj_dir_current = proj_dir + '/end_trimmed'
     rm_dirs.append(proj_dir_current)
     os.mkdir(proj_dir_current)
-    if cfg.R1_bases_ls and cfg.R2_bases_ls:
+    if cfg.R1_bases_ls or cfg.R2_bases_ls:
         os.mkdir(proj_dir_current + '/single')
         os.mkdir(proj_dir_current + '/paired')
-    if cfg.walkthrough is False and rm_dirs[-2] != proj_dir + '/qc':
+    if os.path.exists(rm_dirs[-2] + '/qc'):
+        pass
+    elif os.path.exists(rm_dirs[-2] + '/single/qc'):
+        pass
+    else:
         try:
             crinoid_multiproc(rm_dirs[-2] + '/single', singles_ls)
             crinoid_multiproc(rm_dirs[-2] + '/paired', fastq_ls)

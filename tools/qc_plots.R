@@ -45,6 +45,7 @@ qc <- qc[order(qc$position),]
 boxplot <- ggplot(qc, aes(x = position, y=score, weight=count, group=position), stat='identity')+
   geom_boxplot(fill="white", colour="cornflowerblue", lwd = 0.35, outlier.shape = NA)+
   geom_hline(aes(yintercept = 30), lty=1, alpha=0.05, size=0.35)+
+  geom_hline(aes(yintercept = 20), lty=1, alpha=0.05, size=0.35)+
   stat_summary(aes(x = position, y = mean, group = position),
                shape=23, size=0.2, color="black", alpha=0.25)+
   scale_x_continuous(expand=c(0,0), limit=c(0,nrow(qscores)+1), breaks=seq(0,nrow(qscores)+1,by=5),
@@ -62,6 +63,7 @@ boxplot <- ggplot(qc, aes(x = position, y=score, weight=count, group=position), 
   geom_boxplot(fill="white", colour="cornflowerblue", lwd = 0.35,
                outlier.alpha = 0.25, alpha=0.25, outlier.colour="tomato", outlier.size=1.25)+
   geom_hline(aes(yintercept = 30), lty=1, alpha=0.05, size=0.35)+
+  geom_hline(aes(yintercept = 20), lty=1, alpha=0.05, size=0.35)+
   stat_summary(aes(x = position, y=mean, group=position),
                shape=23, size=0.2, color="black", alpha=0.25)+
   geom_linerange(aes(x = position, ymin=round(mean-sd,0), ymax=round(mean+sd,0), group=position),

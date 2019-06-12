@@ -60,14 +60,8 @@ def scallop_end(proj_dir, q_min, in1):
     if in1_pe_se == 'paired' or in1_pe_se == 'single':
         proj_dir += '/' + in1_pe_se
     in1_scores = in1_path + '/qc/qscores.' + in1_file
-    in1_mx = []    
     with open(in1_scores) as f:
-        for i in f:
-            tmp = []
-            i = i.rstrip()
-            for j in i.split(','):
-                tmp.append(int(j))
-            in1_mx.append(tmp)
+        in1_mx = [[int(j) for j in i.rstrip().split(',')] for i in f]
     max_len = len(in1_mx)
     len_ls = [sum(i) for i in in1_mx]
     try:
@@ -75,39 +69,35 @@ def scallop_end(proj_dir, q_min, in1):
             max_len = scallop_uniform(len_ls, max_len)
     except NameError:
         pass
-    for index, i in enumerate(len_ls):
-        len_ls[index] = (i + 1)/2
-        if len_ls[index] % 1 == 0:
-            len_ls[index] = (len_ls[index]/2)
-        else:
-            len_ls[index] = (len_ls[index] - 0.5)/2
-    back_trim = scallop_auto(len_ls, in1_mx, max_len, q_min)
+    back_trim = None
+    for base, i in enumerate(reversed(in1_mx)):
+        med = (sum(i) + 1)/2
+        delta = med/2 if med % 1 == 0 else (med - 0.5)/2
+        q1 = scallop_stats(med - delta, i)
+        q3 = scallop_stats(med + delta, i)
+        lw = q1 - (1.5 * (q3 - q1))
+        if lw >= q_min:
+            back_trim = max_len - base
+            break
+    print(back_trim)
     scallop_comp(0, back_trim, proj_dir, in1)
 
 
-def scallop_auto(len_ls, in1_mx, max_len, q_min):
-    '''
-    trim defined slice of reads, producing constant read length
-    '''
-    back_trim = None
-    for j in range((max_len - 1), -1, -1):
-        index, x, x_adjust = 0, 0, 0
-        for i in in1_mx[j]:
-            index += i
-            if x_adjust == 0 and index == len_ls[j] - 0.5:
-                x_adjust = x
-            if index >= len_ls[j]:
-                if x_adjust == 0:
-                    target = x
-                    break
-                else:
-                    target = (x + x_adjust)/2
-                    break
-            x += 1
-        if target >= q_min:
-            back_trim = j + 1
-            break
-    return back_trim
+def scallop_stats(target_index, pos):
+    index = 0
+    x_adjust = 0
+    for x, count in enumerate(pos):
+        index += count
+        if (x_adjust == 0 and index == target_index - 0.5):
+            x_adjust = x
+        if index >= target_index:
+            if x_adjust == 0:
+                target = x
+                break
+            else:
+                target = (x + x_adjust)/2
+                break
+    return target
 
 
 def scallop_uniform(len_ls, max_len):
