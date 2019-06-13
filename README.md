@@ -122,6 +122,7 @@ T	sample4	sample5	sample9	sample10
 
 If reverse barcodes do not require demultiplexing, the barcode file can be set up as follows with "NA" or any other text used as a header in the first row:
 
+**barcodes_1.txt**
 ```
 	NA
 A	sample1
