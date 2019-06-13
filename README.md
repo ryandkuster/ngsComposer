@@ -104,7 +104,7 @@ rm_transit = False
 ***
 
 ### Barcode demultiplexing
-#### Barcodes file
+#### Barcodes file(s)
 Optionally, one or more barcode files may be included in the project directory for demultiplexing. The following files are required at minimum:
 - barcodes_1.txt
 - index.txt
@@ -122,6 +122,7 @@ T	sample4	sample5	sample9	sample10
 
 If reverse barcodes do not require demultiplexing, the barcode file can be set up as follows with "NA" or any other text used as a header in the first row:
 
+**barcodes_1.txt**
 ```
 	NA
 A	sample1
@@ -132,7 +133,7 @@ T	sample4
 
 ***
 
-#### Index file
+#### Index file for directing multiple barcode files
 The index file is a tab delimited file required to associate the barcodes file with a specific library in your project directory. It must include the filename of the forward read followed by the appropriate barcodes file:
 
 **index.txt**
