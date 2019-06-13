@@ -1,6 +1,6 @@
 <a href="https://imgur.com/gYTN9Hv"><img src="https://i.imgur.com/gYTN9Hv.png" title="source: imgur.com" /></a>
 
-# composer: a deep QC adventure!
+# ngsComposer: for the next generation of sequencing!
 
 Base-call error-filtering and read preprocessing pipeline designed by biologists
 
@@ -40,7 +40,7 @@ $ python3 composer.py -i <path_to_directory>
 ***
 
 ### Configuration
-Using a text editor, save a file containing the following variables as a python file (inludes '.py' as file extension) and include it in your project directory:
+Using a text editor, save a file containing the following variables as a python file (includes '.py' as file extension) and include it in your project directory:
 
 ```
 # if fastq files should be treated as paired ends, use 'True', else 'False'
@@ -121,7 +121,7 @@ T	sample4
 ***
 
 #### Index file
-The index file is a tab delimited file required to associate the barcodes file with a specific library in your project directory. It must include the filename followed by the appropriate barcodes file:
+The index file is a tab delimited file required to associate the barcodes file with a specific library in your project directory. It must include the filename of the forward read followed by the appropriate barcodes file:
 
 ```
 1_R1.fastq  barcodes_1.txt
