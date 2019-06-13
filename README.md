@@ -1,4 +1,4 @@
-<a href="https://imgur.com/gYTN9Hv"><img src="https://i.imgur.com/gYTN9Hv.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/Ah9KXSM"><img src="https://i.imgur.com/Ah9KXSM.png" title="source: imgur.com" /></a>
 
 # ngsComposer: for the next generation of sequencing!
 
