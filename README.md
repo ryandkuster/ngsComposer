@@ -133,7 +133,7 @@ T	sample4
 
 ***
 
-#### Index file
+#### Index file for demultiplexing using multiple barcode sets
 The index file is a tab delimited file required to associate the barcodes file with a specific library in your project directory. It must include the filename of the forward read followed by the appropriate barcodes file:
 
 **index.txt**
