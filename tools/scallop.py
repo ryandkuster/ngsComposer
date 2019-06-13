@@ -79,7 +79,6 @@ def scallop_end(proj_dir, q_min, in1):
         if lw >= q_min:
             back_trim = max_len - base
             break
-    print(back_trim)
     scallop_comp(0, back_trim, proj_dir, in1)
 
 

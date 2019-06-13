@@ -292,6 +292,7 @@ def pathfinder(proj_dir_current):
     '''
     walk current directory and pull files as lists
     '''
+    #TODO create exception for files beginning with 'unknown' or 'redundant'
     singles_ls, fastq_ls, in1_ls, in2_ls = [], [], [], []
     for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
         for i in files:
@@ -311,6 +312,7 @@ def concater(proj_dir_current):
     '''
     walk current directory and concatenate files with identical names
     '''
+    #TODO check concat dict doesn't waste time
     concat_dict, cat_ls = {}, []
     for root, dirs, files in os.walk(os.path.abspath(proj_dir_current)):
         for i in files:

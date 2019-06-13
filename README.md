@@ -43,47 +43,51 @@ $ python3 composer.py -i <path_to_directory>
 Using a text editor, save a file containing the following variables as a python file (inludes '.py' as file extension) and include it in your project directory:
 
 ```
-# if fastq files should be treated as paired ends (True or False)
+# if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True
 
-# choose number of subprocesses that should run simultaneously (1 or greater)
+# choose number of subprocesses that should run simultaneously
 procs = 2
 
-# create initial QC output (True or False)
+# alternate directory (optionally save space by alternating storage directories)
+alt_dir = False
+
+# create initial QC output
 initial_qc = False
 
-# perform qc step at each filtering stage (time-consuming, but informative) (True or False)
-walkthrough = False
+# perform qc step at each filtering stage (time-consuming, but informative)
+walkthrough = True
 
-# run from beginning to end without pausing at qc steps (True or False)
-walkaway = True
+# run from beginning to end without pausing at qc steps
+walkaway = False
 
-# positions to trim from front of read before demultiplexing, (0 if no buffer sequence)
-front_trim = 2
+# positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
+front_trim = 0
 
-# name of file associating forward reads with barcode array (False if not demultiplexing)
+# name of  file with barcodes to demultiplex forward reads (use 'False' if not demultiplexing)
 bcs_index = 'index.txt'
 
-# number of mismatches allowed in barcodes (hamming distance)
+# number of mismatches (hamming distance) allowed in barcodes
 mismatch = 1
 
-# list sequences immediately adjacent to barcodes (False if not used)
-bases_ls = ['TCGAG','AGCTT']
+# list sequences immediately adjacent to barcodes
+R1_bases_ls = ['A', 'C', 'G', 'T']
+R2_bases_ls = ['A', 'C', 'G', 'T']
 
-# additional, non-genomic base not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
-non_genomic = 'T'
+# number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
+non_genomic = 0
 
-# quality score minimum (Phred value 0-40)(use False to skip)
+# trim read 3' ends based on q_min threshold
+end_trim = False
+
+# quality score minimum (Phred value 0-40)(use 'False' to skip)
 q_min = 30
 
-# percentage of reads >/= q_min quality scores (use False to skip)
+# percentage of reads >/= q_min quality scores (use 'False' to skip)
 q_percent = 95
 
-# trim read 3' ends based on q_min threshold (True or False)
-end_trim = True
-
-# optionally remove each transitional file folder to save space (True or False)
-rm_transit = True
+# optionally remove each transitional file folder to save space
+rm_transit = False
 ```
 
 ***
