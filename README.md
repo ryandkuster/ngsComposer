@@ -13,6 +13,7 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
 - Accepts project directory of multiple libraries
 - Designed by biologists (please don't run away!)
 
+
 ## Installation
 
 Clone or download the Git repository to your desired tool folder
@@ -20,6 +21,14 @@ Clone or download the Git repository to your desired tool folder
 ```bash
 $ git clone https://github.com/ryandkuster/composer.git
 ```
+
+Dependencies:
+- Python3 version 3.5 or above
+- R version compatible with the following required packackes:
+	ggplot2
+	reshape
+	Hmisc
+
 
 ## Usage
 
@@ -41,6 +50,8 @@ $ python3 composer.py -i <path_to_directory>
 
 ### Configuration
 Using a text editor, save a file containing the following variables as a python file (includes '.py' as file extension) and include it in your project directory:
+
+**conf.py**
 
 ```
 # if fastq files should be treated as paired ends, use 'True', else 'False'
@@ -100,6 +111,7 @@ Optionally, one or more barcode files may be included in the project directory f
 
 The barcodes file is a tab or space delimited file including forward barcodes as rows and reverse barcodes as columns. For example, the following would be required for a dual-indexed library:
 
+**barcodes_1.txt**
 ```
 	A	C	G	T
 A	sample1	sample5	sample6	sample10
@@ -123,12 +135,14 @@ T	sample4
 #### Index file
 The index file is a tab delimited file required to associate the barcodes file with a specific library in your project directory. It must include the filename of the forward read followed by the appropriate barcodes file:
 
+**index.txt**
 ```
 1_R1.fastq  barcodes_1.txt
 ```
 
 Alternatively, multiple barcoding schemes may be included to accomodate multiple libraries. For example:
 
+**index.txt**
 ```
 1_R1.fastq  barcodes_1.txt
 2_R1.fastq  barcodes_2.txt
