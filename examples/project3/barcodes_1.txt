@@ -1,0 +1,5 @@
+	NA
+A	sample1
+C	sample2
+G	sample3
+T	sample4

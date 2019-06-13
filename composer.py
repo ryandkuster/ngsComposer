@@ -96,7 +96,7 @@ def bc_test(bcs_file):
     open user-defined bc file and extract forward and reverse
     bcs and test for redundancy
     '''
-    #TODO handle identical barcodes...
+    #TODO handle identical or redundant barcodes...
     with open(bcs_file) as f:
         line = f.readline()
         R1_bcs, R2_bcs, R1_nest, R2_nest = {}, {}, {}, {}
@@ -119,8 +119,8 @@ def bc_test(bcs_file):
                     R1_nest[k1].append(k2)
                 else:
                     R1_nest[k1] = [k1, k2]
-#                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
-#                        k1 + ' in file ' + bcs_file)
+                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
+                        k1 + ' in file ' + bcs_file)
     for i, (k1, v1) in enumerate(R2_bcs.items()):
         for j, (k2, v2) in enumerate(R2_bcs.items()):
             if k2.startswith(k1) and v1 != v2:
@@ -128,9 +128,10 @@ def bc_test(bcs_file):
                     R2_nest[k1].append(k2)
                 else:
                     R2_nest[k1] = [k1, k2]
-#                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
-#                        k1 + ' in file ' + bcs_file)
+                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
+                        k1 + ' in file ' + bcs_file)
     return R1_nest, R2_nest
+
 
 def is_fq(filename):
     '''
@@ -376,7 +377,7 @@ def anemone_multiproc(proj_dir, bcs_dict, in1_ls, in2_ls):
         update = input(
                 '\ncheck qc folder(s) in ' + rm_dirs[-1] + '\ncontinue ' +
                 'without changes to configuration settings? (y/n)\n'
-                ) if cfg.walkaway == False else False 
+                ) if cfg.walkaway == False else 'y' 
         if update not in ('Y', 'y', 'Yes', 'yes', 'YES'):
             prompt = input(
                     '\nupdate mismatch value and rerun anemone ' +
@@ -386,12 +387,11 @@ def anemone_multiproc(proj_dir, bcs_dict, in1_ls, in2_ls):
                 cfg.mismatch = int(input('\nnew mismatch value? (int)\n'))
                 shutil.rmtree(rm_dirs[-1])
                 a,b,c,c = anemone_multiproc(proj_dir, bcs_dict, in1_ls, in2_ls)
+                rm_dirs.pop()
             else:
                 exit = input('\nexit ngsComposer? (y/n)\n')
                 if exit in ('Y', 'y', 'Yes', 'yes', 'YES'):
                     sys.exit('\nngsComposer is now exiting')
-    if cfg.rm_transit is True:
-        dir_del(rm_dirs[:-1])
     return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
 
 
@@ -407,14 +407,32 @@ def rotifer_multiproc(proj_dir, in1_ls, in2_ls):
     rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, cfg.R1_bases_ls,
             cfg.R2_bases_ls, cfg.non_genomic, proj_dir_current)
     pool_multi(rotifer_part, in1_ls)
-    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
+    t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(proj_dir_current)
     if cfg.walkthrough:
-        crinoid_multiproc(proj_dir_current + '/single', singles_ls)
-        crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
-    #TODO add walkthrough functions here
-    if cfg.rm_transit is True:
-        dir_del(rm_dirs[:-1])
-    return singles_ls, fastq_ls, in1_ls, in2_ls
+        crinoid_multiproc(proj_dir_current + '/single', t_singles_ls)
+        crinoid_multiproc(proj_dir_current + '/paired', t_fastq_ls)
+        update = input(
+                '\ncheck qc folder(s) in ' + rm_dirs[-1] + '\ncontinue ' +
+                'without changes to configuration settings? (y/n)\n'
+                ) if cfg.walkaway == False else 'y' 
+        if update not in ('Y', 'y', 'Yes', 'yes', 'YES'):
+            prompt = input(
+                    '\nupdate motif lists and rerun rotifer ' +
+                    'parsing step? (y/n)\n'
+                    )
+            if prompt in ('Y', 'y', 'Yes', 'yes', 'YES'):
+                R1_bases_ls = input('\nnew R1_bases_ls? (space separated list, or use False)\n')
+                cfg.R1_bases_ls = False if R1_bases_ls is False else R1_bases_ls.split()
+                R2_bases_ls = input('\nnew R2_bases_ls? (space separated list, or use False)\n')
+                cfg.R2_bases_ls = False if R2_bases_ls is False else R2_bases_ls.split()
+                shutil.rmtree(rm_dirs[-1])
+                a,b,c,c = rotifer_multiproc(proj_dir, in1_ls, in2_ls)
+                rm_dirs.pop()
+            else:
+                exit = input('\nexit ngsComposer? (y/n)\n')
+                if exit in ('Y', 'y', 'Yes', 'yes', 'YES'):
+                    sys.exit('\nngsComposer is now exiting')
+    return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
 
 
 def scallop_end_multiproc(fastq_ls, singles_ls):
@@ -444,8 +462,6 @@ def scallop_end_multiproc(fastq_ls, singles_ls):
         pool_multi(scallop_end_part, singles_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
     #TODO add walkthrough functions here
-    if cfg.rm_transit is True:
-        dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
@@ -475,8 +491,6 @@ def krill_multiproc(in1_ls, in2_ls, singles_ls):
         crinoid_multiproc(proj_dir_current + '/single', singles_ls)
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
     #TODO add walkthrough functions here
-    if cfg.rm_transit is True:
-        dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
@@ -558,15 +572,23 @@ if __name__ == '__main__':
     if cfg.bcs_index:
         singles_ls, fastq_ls, in1_ls, in2_ls = anemone_multiproc(proj_dir,
                 bcs_dict, in1_ls, in2_ls)
+        if cfg.rm_transit is True:
+            dir_del(rm_dirs[:-1])
 
     if cfg.R1_bases_ls or cfg.R2_bases_ls:
         singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multiproc(proj_dir,
                 in1_ls, in2_ls)
+        if cfg.rm_transit is True:
+            dir_del(rm_dirs[:-1])
 
     if cfg.end_trim is True:
         singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multiproc(fastq_ls,
                 singles_ls)
+        if cfg.rm_transit is True:
+            dir_del(rm_dirs[:-1])
 
     if cfg.q_min and cfg.q_percent:
         singles_ls, fastq_ls, in1_ls, in2_ls = krill_multiproc(in1_ls, in2_ls,
                 singles_ls)
+        if cfg.rm_transit is True:
+            dir_del(rm_dirs[:-1])

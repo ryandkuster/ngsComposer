@@ -204,7 +204,7 @@ def anemone_single_open(in1, out1, of1_ls, mismatch, bcs, proj_dir, round_one):
             anemone_single(f1, out1, of1_ls, mismatch, bcs, proj_dir,
                     round_one)
     except OSError:
-        with open(in1) as f1, open(in2) as f2:
+        with open(in1) as f1:
             anemone_single(f1, out1, of1_ls, mismatch, bcs, proj_dir,
                     round_one)
 

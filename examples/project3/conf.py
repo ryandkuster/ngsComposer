@@ -1,5 +1,5 @@
 # if fastq files should be treated as paired ends, use 'True', else 'False'
-paired = True
+paired = False
 
 # choose number of subprocesses that should run simultaneously
 procs = 1
@@ -14,7 +14,7 @@ initial_qc = True
 walkthrough = True
 
 # run from beginning to end without pausing at qc steps
-walkaway = True
+walkaway = False
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
 front_trim = 2
@@ -27,7 +27,7 @@ mismatch = 1
 
 # list sequences immediately adjacent to barcodes
 R1_bases_ls = ['A', 'C', 'G', 'T']
-R2_bases_ls = ['A', 'C', 'G', 'T']
+R2_bases_ls = False
 
 # number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
 non_genomic = 0

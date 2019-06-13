@@ -2,7 +2,7 @@
 paired = True
 
 # choose number of subprocesses that should run simultaneously
-procs = 2
+procs = 1
 
 # alternate directory (optionally save space by alternating storage directories)
 alt_dir = False
