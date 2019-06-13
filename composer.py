@@ -421,10 +421,14 @@ def rotifer_multiproc(proj_dir, in1_ls, in2_ls):
                     'parsing step? (y/n)\n'
                     )
             if prompt in ('Y', 'y', 'Yes', 'yes', 'YES'):
-                R1_bases_ls = input('\nnew R1_bases_ls? (space separated list, or use False)\n')
-                cfg.R1_bases_ls = False if R1_bases_ls is False else R1_bases_ls.split()
-                R2_bases_ls = input('\nnew R2_bases_ls? (space separated list, or use False)\n')
-                cfg.R2_bases_ls = False if R2_bases_ls is False else R2_bases_ls.split()
+                R1_bases_ls = input('\nnew R1_bases_ls? (space separated ' +
+                        'list, or use False)\n')
+                cfg.R1_bases_ls = False if R1_bases_ls is False else\   
+                        R1_bases_ls.split()
+                R2_bases_ls = input('\nnew R2_bases_ls? (space separated ' +
+                        'list, or use False)\n')
+                cfg.R2_bases_ls = False if R2_bases_ls is False else\
+                        R2_bases_ls.split()
                 shutil.rmtree(rm_dirs[-1])
                 a,b,c,c = rotifer_multiproc(proj_dir, in1_ls, in2_ls)
                 rm_dirs.pop()
