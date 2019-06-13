@@ -335,11 +335,6 @@ def concater(proj_dir_current):
                 os.remove(i)
 
 
-def walkaway_opt(folder):
-    ans = input('\n check qc folder(s) in ' + folder + ' - continue? (y/n)\n')
-    ignore = True if ans in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
-
-
 def crinoid_multiproc(proj_dir, fastq_ls):
     '''
     create user-defined subprocesses to produce base-call summary
@@ -375,13 +370,29 @@ def anemone_multiproc(proj_dir, bcs_dict, in1_ls, in2_ls):
             bcs_dict, proj_dir_current)
     pool_multi(anemone_part, in1_ls)
     concater(proj_dir_current)
-    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
+    t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(proj_dir_current)
     if cfg.walkthrough:
-        crinoid_multiproc(proj_dir_current, fastq_ls)
-        cfg.walkaway == False and walkaway_opt(rm_dirs[-1])
+        crinoid_multiproc(proj_dir_current, t_fastq_ls)
+        update = input(
+                '\ncheck qc folder(s) in ' + rm_dirs[-1] + '\ncontinue ' +
+                'without changes to configuration settings? (y/n)\n'
+                ) if cfg.walkaway == False else False 
+        if update not in ('Y', 'y', 'Yes', 'yes', 'YES'):
+            prompt = input(
+                    '\nupdate mismatch value and rerun anemone ' +
+                    'demultiplexing step? (y/n)\n'
+                    )
+            if prompt in ('Y', 'y', 'Yes', 'yes', 'YES'):
+                cfg.mismatch = int(input('\nnew mismatch value? (int)\n'))
+                shutil.rmtree(rm_dirs[-1])
+                a,b,c,c = anemone_multiproc(proj_dir, bcs_dict, in1_ls, in2_ls)
+            else:
+                exit = input('\nexit ngsComposer? (y/n)\n')
+                if exit in ('Y', 'y', 'Yes', 'yes', 'YES'):
+                    sys.exit('\nngsComposer is now exiting')
     if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
-    return singles_ls, fastq_ls, in1_ls, in2_ls
+    return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
 
 
 def rotifer_multiproc(proj_dir, in1_ls, in2_ls):
@@ -400,7 +411,7 @@ def rotifer_multiproc(proj_dir, in1_ls, in2_ls):
     if cfg.walkthrough:
         crinoid_multiproc(proj_dir_current + '/single', singles_ls)
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
-        cfg.walkaway == False and walkaway_opt(rm_dirs[-1])
+    #TODO add walkthrough functions here
     if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
@@ -432,6 +443,7 @@ def scallop_end_multiproc(fastq_ls, singles_ls):
         scallop_end_part = partial(scallop_end, proj_dir_current, cfg.q_min)
         pool_multi(scallop_end_part, singles_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(proj_dir_current)
+    #TODO add walkthrough functions here
     if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
@@ -462,6 +474,7 @@ def krill_multiproc(in1_ls, in2_ls, singles_ls):
     if cfg.walkthrough:
         crinoid_multiproc(proj_dir_current + '/single', singles_ls)
         crinoid_multiproc(proj_dir_current + '/paired', fastq_ls)
+    #TODO add walkthrough functions here
     if cfg.rm_transit is True:
         dir_del(rm_dirs[:-1])
     return singles_ls, fastq_ls, in1_ls, in2_ls
