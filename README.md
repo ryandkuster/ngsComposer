@@ -43,7 +43,7 @@ Optionally, paired end files can also be included in the project directory:
 
 From command line, run composer with the specified directory of your project
 ```bash
-$ python3 composer.py -i <path_to_directory>
+$ python3 composer.py -i <path_to_project_directory>
 ```
 
 ***

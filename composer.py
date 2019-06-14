@@ -413,10 +413,13 @@ def rotifer_multiproc(proj, in1_ls, in2_ls):
             prompt = input(msg.rotifer_up)
             if prompt in (msg.confirm):
                 R1_bases_ls = input(msg.rotifer_in1)
-                cfg.R1_bases_ls = False if R1_bases_ls is False else R1_bases_ls.split()
+                cfg.R1_bases_ls = False if R1_bases_ls == '' else R1_bases_ls.split()
                 R2_bases_ls = input(msg.rotifer_in2)
-                cfg.R2_bases_ls = False if R2_bases_ls is False else R2_bases_ls.split()
+                cfg.R2_bases_ls = False if R2_bases_ls == '' else R2_bases_ls.split()
                 shutil.rmtree(rm_dirs[-1])
+                if cfg.R1_bases_ls is False and cfg.R2_bases_ls is False:
+                    rm_dirs.pop()
+                    return singles_ls, fastq_ls, in1_ls, in2_ls
                 a,b,c,c = rotifer_multiproc(proj, in1_ls, in2_ls)
                 rm_dirs.pop()
             else:
