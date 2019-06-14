@@ -1,0 +1,6 @@
+if (suppressMessages(!require(ggplot2))) install.packages('ggplot2')
+suppressMessages(library(ggplot2))
+if (suppressMessages(!require(reshape))) install.packages('reshape')
+suppressMessages(library(reshape))
+if (suppressMessages(!require(Hmisc))) install.packages('Hmisc')
+suppressMessages(library(Hmisc))

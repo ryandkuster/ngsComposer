@@ -18,10 +18,13 @@ def crinoid_main():
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
     out2 = proj_dir + '/qscores.' + os.path.basename(in1)
+    subprocess.check_call(['Rscript',
+            os.path.abspath(sys.argv[0])[:-17] +
+            '/tests/test_packages.R'] , shell=False)
     crinoid_open(in1, out1, out2)
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(sys.argv[0])) +
-           '/qc_plots.R'] + [out1, out2], shell=False)
+           '/helpers/qc_plots.R'] + [out1, out2], shell=False)
 
 
 def crinoid_comp(proj_dir, in1):
@@ -33,7 +36,7 @@ def crinoid_comp(proj_dir, in1):
     crinoid_open(in1, out1, out2)
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(sys.argv[0])) +
-           '/tools/qc_plots.R'] + [out1, out2], shell=False)
+           '/tools/helpers/qc_plots.R'] + [out1, out2], shell=False)
 
 
 def crinoid_open(in1, out1, out2):
@@ -50,7 +53,6 @@ def crinoid_open(in1, out1, out2):
 
 def crinoid(f, out1, out2):
     #TODO avoid using '500' as default max_len
-    #TODO add test for presence of R library
     #TODO add option to evaluate raw file alone (should R fail)
 
     max_len = 500
@@ -81,7 +83,7 @@ def crinoid(f, out1, out2):
 
 def dict_maker(max_len):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
-                  '/scores.txt').read().split()
+                  '/helpers/scores.txt').read().split()
     score_ref_dt = dict(zip(scores[:41], scores[-int(len(scores)/2):
                         -int(len(scores)/2)+41]))
     score_dt = {i: {j: 0 for j in score_ref_dt.keys()}

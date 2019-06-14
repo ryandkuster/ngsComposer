@@ -66,7 +66,7 @@ def krill_open(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2):
 
 def krill(q_min, q_percent, f1, f2, pe_o1, pe_o2, se_o1, se_o2):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
-                  '/scores.txt').read().split()
+                  '/helpers/scores.txt').read().split()
     val = dict(zip(scores[:int(len(scores)/2)],
                    scores[-int(len(scores)/2):]))
     y, entry1, entry2 = 0, "", ""
@@ -105,7 +105,7 @@ def krill_single_open(q_min, q_percent, in1, se_1):
 
 def krill_single(q_min, q_percent, f1, se_o1):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
-                  '/scores.txt').read().split()
+                  '/helpers/scores.txt').read().split()
     val = dict(zip(scores[:int(len(scores)/2)],
                scores[-int(len(scores)/2):]))
     y, entry1 = 0, ""
