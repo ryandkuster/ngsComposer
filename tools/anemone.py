@@ -55,6 +55,12 @@ def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj_dir):
     call paired-end or single-end anemone
     '''
     names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(bcs_file)
+    test = bc_test(R1_bcs, names_mx, True)
+    if test:
+        print('redundant R1 barcodes detected')
+    test = bc_test(R2_bcs, names_mx, False)
+    if test:
+        print('redundant R2 barcodes detected')
     of1_ls = [open(proj_dir + '/temp_unknown.' + out1, 'w')]
     if in2:
         of2_ls = [open(proj_dir + '/temp_unknown.' + out2, 'w')]
@@ -66,23 +72,26 @@ def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj_dir):
     of1_dict, of2_dict = {}, {}
     if in2:
         of1_ls, of2_ls = anemone_open(in1, in2, out1, out2, of1_ls, of2_ls,
-                mismatch, R1_bcs, proj_dir, True)
+                                      mismatch, R1_bcs, proj_dir, True)
         if dual_index is True:
             of1_master, of2_master = dual_indexer(in1, in2, R2_bcs, proj_dir,
-                    of1_ls, of2_ls, mismatch)
+                                                  of1_ls, of2_ls, mismatch)
             for file1, file2 in zip(of2_master, of1_master):
                 of1_dict, of2_dict = rename_files(file1, file2, dual_index,
-                        names_mx, proj_dir, of1_dict, of2_dict)
+                                                  names_mx, proj_dir, of1_dict,
+                                                  of2_dict)
         else:
             for file1, file2 in zip(of1_ls, of2_ls):
                 of1_dict, of2_dict = rename_files(file1.name, file2.name,
-                        dual_index, names_mx, proj_dir, of1_dict, of2_dict)
+                                                  dual_index, names_mx,
+                                                  proj_dir, of1_dict, of2_dict)
     else:
         anemone_single_open(in1, out1, of1_ls, mismatch, R1_bcs, proj_dir,
-                True)
+                            True)
         for file1 in of1_ls[1:]:
             of1_dict, of2_dict = rename_files(file1.name, None, dual_index,
-                    names_mx, proj_dir, of1_dict, of2_dict)
+                                              names_mx, proj_dir, of1_dict,
+                                              of2_dict)
     concatenate_files(proj_dir, of1_dict, of2_dict)
 
 
@@ -94,11 +103,28 @@ def bc_reader(bcs_file):
     '''
     with open(bcs_file) as f:
         bcs_mx = [line.rstrip().split() for line in f]
-    R2_bcs = {item: i for i, item in enumerate(bcs_mx[0])}
-    R1_bcs = {item[0]: i for i, item in enumerate(bcs_mx[1:])}
+    R2_bcs = {i: item for i, item in enumerate(bcs_mx[0])}
+    R1_bcs = {i: item[0] for i, item in enumerate(bcs_mx[1:])}
     dual_index = False if len(R2_bcs) == 1 else True
     names_mx = [item[1:] for item in bcs_mx[1:]]
     return names_mx, R1_bcs, R2_bcs, dual_index
+
+
+def bc_test(bcs, names_mx, r1):
+    dupe_ls = []
+    for k1, v1 in bcs.items():
+        for k2, v2 in bcs.items():
+            if v2.startswith(v1) and k1 != k2:
+                dupe_ls.extend((k1, k2))
+    if r1:
+        for i in dupe_ls:
+            for j in range(len(names_mx[i])):
+                names_mx[i][j] = 'redundant'
+    else:
+        for i in range(len(names_mx)):
+            for j in dupe_ls:
+                names_mx[i][j] = 'redundant'
+    return dupe_ls
 
 
 def dual_indexer(in1, in2, R2_bcs, proj_dir, of1_ls, of2_ls, mismatch):
@@ -123,14 +149,17 @@ def dual_indexer(in1, in2, R2_bcs, proj_dir, of1_ls, of2_ls, mismatch):
             of1_master.append(proj_dir + '/' + str(i) + '.' + out1)
             of2_master.append(proj_dir + '/' + str(i) + '.' + out2)
         anemone_open(in1, in2, out1, out2, of1_di_ls, of2_di_ls, mismatch,
-                R2_bcs, proj_dir, True)
+                     R2_bcs, proj_dir, True)
         os.remove(in1)
         os.remove(in2)
     return of1_master, of2_master
 
 
 def rename_files(file1, file2, dual_index, names_mx, proj_dir, of1_dict,
-            of2_dict):
+                 of2_dict):
+    '''
+    using names_mx, rename files with possibility of duplication
+    '''
     for j, element in enumerate(os.path.basename(file1).split('.')):
         if j == 0:
             if dual_index is True:
@@ -186,31 +215,37 @@ def concatenate_files(proj_dir, of1_dict, of2_dict):
 
 
 def anemone_open(in1, in2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj_dir,
-        round_one):
+                 round_one):
+    '''
+    create IO file object based on gzipped status for pe data
+    '''
     try:
         with gzip.open(in1, 'rt') as f1, gzip.open(in2, 'rt') as f2:
             of1_ls, of2_ls = anemone(f1, f2, out1, out2, of1_ls, of2_ls,
-                    mismatch, bcs, proj_dir, round_one)
+                                     mismatch, bcs, proj_dir, round_one)
     except OSError:
         with open(in1) as f1, open(in2) as f2:
             of1_ls, of2_ls = anemone(f1, f2, out1, out2, of1_ls, of2_ls,
-                    mismatch, bcs, proj_dir, round_one)
+                                     mismatch, bcs, proj_dir, round_one)
     return of1_ls, of2_ls
 
 
 def anemone_single_open(in1, out1, of1_ls, mismatch, bcs, proj_dir, round_one):
+    '''
+    create IO file object based on gzipped status for se data
+    '''
     try:
         with gzip.open(in1, 'rt') as f1:
             anemone_single(f1, out1, of1_ls, mismatch, bcs, proj_dir,
-                    round_one)
+                           round_one)
     except OSError:
         with open(in1) as f1:
             anemone_single(f1, out1, of1_ls, mismatch, bcs, proj_dir,
-                    round_one)
+                           round_one)
 
 
 def anemone(f1, f2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj_dir,
-        round_one):
+            round_one):
     '''
     use active 'in1' file to demultiplex in a number of ways
     '''
@@ -286,7 +321,7 @@ def exact_matches(line1, bcs):
     '''
     write to file only bcs with 100 percent match in first pass
     '''
-    for x, file_prefix in bcs.items():
+    for file_prefix, x in bcs.items():
         if line1.startswith(x):
             output_prefix = file_prefix + 1
             z = len(x)
@@ -302,7 +337,7 @@ def mismatches(line1, bcs, mismatch):
     if mismatch > 0 write to file bcs with leniency
     '''
     z, multi, output_prefix = 0, 0, 0
-    for x, file_prefix in bcs.items():
+    for file_prefix, x in bcs.items():
         hamm = 0
         for j in range(len(x)):
             if x[j] != line1[j]:

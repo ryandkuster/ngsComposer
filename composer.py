@@ -7,7 +7,7 @@ import sys
 from functools import partial
 from multiprocessing import Pool
 
-from tools.anemone import anemone_comp
+from tools.anemone import anemone_comp, bc_reader, bc_test
 from tools.crinoid import crinoid_comp
 from tools.krill import krill_comp
 from tools.rotifer import rotifer_comp
@@ -84,7 +84,6 @@ def dir_test(proj, bcs_dict):
     '''
     test project directory for correct structure
     '''
-    # TODO add test for presence of all files in barcodes file
     fastq_ls = []
     for filename in os.listdir(proj):
         if filename == os.path.basename(bcs_index):
@@ -96,48 +95,6 @@ def dir_test(proj, bcs_dict):
         else:
             fastq_ls.append(proj + '/' + filename)
     return fastq_ls
-
-
-def bc_test(bcs_file):
-    '''
-    open user-defined bc file and extract forward and reverse
-    bcs and test for redundancy
-    '''
-    # TODO handle identical or redundant barcodes...
-    with open(bcs_file) as f:
-        line = f.readline()
-        R1_bcs, R2_bcs, R1_nest, R2_nest = {}, {}, {}, {}
-        for i, item in enumerate(line.split()):
-            if item in R2_bcs.keys():
-                sys.exit(bcs_file + ' contains duplicated R2 barcodes')
-            else:
-                R2_bcs[item] = i
-        for i, line in enumerate(f):
-            for j, item in enumerate(line.split()):
-                if j == 0:
-                    if item in R1_bcs.keys():
-                        sys.exit(bcs_file + ' contains duplicated R1 barcodes')
-                    else:
-                        R1_bcs[item] = i
-    for i, (k1, v1) in enumerate(R1_bcs.items()):
-        for j, (k2, v2) in enumerate(R1_bcs.items()):
-            if k2.startswith(k1) and v1 != v2:
-                if k1 in R1_nest.keys():
-                    R1_nest[k1].append(k2)
-                else:
-                    R1_nest[k1] = [k1, k2]
-                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
-                         k1 + ' in file ' + bcs_file)
-    for i, (k1, v1) in enumerate(R2_bcs.items()):
-        for j, (k2, v2) in enumerate(R2_bcs.items()):
-            if k2.startswith(k1) and v1 != v2:
-                if k1 in R2_nest.keys():
-                    R2_nest[k1].append(k2)
-                else:
-                    R2_nest[k1] = [k1, k2]
-                sys.exit('redundancy detected with barcodes ' + k2 + ' and ' +
-                         k1 + ' in file ' + bcs_file)
-    return R1_nest, R2_nest
 
 
 def is_fq(filename):
@@ -306,12 +263,13 @@ def pathfinder(curr):
     '''
     walk current directory and pull files as lists
     '''
-    # TODO create exception for files beginning with 'unknown' or 'redundant'
     singles_ls, fastq_ls, in1_ls, in2_ls = [], [], [], []
     for root, dirs, files in os.walk(os.path.abspath(curr)):
         for i in files:
             fullname = os.path.join(root, i)
-            if os.path.getsize(fullname) == 0:
+            if i.startswith(('unknown.', 'redundant.')):
+                pass
+            elif os.path.getsize(fullname) == 0:
                 os.remove(fullname)
             elif root == str(curr + '/single'):
                 singles_ls.append(fullname)
@@ -326,13 +284,12 @@ def concater(curr):
     '''
     walk current directory and concatenate files with identical names
     '''
-    # TODO check concat dict doesn't waste time
     concat_dict, cat_ls = {}, []
     for root, dirs, files in os.walk(os.path.abspath(curr)):
         for i in files:
             fullname = os.path.join(root, i)
-            if i.startswith('unknown.'):
-                os.remove(fullname)
+            if i.startswith(('unknown.', 'redundant.')):
+                pass
             else:
                 if os.path.getsize(fullname) == 0:
                     os.remove(fullname)
@@ -340,8 +297,10 @@ def concater(curr):
                     concat_dict[i].append(fullname)
                 else:
                     concat_dict[i] = [fullname]
+# TODO check concat dict doesn't waste time if no names duplicated...
     for filename in concat_dict.keys():
         with open(curr + '/' + filename, 'w') as o1:
+# TODO rm cat_ls?
             cat_ls.append(o1.name)
             for i in concat_dict[filename]:
                 with open(i) as obj1:
@@ -530,17 +489,20 @@ if __name__ == '__main__':
             pass
 ######################################################
 
-    if cfg.bcs_index:
-        bcs_index = proj + '/' + cfg.bcs_index
-        bcs_dict = index_reader(bcs_index)
-    else:
-        bcs_dict = {}
-        bcs_index = ''
+    bcs_index = proj + '/' + cfg.bcs_index if cfg.bcs_index else ''
+    bcs_dict = index_reader(bcs_index) if cfg.bcs_index else {}
 
     fastq_ls = dir_test(proj, bcs_dict)
 
-    for i in bcs_dict.values():
-        R1_nest, R2_nest = bc_test(i)
+    for k, v in bcs_dict.items():
+        print(v)
+        names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
+        test = bc_test(R1_bcs, names_mx, True)
+        if test:
+            print('redundant R1 barcodes detected in ' + v)
+        test = bc_test(R2_bcs, names_mx, False)
+        if test:
+            print('redundant R2 barcodes detected in ' + v)
 
     for filename in fastq_ls:
         try:
