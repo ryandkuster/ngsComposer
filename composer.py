@@ -280,11 +280,39 @@ def pathfinder(curr):
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
+#def concater(curr):
+#    '''
+#    walk current directory and concatenate files with identical names
+#    '''
+#    concat_dict, cat_ls = {}, []
+#    for root, dirs, files in os.walk(os.path.abspath(curr)):
+#        for i in files:
+#            fullname = os.path.join(root, i)
+#            if i.startswith(('unknown.', 'redundant.')):
+#                pass
+#            else:
+#                if os.path.getsize(fullname) == 0:
+#                    os.remove(fullname)
+#                elif i in concat_dict:
+#                    concat_dict[i].append(fullname)
+#                else:
+#                    concat_dict[i] = [fullname]
+## TODO check concat dict doesn't waste time if no names duplicated...
+#    for filename in concat_dict.keys():
+#        with open(curr + '/' + filename, 'w') as o1:
+## TODO rm cat_ls?
+#            cat_ls.append(o1.name)
+#            for i in concat_dict[filename]:
+#                with open(i) as obj1:
+#                    shutil.copyfileobj(obj1, o1)
+#                os.remove(i)
+
+
 def concater(curr):
     '''
     walk current directory and concatenate files with identical names
     '''
-    concat_dict, cat_ls = {}, []
+    concat_dict = {}
     for root, dirs, files in os.walk(os.path.abspath(curr)):
         for i in files:
             fullname = os.path.join(root, i)
@@ -297,15 +325,15 @@ def concater(curr):
                     concat_dict[i].append(fullname)
                 else:
                     concat_dict[i] = [fullname]
-# TODO check concat dict doesn't waste time if no names duplicated...
-    for filename in concat_dict.keys():
-        with open(curr + '/' + filename, 'w') as o1:
-# TODO rm cat_ls?
-            cat_ls.append(o1.name)
-            for i in concat_dict[filename]:
-                with open(i) as obj1:
-                    shutil.copyfileobj(obj1, o1)
-                os.remove(i)
+    for filename, filepaths in concat_dict.items():
+        if len(filepaths) == 1:
+            shutil.move(filepaths[0], curr + '/' + filename)
+        else:
+            with open(curr + '/' + filename, 'w') as o1:
+                for i in filepaths:
+                    with open(i) as obj1:
+                        shutil.copyfileobj(obj1, o1)
+                    os.remove(i)
 
 
 def crinoid_multi(proj, fastq_ls):
@@ -446,6 +474,7 @@ def krill_multi(in1_ls, in2_ls, singles_ls):
         krill_part = partial(krill_comp, in1_ls, in2_ls, cfg.q_min,
                              cfg.q_percent, curr)
         pool_multi(krill_part, singles_ls)
+# TODO confirm why following line was added...
     concater(curr + '/single')
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
     shutil.rmtree(curr + '/single/pe_lib')
@@ -495,7 +524,6 @@ if __name__ == '__main__':
     fastq_ls = dir_test(proj, bcs_dict)
 
     for k, v in bcs_dict.items():
-        print(v)
         names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
         test = bc_test(R1_bcs, names_mx, True)
         if test:
