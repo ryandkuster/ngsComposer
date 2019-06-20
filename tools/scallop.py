@@ -12,20 +12,20 @@ def scallop_main():
     front_trim = args.f
     back_trim = None if args.b == 0 else args.b
     if args.o is None:
-        proj_dir = os.path.dirname(os.path.abspath(in1))
+        proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
-        proj_dir = os.path.abspath(args.o)
+        proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
-    out1 = proj_dir + '/trimmed.' + os.path.basename(in1)
+    out1 = os.path.join(proj, 'trimmed.' + os.path.basename(in1))
     scallop_open(in1, front_trim, back_trim, out1)
 
 
-def scallop_comp(front_trim, back_trim, proj_dir, in1):
+def scallop_comp(front_trim, back_trim, curr, in1):
     '''
     composer entry point to scallop
     '''
-    out1 = proj_dir + '/' + os.path.basename(in1)
+    out1 = os.path.join(curr, os.path.basename(in1))
     scallop_open(in1, front_trim, back_trim, out1)
 
 
@@ -51,15 +51,15 @@ def scallop(front_trim, back_trim, f, o):
             o.write(line)
 
 
-def scallop_end(proj_dir, q_min, in1):
+def scallop_end(curr, end_trim, in1):
     '''
     composer entry point for trimming based on qc stats
     '''
     in1_path, in1_file = os.path.split(in1)
     _, in1_pe_se = os.path.split(in1_path)
     if in1_pe_se == 'paired' or in1_pe_se == 'single':
-        proj_dir += '/' + in1_pe_se
-    in1_scores = in1_path + '/qc/qscores.' + in1_file
+        curr += '/' + in1_pe_se
+    in1_scores = os.path.join(in1_path, 'qc', 'qscores.' + in1_file)
     with open(in1_scores) as f:
         in1_mx = [[int(j) for j in i.rstrip().split(',')] for i in f]
     max_len = len(in1_mx)
@@ -76,10 +76,10 @@ def scallop_end(proj_dir, q_min, in1):
         q1 = scallop_stats(med - delta, i)
         q3 = scallop_stats(med + delta, i)
         lw = q1 - (1.5 * (q3 - q1))
-        if lw >= q_min:
+        if lw >= end_trim:
             back_trim = max_len - base
             break
-    scallop_comp(0, back_trim, proj_dir, in1)
+    scallop_comp(0, back_trim, curr, in1)
 
 
 def scallop_stats(target_index, pos):

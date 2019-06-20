@@ -39,7 +39,7 @@ def conf_confirm(proj):
     assert cfg.walkthrough is True or cfg.walkthrough is False
     assert cfg.walkaway is True or cfg.walkaway is False
     assert isinstance(cfg.front_trim, int)
-    assert os.path.exists(proj + '/' + str(cfg.bcs_index)) or\
+    assert os.path.exists(os.path.join(proj, cfg.bcs_index)) or\
         cfg.bcs_index is False
     assert isinstance(cfg.mismatch, int)
     assert cfg.R1_bases_ls is False or isinstance(cfg.R1_bases_ls, list)
@@ -53,14 +53,15 @@ def conf_confirm(proj):
             for j in i:
                 assert j in ['A', 'C', 'G', 'T']
     assert cfg.non_genomic is False or isinstance(cfg.non_genomic, int)
+    if cfg.end_trim:
+        assert 0 <= cfg.end_trim <= 40 and cfg.end_trim is not True
     if cfg.q_min or cfg.q_percent:
-        assert 0 <= cfg.q_min <= 40
-        assert 0 <= cfg.q_percent <= 100
+        assert 0 <= cfg.q_min <= 40 and cfg.q_min is not True
+        assert 0 <= cfg.q_percent <= 100 and cfg.q_percent is not True
         if cfg.q_min and cfg.q_percent:
             pass
         else:
             sys.exit('both q_min and q_percent variables must be defined')
-    assert cfg.end_trim is True or cfg.end_trim is False
     assert cfg.rm_transit is True or cfg.rm_transit is False
 
 
@@ -76,7 +77,7 @@ def index_reader(bcs_index):
                     key = item
                 if j == 1:
                     value = item
-            bcs_dict[key] = proj + '/' + value
+            bcs_dict[key] = os.path.join(proj, value)
     return bcs_dict
 
 
@@ -88,12 +89,12 @@ def dir_test(proj, bcs_dict):
     for filename in os.listdir(proj):
         if filename == os.path.basename(bcs_index):
             pass
-        elif proj + '/' + filename in bcs_dict.values():
+        elif os.path.join(proj, filename) in bcs_dict.values():
             pass
         elif filename == 'conf.py' or filename == '__pycache__':
             pass
         else:
-            fastq_ls.append(proj + '/' + filename)
+            fastq_ls.append(os.path.join(proj, filename))
     return fastq_ls
 
 
@@ -280,34 +281,6 @@ def pathfinder(curr):
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
-#def concater(curr):
-#    '''
-#    walk current directory and concatenate files with identical names
-#    '''
-#    concat_dict, cat_ls = {}, []
-#    for root, dirs, files in os.walk(os.path.abspath(curr)):
-#        for i in files:
-#            fullname = os.path.join(root, i)
-#            if i.startswith(('unknown.', 'redundant.')):
-#                pass
-#            else:
-#                if os.path.getsize(fullname) == 0:
-#                    os.remove(fullname)
-#                elif i in concat_dict:
-#                    concat_dict[i].append(fullname)
-#                else:
-#                    concat_dict[i] = [fullname]
-## TODO check concat dict doesn't waste time if no names duplicated...
-#    for filename in concat_dict.keys():
-#        with open(curr + '/' + filename, 'w') as o1:
-## TODO rm cat_ls?
-#            cat_ls.append(o1.name)
-#            for i in concat_dict[filename]:
-#                with open(i) as obj1:
-#                    shutil.copyfileobj(obj1, o1)
-#                os.remove(i)
-
-
 def concater(curr):
     '''
     walk current directory and concatenate files with identical names
@@ -327,9 +300,9 @@ def concater(curr):
                     concat_dict[i] = [fullname]
     for filename, filepaths in concat_dict.items():
         if len(filepaths) == 1:
-            shutil.move(filepaths[0], curr + '/' + filename)
+            shutil.move(filepaths[0], os.path.join(curr, filename))
         else:
-            with open(curr + '/' + filename, 'w') as o1:
+            with open(os.path.join(curr, filename), 'w') as o1:
                 for i in filepaths:
                     with open(i) as obj1:
                         shutil.copyfileobj(obj1, o1)
@@ -353,8 +326,7 @@ def scallop_multi(proj, fastq_ls):
     curr = proj + '/trimmed'
     rm_dirs.append(curr)
     os.mkdir(curr)
-    scallop_part = partial(scallop_comp, cfg.front_trim, None,
-                           curr)
+    scallop_part = partial(scallop_comp, cfg.front_trim, None, curr)
     pool_multi(scallop_part, fastq_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
     return singles_ls, fastq_ls, in1_ls, in2_ls
@@ -428,7 +400,7 @@ def rotifer_multi(proj, in1_ls, in2_ls):
 
 def scallop_end_multi(fastq_ls, singles_ls):
     '''
-    automated 3' end read trimming based on q_min value
+    automated 3' end read trimming based on minimum value
     '''
     curr = proj + '/end_trimmed'
     rm_dirs.append(curr)
@@ -446,10 +418,10 @@ def scallop_end_multi(fastq_ls, singles_ls):
             crinoid_multi(rm_dirs[-2] + '/paired', fastq_ls)
         except FileNotFoundError:
             crinoid_multi(rm_dirs[-2], fastq_ls)
-    scallop_end_part = partial(scallop_end, curr, cfg.q_min)
+    scallop_end_part = partial(scallop_end, curr, cfg.end_trim)
     pool_multi(scallop_end_part, fastq_ls)
     if singles_ls:
-        scallop_end_part = partial(scallop_end, curr, cfg.q_min)
+        scallop_end_part = partial(scallop_end, curr, cfg.end_trim)
         pool_multi(scallop_end_part, singles_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
     # TODO add walkthrough functions here
@@ -474,7 +446,6 @@ def krill_multi(in1_ls, in2_ls, singles_ls):
         krill_part = partial(krill_comp, in1_ls, in2_ls, cfg.q_min,
                              cfg.q_percent, curr)
         pool_multi(krill_part, singles_ls)
-# TODO confirm why following line was added...
     concater(curr + '/single')
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
     shutil.rmtree(curr + '/single/pe_lib')
@@ -518,12 +489,16 @@ if __name__ == '__main__':
             pass
 ######################################################
 
-    bcs_index = proj + '/' + cfg.bcs_index if cfg.bcs_index else ''
+    bcs_index = os.path.join(proj, cfg.bcs_index) if cfg.bcs_index else ''
     bcs_dict = index_reader(bcs_index) if cfg.bcs_index else {}
 
     fastq_ls = dir_test(proj, bcs_dict)
 
     for k, v in bcs_dict.items():
+        try:
+            assert os.path.join(proj, k) in fastq_ls
+        except AssertionError:
+            sys.exit('check index.txt formatting')
         names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
         test = bc_test(R1_bcs, names_mx, True)
         if test:
@@ -574,7 +549,7 @@ if __name__ == '__main__':
         if cfg.rm_transit is True:
             dir_del(rm_dirs[:-1])
 
-    if cfg.end_trim is True:
+    if cfg.end_trim:
         singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multi(fastq_ls,
                 singles_ls)
         if cfg.rm_transit is True:

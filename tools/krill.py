@@ -13,34 +13,34 @@ def krill_main():
     in1 = args.r1
     in2 = args.r2 if args.r2 else None
     if args.o is None:
-        proj_dir = os.path.dirname(os.path.abspath(in1))
+        proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
-        proj_dir = os.path.abspath(args.o)
+        proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
-    pe_1 = proj_dir + '/pe.' + os.path.basename(in1)
-    se_1 = proj_dir + '/se.' + os.path.basename(in1)
+    pe_1 = os.path.join(proj, 'pe.' + os.path.basename(in1))
+    se_1 = os.path.join(proj, 'se.' + os.path.basename(in1))
     if in2:
-        pe_2 = proj_dir + '/pe.' + os.path.basename(in2)
-        se_2 = proj_dir + '/se.' + os.path.basename(in2)
+        pe_2 = os.path.join(proj, 'pe.' + os.path.basename(in2))
+        se_2 = os.path.join(proj, 'se.' + os.path.basename(in2))
         krill_open(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2)
     else:
         krill_single_open(q_min, q_percent, in1, se_1)
 
 
-def krill_comp(in1_ls, in2_ls, q_min, q_percent, proj_dir_current, in1):
+def krill_comp(in1_ls, in2_ls, q_min, q_percent, curr, in1):
     '''
     composer entry point to krill
     '''
-    pe_1 = proj_dir_current + '/paired/' + os.path.basename(in1)
-    se_1 = proj_dir_current + '/single/pe_lib/' + os.path.basename(in1)
+    pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
+    se_1 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in1))
     try:
         in2 = in2_ls[in1_ls.index(in1)]
-        pe_2 = proj_dir_current + '/paired/' + os.path.basename(in2)
-        se_2 = proj_dir_current + '/single/pe_lib/' + os.path.basename(in2)
+        pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
+        se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
         krill_open(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2)
     except (IndexError, ValueError) as e:
-        se_1 = proj_dir_current + '/single/se_lib/' + os.path.basename(in1)
+        se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
         krill_single_open(q_min, q_percent, in1, se_1)
 
 

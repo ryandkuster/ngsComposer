@@ -20,21 +20,21 @@ def anemone_main():
     bcs_file = args.c
     mismatch = args.m
     if args.o is None:
-        proj_dir = os.path.dirname(os.path.abspath(in1))
+        proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
-        proj_dir = os.path.abspath(args.o)
+        proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     anemone_init(in1, in2, out1, out2, mismatch,
-                 bcs_file, proj_dir)
+                 bcs_file, proj)
 
 
-def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, proj_dir, in1):
+def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
     '''
     composer entry point to anemone
     '''
-    proj_dir = proj_dir + '/' + os.path.basename(in1)
-    os.mkdir(proj_dir)
+    curr = os.path.join(curr, os.path.basename(in1))
+    os.mkdir(curr)
     for k, v in bcs_dict.items():
         if k == os.path.basename(in1):
             bcs_file = v
@@ -46,10 +46,10 @@ def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, proj_dir, in1):
         out2 = False
     out1 = os.path.basename(in1)
     anemone_init(in1, in2, out1, out2, mismatch,
-                 bcs_file, proj_dir)
+                 bcs_file, curr)
 
 
-def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj_dir):
+def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj):
     '''
     extract bcs from bcs_file and detect dual-indexing
     call paired-end or single-end anemone
@@ -61,38 +61,38 @@ def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj_dir):
     test = bc_test(R2_bcs, names_mx, False)
     if test:
         print('redundant R2 barcodes detected')
-    of1_ls = [open(proj_dir + '/temp_unknown.' + out1, 'w')]
+    of1_ls = [open(proj + '/temp_unknown.' + out1, 'w')]
     if in2:
-        of2_ls = [open(proj_dir + '/temp_unknown.' + out2, 'w')]
+        of2_ls = [open(proj + '/temp_unknown.' + out2, 'w')]
     for i, item in enumerate(R1_bcs):
-        of1_ls.append(open(proj_dir + '/' + str(i) + '.' + out1, 'w'))
+        of1_ls.append(open(proj + '/' + str(i) + '.' + out1, 'w'))
         if in2:
-            of2_ls.append(open(proj_dir + '/' + str(i) + '.' + out2, 'w'))
+            of2_ls.append(open(proj + '/' + str(i) + '.' + out2, 'w'))
 
     of1_dict, of2_dict = {}, {}
     if in2:
         of1_ls, of2_ls = anemone_open(in1, in2, out1, out2, of1_ls, of2_ls,
-                                      mismatch, R1_bcs, proj_dir, True)
+                                      mismatch, R1_bcs, proj, True)
         if dual_index is True:
-            of1_master, of2_master = dual_indexer(in1, in2, R2_bcs, proj_dir,
+            of1_master, of2_master = dual_indexer(in1, in2, R2_bcs, proj,
                                                   of1_ls, of2_ls, mismatch)
             for file1, file2 in zip(of2_master, of1_master):
                 of1_dict, of2_dict = rename_files(file1, file2, dual_index,
-                                                  names_mx, proj_dir, of1_dict,
+                                                  names_mx, proj, of1_dict,
                                                   of2_dict)
         else:
             for file1, file2 in zip(of1_ls, of2_ls):
                 of1_dict, of2_dict = rename_files(file1.name, file2.name,
                                                   dual_index, names_mx,
-                                                  proj_dir, of1_dict, of2_dict)
+                                                  proj, of1_dict, of2_dict)
     else:
-        anemone_single_open(in1, out1, of1_ls, mismatch, R1_bcs, proj_dir,
+        anemone_single_open(in1, out1, of1_ls, mismatch, R1_bcs, proj,
                             True)
         for file1 in of1_ls[1:]:
             of1_dict, of2_dict = rename_files(file1.name, None, dual_index,
-                                              names_mx, proj_dir, of1_dict,
+                                              names_mx, proj, of1_dict,
                                               of2_dict)
-    concatenate_files(proj_dir, of1_dict, of2_dict)
+    concatenate_files(proj, of1_dict, of2_dict)
 
 
 def bc_reader(bcs_file):
@@ -106,6 +106,8 @@ def bc_reader(bcs_file):
     R2_bcs = {i: item for i, item in enumerate(bcs_mx[0])}
     R1_bcs = {i: item[0] for i, item in enumerate(bcs_mx[1:])}
     dual_index = False if len(R2_bcs) == 1 else True
+    if (len(bcs_mx[1]) - len(bcs_mx[0])) != 1:
+        sys.exit('format of barcodes file ' + bcs_file + ' is not recognized')
     names_mx = [item[1:] for item in bcs_mx[1:]]
     return names_mx, R1_bcs, R2_bcs, dual_index
 
@@ -127,35 +129,35 @@ def bc_test(bcs, names_mx, r1):
     return dupe_ls
 
 
-def dual_indexer(in1, in2, R2_bcs, proj_dir, of1_ls, of2_ls, mismatch):
+def dual_indexer(in1, in2, R2_bcs, proj, of1_ls, of2_ls, mismatch):
     '''
     create of1/2_di_ls to direct output for final iteration
     create of1/2_masters to keep track of ALL output files in directory
     '''
-    of1_master = [proj_dir + '/unknown.' + os.path.basename(in2)]
-    of2_master = [proj_dir + '/unknown.' + os.path.basename(in1)]
+    of1_master = [proj + '/unknown.' + os.path.basename(in2)]
+    of2_master = [proj + '/unknown.' + os.path.basename(in1)]
     for file1, file2 in zip(of1_ls[1:], of2_ls[1:]):
         in2 = file1.name
         in1 = file2.name  # the R2 reads become in1
         out1 = os.path.basename(in1)
         out2 = os.path.basename(in2)
-        of1_di_ls = [open(proj_dir + '/temp_unknown.' + out1, 'w')]
-        of2_di_ls = [open(proj_dir + '/temp_unknown.' + out2, 'w')]
-        of1_master.append(proj_dir + '/unknown.' + out1)
-        of2_master.append(proj_dir + '/unknown.' + out2)
+        of1_di_ls = [open(proj + '/temp_unknown.' + out1, 'w')]
+        of2_di_ls = [open(proj + '/temp_unknown.' + out2, 'w')]
+        of1_master.append(proj + '/unknown.' + out1)
+        of2_master.append(proj + '/unknown.' + out2)
         for i, item in enumerate(R2_bcs):
-            of1_di_ls.append(open(proj_dir + '/' + str(i) + '.' + out1, 'w'))
-            of2_di_ls.append(open(proj_dir + '/' + str(i) + '.' + out2, 'w'))
-            of1_master.append(proj_dir + '/' + str(i) + '.' + out1)
-            of2_master.append(proj_dir + '/' + str(i) + '.' + out2)
+            of1_di_ls.append(open(proj + '/' + str(i) + '.' + out1, 'w'))
+            of2_di_ls.append(open(proj + '/' + str(i) + '.' + out2, 'w'))
+            of1_master.append(proj + '/' + str(i) + '.' + out1)
+            of2_master.append(proj + '/' + str(i) + '.' + out2)
         anemone_open(in1, in2, out1, out2, of1_di_ls, of2_di_ls, mismatch,
-                     R2_bcs, proj_dir, True)
+                     R2_bcs, proj, True)
         os.remove(in1)
         os.remove(in2)
     return of1_master, of2_master
 
 
-def rename_files(file1, file2, dual_index, names_mx, proj_dir, of1_dict,
+def rename_files(file1, file2, dual_index, names_mx, proj, of1_dict,
                  of2_dict):
     '''
     using names_mx, rename files with possibility of duplication
@@ -175,9 +177,9 @@ def rename_files(file1, file2, dual_index, names_mx, proj_dir, of1_dict,
         rename2 = file2 if file2 else None
     else:
         sample_id = names_mx[int(x)][int(y)]
-        rename1 = proj_dir + '/' + sample_id + '.' + \
+        rename1 = proj + '/' + sample_id + '.' + \
             os.path.basename(file1)
-        rename2 = proj_dir + '/' + sample_id + '.' + \
+        rename2 = proj + '/' + sample_id + '.' + \
             os.path.basename(file2) if file2 else None
         os.rename(file1, rename1)
         if file2:
@@ -193,19 +195,19 @@ def rename_files(file1, file2, dual_index, names_mx, proj_dir, of1_dict,
     return of1_dict, of2_dict
 
 
-def concatenate_files(proj_dir, of1_dict, of2_dict):
+def concatenate_files(proj, of1_dict, of2_dict):
     '''
     combine files with identical sample ids
     '''
     for sample_id in of1_dict.keys():
-        with open(proj_dir + '/' + sample_id + '.R1.fastq', 'w') as o1:
+        with open(proj + '/' + sample_id + '.R1.fastq', 'w') as o1:
             for i in of1_dict[sample_id]:
                 with open(i) as obj1:
                     shutil.copyfileobj(obj1, o1)
                 os.remove(i)
     try:
         for sample_id in of2_dict.keys():
-            with open(proj_dir + '/' + sample_id + '.R2.fastq', 'w') as o2:
+            with open(proj + '/' + sample_id + '.R2.fastq', 'w') as o2:
                 for i in of2_dict[sample_id]:
                     with open(i) as obj2:
                         shutil.copyfileobj(obj2, o2)
@@ -214,7 +216,7 @@ def concatenate_files(proj_dir, of1_dict, of2_dict):
         pass
 
 
-def anemone_open(in1, in2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj_dir,
+def anemone_open(in1, in2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj,
                  round_one):
     '''
     create IO file object based on gzipped status for pe data
@@ -222,29 +224,29 @@ def anemone_open(in1, in2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj_dir,
     try:
         with gzip.open(in1, 'rt') as f1, gzip.open(in2, 'rt') as f2:
             of1_ls, of2_ls = anemone(f1, f2, out1, out2, of1_ls, of2_ls,
-                                     mismatch, bcs, proj_dir, round_one)
+                                     mismatch, bcs, proj, round_one)
     except OSError:
         with open(in1) as f1, open(in2) as f2:
             of1_ls, of2_ls = anemone(f1, f2, out1, out2, of1_ls, of2_ls,
-                                     mismatch, bcs, proj_dir, round_one)
+                                     mismatch, bcs, proj, round_one)
     return of1_ls, of2_ls
 
 
-def anemone_single_open(in1, out1, of1_ls, mismatch, bcs, proj_dir, round_one):
+def anemone_single_open(in1, out1, of1_ls, mismatch, bcs, proj, round_one):
     '''
     create IO file object based on gzipped status for se data
     '''
     try:
         with gzip.open(in1, 'rt') as f1:
-            anemone_single(f1, out1, of1_ls, mismatch, bcs, proj_dir,
+            anemone_single(f1, out1, of1_ls, mismatch, bcs, proj,
                            round_one)
     except OSError:
         with open(in1) as f1:
-            anemone_single(f1, out1, of1_ls, mismatch, bcs, proj_dir,
+            anemone_single(f1, out1, of1_ls, mismatch, bcs, proj,
                            round_one)
 
 
-def anemone(f1, f2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj_dir,
+def anemone(f1, f2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj,
             round_one):
     '''
     use active 'in1' file to demultiplex in a number of ways
@@ -265,21 +267,21 @@ def anemone(f1, f2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj_dir,
             y, entry1, entry2 = 0, "", ""
     if round_one is True:
         if mismatch > 0:
-            second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj_dir)
+            second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj)
         else:
             for x in of1_ls:
                 x.close()
             for x in of2_ls:
                 x.close()
-            of1_ls[0] = open(proj_dir + '/unknown.' + out1, 'w')
-            of2_ls[0] = open(proj_dir + '/unknown.' + out2, 'w')
-            os.rename(proj_dir + '/temp_unknown.' + out1,
-                      proj_dir + '/unknown.' + out1)
-            os.rename(proj_dir + '/temp_unknown.' + out2,
-                      proj_dir + '/unknown.' + out2)
+            of1_ls[0] = open(proj + '/unknown.' + out1, 'w')
+            of2_ls[0] = open(proj + '/unknown.' + out2, 'w')
+            os.rename(proj + '/temp_unknown.' + out1,
+                      proj + '/unknown.' + out1)
+            os.rename(proj + '/temp_unknown.' + out2,
+                      proj + '/unknown.' + out2)
     else:
-        os.remove(proj_dir + '/temp_unknown.' + out1)
-        os.remove(proj_dir + '/temp_unknown.' + out2)
+        os.remove(proj + '/temp_unknown.' + out1)
+        os.remove(proj + '/temp_unknown.' + out2)
         for x in of1_ls:
             x.close()
         for x in of2_ls:
@@ -287,7 +289,7 @@ def anemone(f1, f2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj_dir,
     return of1_ls, of2_ls
 
 
-def anemone_single(f1, out1, of1_ls, mismatch, bcs, proj_dir, round_one):
+def anemone_single(f1, out1, of1_ls, mismatch, bcs, proj, round_one):
     '''
     use active 'in1' file to demultiplex in a number of ways
     '''
@@ -305,14 +307,14 @@ def anemone_single(f1, out1, of1_ls, mismatch, bcs, proj_dir, round_one):
             y, entry1 = 0, ""
     if round_one is True:
         if mismatch > 0:
-            second_pass(out1, False, of1_ls, False, mismatch, bcs, proj_dir)
+            second_pass(out1, False, of1_ls, False, mismatch, bcs, proj)
         else:
             for x in of1_ls:
                 x.close()
-            os.rename(proj_dir + '/temp_unknown.' + out1,
-                      proj_dir + '/unknown.' + out1)
+            os.rename(proj + '/temp_unknown.' + out1,
+                      proj + '/unknown.' + out1)
     else:
-        os.remove(proj_dir + '/temp_unknown.' + out1)
+        os.remove(proj + '/temp_unknown.' + out1)
         for x in of1_ls:
             x.close()
 
@@ -355,24 +357,24 @@ def mismatches(line1, bcs, mismatch):
     return z, output_prefix
 
 
-def second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj_dir):
+def second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj):
     '''
     after the first round of precision demultiplexing, attempt matches
     of unknown reads
     '''
     of1_ls[0].close()
-    of1_ls[0] = open(proj_dir + '/unknown.' + out1, 'w')
+    of1_ls[0] = open(proj + '/unknown.' + out1, 'w')
     if out2:
         of2_ls[0].close()
-        of2_ls[0] = open(proj_dir + '/unknown.' + out2, 'w')
-    in1 = proj_dir + '/temp_unknown.' + out1
+        of2_ls[0] = open(proj + '/unknown.' + out2, 'w')
+    in1 = proj + '/temp_unknown.' + out1
     if out2:
-        in2 = proj_dir + '/temp_unknown.' + out2
+        in2 = proj + '/temp_unknown.' + out2
         anemone_open(in1, in2, out1, out2, of1_ls,
-                of2_ls, mismatch, bcs, proj_dir, False)
+                of2_ls, mismatch, bcs, proj, False)
     else:
         anemone_single_open(in1, out1, of1_ls, mismatch,
-                       bcs, proj_dir, False)
+                       bcs, proj, False)
 
 
 if __name__ == '__main__':

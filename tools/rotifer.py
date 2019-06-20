@@ -12,20 +12,20 @@ def rotifer_main():
     in2 = args.r2 if args.r2 else None
     trim = args.n if args.n else None
     if args.o is None:
-        proj_dir = os.path.dirname(os.path.abspath(in1))
+        proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
-        proj_dir = os.path.abspath(args.o)
+        proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
-    pe_1 = proj_dir + '/pe.' + os.path.basename(in1)
-    se_1 = proj_dir + '/se.' + os.path.basename(in1)
+    pe_1 = os.path.join(proj, 'pe.' + os.path.basename(in1))
+    se_1 = os.path.join(proj, 'se.' + os.path.basename(in1))
     R1_bases_ls = args.m1 if args.m1 else None
     R2_bases_ls = args.m2 if args.m2 else None
     if R1_bases_ls is None and R2_bases_ls is None:
         sys.exit('at least one motifs list must be defined')
     if in2:
-        pe_2 = proj_dir + '/pe.' + os.path.basename(in2)
-        se_2 = proj_dir + '/se.' + os.path.basename(in2)
+        pe_2 = os.path.join(proj, 'pe.' + os.path.basename(in2))
+        se_2 = os.path.join(proj, 'se.' + os.path.basename(in2))
         rotifer_open(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1,
                 se_2, trim)
     else:
@@ -33,16 +33,16 @@ def rotifer_main():
 
 
 def rotifer_comp(in1_ls, in2_ls, R1_bases_ls, R2_bases_ls, trim,
-            proj_dir_current, in1):
+            curr, in1):
     '''
     composer entry point to rotifer
     '''
-    pe_1 = proj_dir_current + '/paired/' + os.path.basename(in1)
-    se_1 = proj_dir_current + '/single/' + os.path.basename(in1)
+    pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
+    se_1 = os.path.join(curr, 'single', os.path.basename(in1))
     try:
         in2 = in2_ls[in1_ls.index(in1)]
-        pe_2 = proj_dir_current + '/paired/' + os.path.basename(in2)
-        se_2 = proj_dir_current + '/single/' + os.path.basename(in2)
+        pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
+        se_2 = os.path.join(curr, 'single', os.path.basename(in2))
         rotifer_open(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1,
                 se_2, trim)
     except (IndexError, ValueError) as e:

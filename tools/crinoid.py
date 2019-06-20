@@ -11,13 +11,13 @@ def crinoid_main():
     '''
     in1 = args.r1
     if args.o is None:
-        proj_dir = os.path.dirname(os.path.abspath(in1))
+        proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
-        proj_dir = os.path.abspath(args.o)
+        proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
-    out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
-    out2 = proj_dir + '/qscores.' + os.path.basename(in1)
+    out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1))
+    out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1))
     subprocess.check_call(['Rscript',
             os.path.abspath(sys.argv[0])[:-17] +
             '/tests/test_packages.R'] , shell=False)
@@ -27,12 +27,12 @@ def crinoid_main():
            '/helpers/qc_plots.R'] + [out1, out2], shell=False)
 
 
-def crinoid_comp(proj_dir, in1):
+def crinoid_comp(curr, in1):
     '''
     composer entry point to crinoid
     '''
-    out1 = proj_dir + '/nucleotides.' + os.path.basename(in1)
-    out2 = proj_dir + '/qscores.' + os.path.basename(in1)
+    out1 = os.path.join(curr, 'nucleotides.' + os.path.basename(in1))
+    out2 = os.path.join(curr, 'qscores.' + os.path.basename(in1))
     crinoid_open(in1, out1, out2)
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(sys.argv[0])) +
