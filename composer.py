@@ -39,8 +39,8 @@ def conf_confirm(proj):
     assert cfg.walkthrough is True or cfg.walkthrough is False
     assert cfg.walkaway is True or cfg.walkaway is False
     assert isinstance(cfg.front_trim, int)
-    assert os.path.exists(os.path.join(proj, cfg.bcs_index)) or\
-        cfg.bcs_index is False
+    if cfg.bcs_index:
+        assert os.path.exists(os.path.join(proj, cfg.bcs_index))
     assert isinstance(cfg.mismatch, int)
     assert cfg.R1_bases_ls is False or isinstance(cfg.R1_bases_ls, list)
     if isinstance(cfg.R1_bases_ls, list):
@@ -381,16 +381,15 @@ def rotifer_multi(proj, in1_ls, in2_ls):
         if update not in (msg.confirm):
             prompt = input(msg.rotifer_up)
             if prompt in (msg.confirm):
+                shutil.rmtree(rm_dirs[-1])
+                rm_dirs.pop()
                 R1 = input(msg.rotifer_in1)
                 cfg.R1_bases_ls = False if R1 == '' else R1.split()
                 R2 = input(msg.rotifer_in2)
                 cfg.R2_bases_ls = False if R2 == '' else R2.split()
-                shutil.rmtree(rm_dirs[-1])
                 if cfg.R1_bases_ls is False and cfg.R2_bases_ls is False:
-                    rm_dirs.pop()
                     return singles_ls, fastq_ls, in1_ls, in2_ls
                 _, _, _, _ = rotifer_multi(proj, in1_ls, in2_ls)
-                rm_dirs.pop()
             else:
                 exit = input('\nexit ngsComposer? (y/n)\n')
                 if exit in ('Y', 'y', 'Yes', 'yes', 'YES'):
@@ -398,7 +397,7 @@ def rotifer_multi(proj, in1_ls, in2_ls):
     return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
 
 
-def scallop_end_multi(fastq_ls, singles_ls):
+def scallop_end_multi(proj, fastq_ls, singles_ls):
     '''
     automated 3' end read trimming based on minimum value
     '''
@@ -408,7 +407,7 @@ def scallop_end_multi(fastq_ls, singles_ls):
     if cfg.R1_bases_ls or cfg.R2_bases_ls:
         os.mkdir(curr + '/single')
         os.mkdir(curr + '/paired')
-    if os.path.exists(rm_dirs[-2] + '/qc'):
+    if os.path.exists(rm_dirs[0] + '/qc'):
         pass
     elif os.path.exists(rm_dirs[-2] + '/single/qc'):
         pass
@@ -423,9 +422,29 @@ def scallop_end_multi(fastq_ls, singles_ls):
     if singles_ls:
         scallop_end_part = partial(scallop_end, curr, cfg.end_trim)
         pool_multi(scallop_end_part, singles_ls)
-    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
-    # TODO add walkthrough functions here
-    return singles_ls, fastq_ls, in1_ls, in2_ls
+    t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
+    if cfg.walkthrough:
+        if cfg.R1_bases_ls or cfg.R2_bases_ls:
+            crinoid_multi(curr + '/single', t_singles_ls)
+            crinoid_multi(curr + '/paired', t_fastq_ls)
+        else:
+            crinoid_multi(curr, t_fastq_ls)
+        update = input(msg.scallop_qc) if cfg.walkaway is False else 'y'
+        if update not in (msg.confirm):
+            prompt = input(msg.scallop_up)
+            if prompt in (msg.confirm):
+                shutil.rmtree(rm_dirs[-1])
+                rm_dirs.pop()
+                cfg.end_trim = input(msg.scallop_in)
+                cfg.end_trim = False if cfg.end_trim == '' else int(cfg.end_trim)
+                if cfg.end_trim is False:
+                    return singles_ls, fastq_ls, in1_ls, in2_ls
+                _, _, _, _ = scallop_end_multi(proj, fastq_ls, singles_ls)
+            else:
+                exit = input('\nexit ngsComposer? (y/n)\n')
+                if exit in ('Y', 'y', 'Yes', 'yes', 'YES'):
+                    sys.exit('\nngsComposer is now exiting')
+    return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
 
 
 def krill_multi(in1_ls, in2_ls, singles_ls):
@@ -532,31 +551,61 @@ if __name__ == '__main__':
     begin calling tools
     '''
     if cfg.initial_qc is True:
+        print(msg.crin_title)
         crinoid_multi(proj, fastq_ls)
 
     if cfg.front_trim > 0:
+        print(msg.scal_title1)
         singles_ls, fastq_ls, in1_ls, in2_ls = scallop_multi(proj, fastq_ls)
 
     if cfg.bcs_index:
+        print(msg.nem_title)
         singles_ls, fastq_ls, in1_ls, in2_ls = anemone_multi(proj,
                 bcs_dict, in1_ls, in2_ls)
         if cfg.rm_transit is True:
             dir_del(rm_dirs[:-1])
 
     if cfg.R1_bases_ls or cfg.R2_bases_ls:
+        print(msg.rot_title)
         singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multi(proj,
                 in1_ls, in2_ls)
         if cfg.rm_transit is True:
             dir_del(rm_dirs[:-1])
 
     if cfg.end_trim:
-        singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multi(fastq_ls,
-                singles_ls)
+        print(msg.scal_title2)
+        singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multi(proj,
+                fastq_ls, singles_ls)
         if cfg.rm_transit is True:
             dir_del(rm_dirs[:-1])
 
     if cfg.q_min and cfg.q_percent:
+        print(msg.kril_title)
         singles_ls, fastq_ls, in1_ls, in2_ls = krill_multi(in1_ls, in2_ls,
                 singles_ls)
         if cfg.rm_transit is True:
             dir_del(rm_dirs[:-1])
+
+    #TODO create 'receipt'
+    print('\n',
+          'paired =', cfg.paired, '\n',
+          'procs =', cfg.procs, '\n',
+          'alt_dir =', cfg.alt_dir, '\n',
+          'initial_qc =', cfg.initial_qc, '\n',
+          'walkthrough =', cfg.walkthrough, '\n',
+          'walkaway =', cfg.walkaway, '\n',
+          'front_trim =', cfg.front_trim, '\n',
+          'bcs_index =', cfg.bcs_index, '\n',
+          'mismatch =', cfg.mismatch, '\n',
+          'R1_bases_ls =', cfg.R1_bases_ls, '\n',
+          'R2_bases_ls =', cfg.R2_bases_ls, '\n',
+          'non_genomic =', cfg.non_genomic, '\n',
+          'q_min =', cfg.q_min, '\n',
+          'q_percent =', cfg.q_percent, '\n',
+          'end_trim =', cfg.end_trim, '\n',
+          'rm_transit =', cfg.rm_transit,  '\n')
+
+
+
+
+
