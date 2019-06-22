@@ -22,10 +22,16 @@ def initialize(proj):
         proj = os.path.abspath(proj)
     else:
         sys.exit('project directory not found')
-    subprocess.check_call(['Rscript', os.path.dirname(
-        os.path.abspath(sys.argv[0])) +
-        '/tests/test_packages.R'], shell=False)
     return proj
+
+
+def r_packages():
+    try:
+        subprocess.check_call(['Rscript', os.path.dirname(
+            os.path.abspath(sys.argv[0])) +
+            '/tests/test_packages.R'], shell=False)
+    except FileNotFoundError:
+        sys.exit('please install latest version of R')
 
 
 def conf_confirm(proj):
@@ -485,6 +491,7 @@ if __name__ == '__main__':
         the project directory')
     args = parser.parse_args()
     proj = initialize(args.i)
+    r_packages()
     sys.path.append(proj)
     import conf as cfg
     import tools.helpers.messages as msg
