@@ -362,12 +362,12 @@ def anemone_multi(proj, bcs_dict, in1_ls, in2_ls):
                 rm_dirs.pop()
             else:
                 exit = input('\nexit ngsComposer? (y/n)\n')
-                if exit in ('Y', 'y', 'Yes', 'yes', 'YES'):
+                if exit in (msg.confirm):
                     sys.exit('\nngsComposer is now exiting')
     return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
 
 
-def rotifer_multi(proj, in1_ls, in2_ls):
+def rotifer_multi(proj, fastq_ls, in1_ls, in2_ls):
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
@@ -395,10 +395,10 @@ def rotifer_multi(proj, in1_ls, in2_ls):
                 cfg.R2_bases_ls = False if R2 == '' else R2.split()
                 if cfg.R1_bases_ls is False and cfg.R2_bases_ls is False:
                     return singles_ls, fastq_ls, in1_ls, in2_ls
-                _, _, _, _ = rotifer_multi(proj, in1_ls, in2_ls)
+                t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = rotifer_multi(proj, fastq_ls, in1_ls, in2_ls)
             else:
                 exit = input('\nexit ngsComposer? (y/n)\n')
-                if exit in ('Y', 'y', 'Yes', 'yes', 'YES'):
+                if exit in (msg.confirm):
                     sys.exit('\nngsComposer is now exiting')
     return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
 
@@ -445,10 +445,10 @@ def scallop_end_multi(proj, fastq_ls, singles_ls):
                 cfg.end_trim = False if cfg.end_trim == '' else int(cfg.end_trim)
                 if cfg.end_trim is False:
                     return singles_ls, fastq_ls, in1_ls, in2_ls
-                _, _, _, _ = scallop_end_multi(proj, fastq_ls, singles_ls)
+                t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = scallop_end_multi(proj, fastq_ls, singles_ls)
             else:
                 exit = input('\nexit ngsComposer? (y/n)\n')
-                if exit in ('Y', 'y', 'Yes', 'yes', 'YES'):
+                if exit in (msg.confirm):
                     sys.exit('\nngsComposer is now exiting')
     return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
 
@@ -574,7 +574,7 @@ if __name__ == '__main__':
 
     if cfg.R1_bases_ls or cfg.R2_bases_ls:
         print(msg.rot_title)
-        singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multi(proj,
+        singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multi(proj, fastq_ls,
                 in1_ls, in2_ls)
         if cfg.rm_transit is True:
             dir_del(rm_dirs[:-1])
@@ -593,7 +593,6 @@ if __name__ == '__main__':
         if cfg.rm_transit is True:
             dir_del(rm_dirs[:-1])
 
-    #TODO create 'receipt'
     print('\n',
           'paired =', cfg.paired, '\n',
           'procs =', cfg.procs, '\n',
