@@ -14,15 +14,91 @@ from tools.rotifer import rotifer_comp
 from tools.scallop import scallop_comp, scallop_end
 
 
-def initialize(proj):
-    '''
-    check files in proj for completeness
-    '''
-    if os.path.exists(proj) is True:
-        proj = os.path.abspath(proj)
-    else:
-        sys.exit('project directory not found')
-    return proj
+class Project:
+    def __init__(self):
+        self.singles_ls = []
+        self.fastq_ls = []
+        self.in1_ls = []
+        self.in2_ls = []
+        self.rm_dirs = []
+
+    def initialize(self, proj):
+        '''
+        check files in project directory for completeness
+        '''
+        if os.path.exists(proj) is True:
+            self.proj = os.path.abspath(proj)
+            sys.path.append(self.proj)
+            import conf as config
+            c.__dict__.update(config.__dict__)
+        else:
+            sys.exit('project directory not found')
+
+    def conf_confirm(self):
+        '''
+        test user-input from configuration file
+        '''
+        assert self.paired is True or self.paired is False
+        assert self.procs >= 1
+        assert os.path.exists(self.alt_dir) or self.alt_dir is False
+        assert self.initial_qc is True or self.initial_qc is False
+        assert self.walkthrough is True or self.walkthrough is False
+        assert self.walkaway is True or self.walkaway is False
+        assert isinstance(self.front_trim, int)
+        if self.bcs_index:
+            assert os.path.exists(os.path.join(self.proj, self.bcs_index))
+        assert isinstance(self.mismatch, int)
+        assert self.R1_bases_ls is False or isinstance(self.R1_bases_ls, list)
+        if isinstance(self.R1_bases_ls, list):
+            for i in self.R1_bases_ls:
+                for j in i:
+                    assert j in ['A', 'C', 'G', 'T']
+        assert self.R2_bases_ls is False or isinstance(self.R2_bases_ls, list)
+        if isinstance(self.R2_bases_ls, list):
+            for i in self.R2_bases_ls:
+                for j in i:
+                    assert j in ['A', 'C', 'G', 'T']
+        assert self.non_genomic is False or isinstance(self.non_genomic, int)
+        if self.end_trim:
+            assert 0 <= self.end_trim <= 40 and self.end_trim is not True
+        if self.q_min or self.q_percent:
+            assert 0 <= self.q_min <= 40 and self.q_min is not True
+            assert 0 <= self.q_percent <= 100 and self.q_percent is not True
+            if self.q_min and self.q_percent:
+                pass
+            else:
+                sys.exit('both q_min and q_percent variables must be defined')
+        assert self.rm_transit is True or self.rm_transit is False
+
+    def index_reader(self):
+        '''
+        open bcs_index and create dictionary of associated bc keyfiles
+        '''
+        c.bcs_index = os.path.join(c.proj, c.bcs_index) if c.bcs_index else ''
+        self.bcs_dict = {}
+        with open(self.bcs_index) as f:
+            for line in f:
+                for j, item in enumerate(line.split()):
+                    if j == 0:
+                        key = item
+                    if j == 1:
+                        value = item
+                self.bcs_dict[key] = os.path.join(self.proj, value)
+
+    def dir_test(self):
+        '''
+        test project directory for correct structure
+        '''
+        self.fastq_ls = []
+        for filename in os.listdir(self.proj):
+            if filename == os.path.basename(self.bcs_index):
+                pass
+            elif os.path.join(self.proj, filename) in self.bcs_dict.values():
+                pass
+            elif filename == 'conf.py' or filename == '__pycache__':
+                pass
+            else:
+                self.fastq_ls.append(os.path.join(self.proj, filename))
 
 
 def r_packages():
@@ -32,76 +108,6 @@ def r_packages():
             '/tests/test_packages.R'], shell=False)
     except FileNotFoundError:
         sys.exit('please install latest version of R')
-
-
-def conf_confirm(proj):
-    '''
-    test user-input from configuration file
-    '''
-    assert cfg.paired is True or cfg.paired is False
-    assert cfg.procs >= 1
-    assert os.path.exists(cfg.alt_dir) or cfg.alt_dir is False
-    assert cfg.initial_qc is True or cfg.initial_qc is False
-    assert cfg.walkthrough is True or cfg.walkthrough is False
-    assert cfg.walkaway is True or cfg.walkaway is False
-    assert isinstance(cfg.front_trim, int)
-    if cfg.bcs_index:
-        assert os.path.exists(os.path.join(proj, cfg.bcs_index))
-    assert isinstance(cfg.mismatch, int)
-    assert cfg.R1_bases_ls is False or isinstance(cfg.R1_bases_ls, list)
-    if isinstance(cfg.R1_bases_ls, list):
-        for i in cfg.R1_bases_ls:
-            for j in i:
-                assert j in ['A', 'C', 'G', 'T']
-    assert cfg.R2_bases_ls is False or isinstance(cfg.R2_bases_ls, list)
-    if isinstance(cfg.R2_bases_ls, list):
-        for i in cfg.R2_bases_ls:
-            for j in i:
-                assert j in ['A', 'C', 'G', 'T']
-    assert cfg.non_genomic is False or isinstance(cfg.non_genomic, int)
-    if cfg.end_trim:
-        assert 0 <= cfg.end_trim <= 40 and cfg.end_trim is not True
-    if cfg.q_min or cfg.q_percent:
-        assert 0 <= cfg.q_min <= 40 and cfg.q_min is not True
-        assert 0 <= cfg.q_percent <= 100 and cfg.q_percent is not True
-        if cfg.q_min and cfg.q_percent:
-            pass
-        else:
-            sys.exit('both q_min and q_percent variables must be defined')
-    assert cfg.rm_transit is True or cfg.rm_transit is False
-
-
-def index_reader(bcs_index):
-    '''
-    open bcs_index and create dictionary of associated bc keyfiles
-    '''
-    bcs_dict = {}
-    with open(bcs_index) as f:
-        for line in f:
-            for j, item in enumerate(line.split()):
-                if j == 0:
-                    key = item
-                if j == 1:
-                    value = item
-            bcs_dict[key] = os.path.join(proj, value)
-    return bcs_dict
-
-
-def dir_test(proj, bcs_dict):
-    '''
-    test project directory for correct structure
-    '''
-    fastq_ls = []
-    for filename in os.listdir(proj):
-        if filename == os.path.basename(bcs_index):
-            pass
-        elif os.path.join(proj, filename) in bcs_dict.values():
-            pass
-        elif filename == 'conf.py' or filename == '__pycache__':
-            pass
-        else:
-            fastq_ls.append(os.path.join(proj, filename))
-    return fastq_ls
 
 
 def is_fq(filename):
@@ -170,12 +176,12 @@ def input_sort(pairs_dict):
     '''
     in1_ls, in2_ls = [], []
     for values in pairs_dict.values():
-        if cfg.paired is True and len(values) == 2:
+        if c.paired is True and len(values) == 2:
             in1_ls, in2_ls = input_paired(values, in1_ls, in2_ls)
-        elif cfg.paired is True and len(values) != 2:
+        elif c.paired is True and len(values) != 2:
             sys.exit('R1 and R2 pairs not found, expect paired library\n' +
                      'check the naming conventions of the bcs_index')
-        if cfg.paired is False:
+        if c.paired is False:
             in1_ls, in2_ls = input_single(values, in1_ls, in2_ls)
     return in1_ls, in2_ls
 
@@ -224,17 +230,17 @@ def dir_size(proj, fastq_ls, fastq_test):
     drive_free = drive_stats.f_frsize * drive_stats.f_bavail
     dir_used = 0
     dir_plan = 0
-    dir_plan = dir_plan + 1 if cfg.front_trim else dir_plan
-    dir_plan = dir_plan + 1 if cfg.bcs_index else dir_plan
-    if cfg.R1_bases_ls:
+    dir_plan = dir_plan + 1 if c.front_trim else dir_plan
+    dir_plan = dir_plan + 1 if c.bcs_index else dir_plan
+    if c.R1_bases_ls:
         dir_plan += 1
-    elif cfg.R2_bases_ls:
+    elif c.R2_bases_ls:
         dir_plan += 1
-    dir_plan = dir_plan + 1 if cfg.end_trim else dir_plan
-    dir_plan = dir_plan + 1 if cfg.q_min else dir_plan
+    dir_plan = dir_plan + 1 if c.end_trim else dir_plan
+    dir_plan = dir_plan + 1 if c.q_min else dir_plan
     for i in fastq_ls:
         dir_used += os.path.getsize(i)
-    if cfg.rm_transit:
+    if c.rm_transit:
         dir_plan = dir_used * 2 if fastq_test else dir_used * 2 * 5
     else:
         dir_plan = dir_used * dir_plan if fastq_test\
@@ -261,7 +267,7 @@ def pool_multi(pool_part, pool_ls):
     '''
     create n subprocesses of current tool
     '''
-    pool = Pool(cfg.procs)
+    pool = Pool(c.procs)
     pool.map(pool_part, pool_ls)
     pool.close()
 
@@ -315,48 +321,48 @@ def concater(curr):
                     os.remove(i)
 
 
-def crinoid_multi(proj, fastq_ls):
+def crinoid_multi():
     '''
     create user-defined subprocesses to produce base-call summary
     '''
-    curr = proj + '/qc'
+    curr = os.path.join(c.proj, 'qc')
     os.mkdir(curr)
     crinoid_part = partial(crinoid_comp, curr)
-    pool_multi(crinoid_part, fastq_ls)
+    pool_multi(crinoid_part, c.fastq_ls)
 
 
-def scallop_multi(proj, fastq_ls):
+def scallop_multi():
     '''
     create user-defined subprocesses to trim every file in fastq_ls
     '''
-    curr = proj + '/trimmed'
-    rm_dirs.append(curr)
+    curr = os.path.join(c.proj, 'trimmed')
+    c.rm_dirs.append(curr)
     os.mkdir(curr)
-    scallop_part = partial(scallop_comp, cfg.front_trim, None, curr)
-    pool_multi(scallop_part, fastq_ls)
+    scallop_part = partial(scallop_comp, c.front_trim, None, curr)
+    pool_multi(scallop_part, c.fastq_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
-def anemone_multi(proj, bcs_dict, in1_ls, in2_ls):
+def anemone_multi():
     '''
     create user-defined subprocesses to demultiplex
     '''
-    curr = proj + '/demultiplexed'
+    curr = os.path.join(c.proj, 'demultiplexed')
     rm_dirs.append(curr)
     os.mkdir(curr)
-    anemone_part = partial(anemone_comp, in1_ls, in2_ls, cfg.mismatch,
-                           bcs_dict, curr)
-    pool_multi(anemone_part, in1_ls)
+    anemone_part = partial(anemone_comp, c.in1_ls, c.in2_ls, c.mismatch,
+                           c.bcs_dict, curr)
+    pool_multi(anemone_part, c.in1_ls)
     concater(curr)
     t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
-    if cfg.walkthrough:
+    if c.walkthrough:
         crinoid_multi(curr, t_fastq_ls)
-        update = input(msg.anemone_qc) if cfg.walkaway is False else 'y'
+        update = input(msg.anemone_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.anemone_up)
             if prompt in (msg.confirm):
-                cfg.mismatch = int(input(msg.anemone_in))
+                c.mismatch = int(input(msg.anemone_in))
                 shutil.rmtree(rm_dirs[-1])
                 _, _, _, _ = anemone_multi(proj, bcs_dict, in1_ls, in2_ls)
                 rm_dirs.pop()
@@ -376,24 +382,24 @@ def rotifer_multi(proj, fastq_ls, in1_ls, in2_ls):
     os.mkdir(curr)
     os.mkdir(curr + '/single')
     os.mkdir(curr + '/paired')
-    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, cfg.R1_bases_ls,
-                           cfg.R2_bases_ls, cfg.non_genomic, curr)
+    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, c.R1_bases_ls,
+                           c.R2_bases_ls, c.non_genomic, curr)
     pool_multi(rotifer_part, in1_ls)
     t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
-    if cfg.walkthrough:
+    if c.walkthrough:
         crinoid_multi(curr + '/single', t_singles_ls)
         crinoid_multi(curr + '/paired', t_fastq_ls)
-        update = input(msg.rotifer_qc) if cfg.walkaway is False else 'y'
+        update = input(msg.rotifer_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.rotifer_up)
             if prompt in (msg.confirm):
                 shutil.rmtree(rm_dirs[-1])
                 rm_dirs.pop()
                 R1 = input(msg.rotifer_in1)
-                cfg.R1_bases_ls = False if R1 == '' else R1.split()
+                c.R1_bases_ls = False if R1 == '' else R1.split()
                 R2 = input(msg.rotifer_in2)
-                cfg.R2_bases_ls = False if R2 == '' else R2.split()
-                if cfg.R1_bases_ls is False and cfg.R2_bases_ls is False:
+                c.R2_bases_ls = False if R2 == '' else R2.split()
+                if c.R1_bases_ls is False and c.R2_bases_ls is False:
                     return singles_ls, fastq_ls, in1_ls, in2_ls
                 t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = rotifer_multi(proj, fastq_ls, in1_ls, in2_ls)
             else:
@@ -410,7 +416,7 @@ def scallop_end_multi(proj, fastq_ls, singles_ls):
     curr = proj + '/end_trimmed'
     rm_dirs.append(curr)
     os.mkdir(curr)
-    if cfg.R1_bases_ls or cfg.R2_bases_ls:
+    if c.R1_bases_ls or c.R2_bases_ls:
         os.mkdir(curr + '/single')
         os.mkdir(curr + '/paired')
     if os.path.exists(rm_dirs[-2] + '/qc'):
@@ -423,27 +429,27 @@ def scallop_end_multi(proj, fastq_ls, singles_ls):
             crinoid_multi(rm_dirs[-2] + '/paired', fastq_ls)
         except FileNotFoundError:
             crinoid_multi(rm_dirs[-2], fastq_ls)
-    scallop_end_part = partial(scallop_end, curr, cfg.end_trim)
+    scallop_end_part = partial(scallop_end, curr, c.end_trim)
     pool_multi(scallop_end_part, fastq_ls)
     if singles_ls:
-        scallop_end_part = partial(scallop_end, curr, cfg.end_trim)
+        scallop_end_part = partial(scallop_end, curr, c.end_trim)
         pool_multi(scallop_end_part, singles_ls)
     t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
-    if cfg.walkthrough:
-        if cfg.R1_bases_ls or cfg.R2_bases_ls:
+    if c.walkthrough:
+        if c.R1_bases_ls or c.R2_bases_ls:
             crinoid_multi(curr + '/single', t_singles_ls)
             crinoid_multi(curr + '/paired', t_fastq_ls)
         else:
             crinoid_multi(curr, t_fastq_ls)
-        update = input(msg.scallop_qc) if cfg.walkaway is False else 'y'
+        update = input(msg.scallop_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.scallop_up)
             if prompt in (msg.confirm):
                 shutil.rmtree(rm_dirs[-1])
                 rm_dirs.pop()
-                cfg.end_trim = input(msg.scallop_in)
-                cfg.end_trim = False if cfg.end_trim == '' else int(cfg.end_trim)
-                if cfg.end_trim is False:
+                c.end_trim = input(msg.scallop_in)
+                c.end_trim = False if c.end_trim == '' else int(c.end_trim)
+                if c.end_trim is False:
                     return singles_ls, fastq_ls, in1_ls, in2_ls
                 t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = scallop_end_multi(proj, fastq_ls, singles_ls)
             else:
@@ -464,31 +470,31 @@ def krill_multi(in1_ls, in2_ls, singles_ls):
     os.mkdir(curr + '/single/pe_lib')
     os.mkdir(curr + '/single/se_lib')
     os.mkdir(curr + '/paired')
-    krill_part = partial(krill_comp, in1_ls, in2_ls, cfg.q_min, cfg.q_percent,
+    krill_part = partial(krill_comp, in1_ls, in2_ls, c.q_min, c.q_percent,
                          curr)
     pool_multi(krill_part, in1_ls)
     if singles_ls:
-        krill_part = partial(krill_comp, in1_ls, in2_ls, cfg.q_min,
-                             cfg.q_percent, curr)
+        krill_part = partial(krill_comp, in1_ls, in2_ls, c.q_min,
+                             c.q_percent, curr)
         pool_multi(krill_part, singles_ls)
     concater(curr + '/single')
     t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
     shutil.rmtree(curr + '/single/pe_lib')
     shutil.rmtree(curr + '/single/se_lib')
-    if cfg.walkthrough:
+    if c.walkthrough:
         crinoid_multi(curr + '/single', t_singles_ls)
         crinoid_multi(curr + '/paired', t_fastq_ls)
-        update = input(msg.krill_qc) if cfg.walkaway is False else 'y'
+        update = input(msg.krill_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.krill_up)
             if prompt in (msg.confirm):
                 shutil.rmtree(rm_dirs[-1])
                 rm_dirs.pop()
-                cfg.q_min = input(msg.krill_in1)
-                cfg.q_percent = input(msg.krill_in2)
-                cfg.q_min = False if cfg.q_min == '' else int(cfg.q_min)
-                cfg.q_percent = False if cfg.q_percent == '' else int(cfg.q_percent)
-                if cfg.q_min is False or cfg.q_percent is False:
+                c.q_min = input(msg.krill_in1)
+                c.q_percent = input(msg.krill_in2)
+                c.q_min = False if c.q_min == '' else int(c.q_min)
+                c.q_percent = False if c.q_percent == '' else int(c.q_percent)
+                if c.q_min is False or c.q_percent is False:
                     return singles_ls, fastq_ls, in1_ls, in2_ls
                 t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = krill_multi(in1_ls, in2_ls, singles_ls)
             else:
@@ -499,29 +505,25 @@ def krill_multi(in1_ls, in2_ls, singles_ls):
 
 
 if __name__ == '__main__':
-    singles_ls, fastq_ls, in1_ls, in2_ls, rm_dirs = [], [], [], [], []
     parser = argparse.ArgumentParser(description='composer is a base-call\
         error-filtering and read preprocessing pipeline for fastq libraries - \
         see https://github.com/ryandkuster/composer for usage')
     parser.add_argument('-i', type=str, help='the full or relative path to \
         the project directory')
     args = parser.parse_args()
-    proj = initialize(args.i)
-    r_packages()
-    sys.path.append(proj)
-    import conf as cfg
-    import tools.helpers.messages as msg
-    conf_confirm(proj)
+    c = Project()
+    c.initialize(args.i)
+    c.conf_confirm()
 
 ######################################################
 # TODO delete the following (for ease of testing):
 ######################################################
-    old_dirs = [proj + '/qc',
-                proj + '/trimmed',
-                proj + '/demultiplexed',
-                proj + '/parsed',
-                proj + '/end_trimmed',
-                proj + '/filtered']
+    old_dirs = [c.proj + '/qc',
+                c.proj + '/trimmed',
+                c.proj + '/demultiplexed',
+                c.proj + '/parsed',
+                c.proj + '/end_trimmed',
+                c.proj + '/filtered']
     for folder in old_dirs:
         try:
             shutil.rmtree(folder)
@@ -531,14 +533,14 @@ if __name__ == '__main__':
             pass
 ######################################################
 
-    bcs_index = os.path.join(proj, cfg.bcs_index) if cfg.bcs_index else ''
-    bcs_dict = index_reader(bcs_index) if cfg.bcs_index else {}
+    c.index_reader()
+    c.dir_test()
+    r_packages()
 
-    fastq_ls = dir_test(proj, bcs_dict)
 
-    for k, v in bcs_dict.items():
+    for k, v in c.bcs_dict.items():
         try:
-            assert os.path.join(proj, k) in fastq_ls
+            assert os.path.join(c.proj, k) in c.fastq_ls
         except AssertionError:
             sys.exit('check index.txt formatting')
         names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
@@ -549,7 +551,7 @@ if __name__ == '__main__':
         if test:
             print('redundant R2 barcodes detected in ' + v)
 
-    for filename in fastq_ls:
+    for filename in c.fastq_ls:
         try:
             fastq_test = is_fq(filename)
         except UnicodeDecodeError:
@@ -557,75 +559,75 @@ if __name__ == '__main__':
         if fastq_test is None:
             sys.exit(filename + ' was not expected in project directory')
 
-    if cfg.alt_dir:
-        proj = initialize(cfg.alt_dir)
-        if len(os.listdir(proj)) != 0:
+    if c.alt_dir:
+        c.proj = initialize(c.alt_dir)
+        if len(os.listdir(c.proj)) != 0:
             sys.exit('alt_dir must be an empty directory')
 
-    dir_size(proj, fastq_ls, fastq_test)
+    dir_size(c.proj, c.fastq_ls, fastq_test)
 
-    if cfg.bcs_index and cfg.paired is True and \
+    if c.bcs_index and c.paired is True and \
             len(fastq_ls)/2 != len(bcs_dict):
         sys.exit('incorrect number of files based on index.txt')
-    pairs_dict = is_paired(fastq_ls)
+    pairs_dict = is_paired(c.fastq_ls)
     in1_ls, in2_ls = input_sort(pairs_dict)
 
     '''
     begin calling tools
     '''
-    if cfg.initial_qc is True:
+    import tools.helpers.messages as msg
+    if c.initial_qc is True:
         print(msg.crin_title)
-        crinoid_multi(proj, fastq_ls)
+        crinoid_multi()
 
-    if cfg.front_trim > 0:
+    if c.front_trim > 0:
         print(msg.scal_title1)
-        singles_ls, fastq_ls, in1_ls, in2_ls = scallop_multi(proj, fastq_ls)
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_multi()
 
-    if cfg.bcs_index:
+    if c.bcs_index:
         print(msg.nem_title)
-        singles_ls, fastq_ls, in1_ls, in2_ls = anemone_multi(proj,
-                bcs_dict, in1_ls, in2_ls)
-        if cfg.rm_transit is True:
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = anemone_multi()
+        if c.rm_transit is True:
             dir_del(rm_dirs[:-1])
 
-    if cfg.R1_bases_ls or cfg.R2_bases_ls:
+    if c.R1_bases_ls or c.R2_bases_ls:
         print(msg.rot_title)
         singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multi(proj, fastq_ls,
                 in1_ls, in2_ls)
-        if cfg.rm_transit is True:
+        if c.rm_transit is True:
             dir_del(rm_dirs[:-1])
 
-    if cfg.end_trim:
+    if c.end_trim:
         print(msg.scal_title2)
         singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multi(proj,
                 fastq_ls, singles_ls)
-        if cfg.rm_transit is True:
+        if c.rm_transit is True:
             dir_del(rm_dirs[:-1])
 
-    if cfg.q_min and cfg.q_percent:
+    if c.q_min and c.q_percent:
         print(msg.kril_title)
         singles_ls, fastq_ls, in1_ls, in2_ls = krill_multi(in1_ls, in2_ls,
                 singles_ls)
-        if cfg.rm_transit is True:
+        if c.rm_transit is True:
             dir_del(rm_dirs[:-1])
 
     print('\n',
-          'paired =', cfg.paired, '\n',
-          'procs =', cfg.procs, '\n',
-          'alt_dir =', cfg.alt_dir, '\n',
-          'initial_qc =', cfg.initial_qc, '\n',
-          'walkthrough =', cfg.walkthrough, '\n',
-          'walkaway =', cfg.walkaway, '\n',
-          'front_trim =', cfg.front_trim, '\n',
-          'bcs_index =', cfg.bcs_index, '\n',
-          'mismatch =', cfg.mismatch, '\n',
-          'R1_bases_ls =', cfg.R1_bases_ls, '\n',
-          'R2_bases_ls =', cfg.R2_bases_ls, '\n',
-          'non_genomic =', cfg.non_genomic, '\n',
-          'q_min =', cfg.q_min, '\n',
-          'q_percent =', cfg.q_percent, '\n',
-          'end_trim =', cfg.end_trim, '\n',
-          'rm_transit =', cfg.rm_transit,  '\n')
+          'paired =', c.paired, '\n',
+          'procs =', c.procs, '\n',
+          'alt_dir =', c.alt_dir, '\n',
+          'initial_qc =', c.initial_qc, '\n',
+          'walkthrough =', c.walkthrough, '\n',
+          'walkaway =', c.walkaway, '\n',
+          'front_trim =', c.front_trim, '\n',
+          'bcs_index =', c.bcs_index, '\n',
+          'mismatch =', c.mismatch, '\n',
+          'R1_bases_ls =', c.R1_bases_ls, '\n',
+          'R2_bases_ls =', c.R2_bases_ls, '\n',
+          'non_genomic =', c.non_genomic, '\n',
+          'q_min =', c.q_min, '\n',
+          'q_percent =', c.q_percent, '\n',
+          'end_trim =', c.end_trim, '\n',
+          'rm_transit =', c.rm_transit,  '\n')
 
 
 
