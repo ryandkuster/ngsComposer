@@ -413,7 +413,7 @@ def scallop_end_multi(proj, fastq_ls, singles_ls):
     if cfg.R1_bases_ls or cfg.R2_bases_ls:
         os.mkdir(curr + '/single')
         os.mkdir(curr + '/paired')
-    if os.path.exists(rm_dirs[0] + '/qc'):
+    if os.path.exists(rm_dirs[-2] + '/qc'):
         pass
     elif os.path.exists(rm_dirs[-2] + '/single/qc'):
         pass
@@ -472,13 +472,29 @@ def krill_multi(in1_ls, in2_ls, singles_ls):
                              cfg.q_percent, curr)
         pool_multi(krill_part, singles_ls)
     concater(curr + '/single')
-    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
+    t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
     shutil.rmtree(curr + '/single/pe_lib')
     shutil.rmtree(curr + '/single/se_lib')
     if cfg.walkthrough:
-        crinoid_multi(curr + '/single', singles_ls)
-        crinoid_multi(curr + '/paired', fastq_ls)
-    # TODO add walkthrough functions here
+        crinoid_multi(curr + '/single', t_singles_ls)
+        crinoid_multi(curr + '/paired', t_fastq_ls)
+        update = input(msg.krill_qc) if cfg.walkaway is False else 'y'
+        if update not in (msg.confirm):
+            prompt = input(msg.krill_up)
+            if prompt in (msg.confirm):
+                shutil.rmtree(rm_dirs[-1])
+                rm_dirs.pop()
+                cfg.q_min = input(msg.krill_in1)
+                cfg.q_percent = input(msg.krill_in2)
+                cfg.q_min = False if cfg.q_min == '' else int(cfg.q_min)
+                cfg.q_percent = False if cfg.q_percent == '' else int(cfg.q_percent)
+                if cfg.q_min is False or cfg.q_percent is False:
+                    return singles_ls, fastq_ls, in1_ls, in2_ls
+                t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = krill_multi(in1_ls, in2_ls, singles_ls)
+            else:
+                exit = input('\nexit ngsComposer? (y/n)\n')
+                if exit in (msg.confirm):
+                    sys.exit('\nngsComposer is now exiting')
     return singles_ls, fastq_ls, in1_ls, in2_ls
 
 

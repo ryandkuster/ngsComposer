@@ -31,7 +31,13 @@ scallop_in = ('\nnew end_trim value? (int, or press enter to continue the ' +
               'pipeline disregarding end-trimming\n')
 
 
-
+krill_qc = ('\ncheck qc file(s) in filtered directory\n\n' +
+              'continue without changes to configuration settings? (y/n)\n')
+krill_up = ('\nupdate q_min, q_percent values and rerun filtering step? (y/n)\n')
+krill_in1 = ('\nnew q_min value? (int, or press enter to continue the ' +
+              'pipeline disregarding filtering\n')
+krill_in2 = ('\nnew q_percent value? (int, or press enter to continue the ' +
+              'pipeline disregarding filtering\n')
 
 
 confirm = ['Y', 'y', 'Yes', 'yes', 'YES']
