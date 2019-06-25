@@ -50,14 +50,14 @@ class Project:
         assert isinstance(self.mismatch, int)
         assert self.R1_bases_ls is False or isinstance(self.R1_bases_ls, list)
         if isinstance(self.R1_bases_ls, list):
-            for i in self.R1_bases_ls:
-                for j in i:
-                    assert j in ['A', 'C', 'G', 'T']
+            test = nucleotide_test(self.R1_bases_ls)
+        if test is not True:
+            sys.exit(test)
         assert self.R2_bases_ls is False or isinstance(self.R2_bases_ls, list)
         if isinstance(self.R2_bases_ls, list):
-            for i in self.R2_bases_ls:
-                for j in i:
-                    assert j in ['A', 'C', 'G', 'T']
+            test = nucleotide_test(self.R2_bases_ls)
+        if test is not True:
+            sys.exit(test)
         assert self.non_genomic is False or isinstance(self.non_genomic, int)
         if self.end_trim:
             assert 0 <= self.end_trim <= 40 and self.end_trim is not True
@@ -101,6 +101,21 @@ class Project:
                 pass
             else:
                 self.fastq_ls.append(os.path.join(self.proj, filename))
+
+
+def nucleotide_test(ls):
+    nuc_ls = (j for i in ls for j in i)
+    for i in nuc_ls:
+        if i in ['A', 'C', 'G', 'T']:
+            test = True
+            pass
+        elif i.upper() in ['A', 'C', 'G', 'T']:
+            test = 'barcodes and motifs must be upper-case only'
+            break
+        else:
+            test = 'barcodes and motifs must consist of A, C, G, or T only'
+            break
+    return test
 
 
 def r_packages():
@@ -523,6 +538,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     c = Project()
     c.initialize(args.i)
+    import tools.helpers.messages as msg
     c.conf_confirm()
 
 ######################################################
@@ -559,6 +575,12 @@ if __name__ == '__main__':
         test = bc_test(R2_bcs, names_mx, False)
         if test:
             print('redundant R2 barcodes detected in ' + v)
+        test = nucleotide_test(R1_bcs.values())
+        if test is not True:
+            sys.exit(test)
+        test = nucleotide_test(R2_bcs.values()) if len(R2_bcs) > 1 else True
+        if test is not True:
+            sys.exit(test)
 
     for filename in c.fastq_ls:
         try:
@@ -578,14 +600,9 @@ if __name__ == '__main__':
     if c.bcs_index and c.paired is True and \
             len(c.fastq_ls)/2 != len(c.bcs_dict):
         sys.exit('incorrect number of files based on index.txt')
-    pairs_dict = is_paired(c.fastq_ls)
-    in1_ls, in2_ls = input_sort(pairs_dict)
+    c.pairs_dict = is_paired(c.fastq_ls)
+    c.in1_ls, c.in2_ls = input_sort(c.pairs_dict)
 
-    '''
-    begin calling tools
-    '''
-
-    import tools.helpers.messages as msg
     if c.initial_qc is True:
         print(msg.crin_title)
         crinoid_multi(c.proj, c.fastq_ls)
