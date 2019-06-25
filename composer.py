@@ -250,6 +250,16 @@ def dir_size(proj, fastq_ls, fastq_test):
                  'process, consider rm_transit or alt_dir variables')
 
 
+def dir_make(title):
+    '''
+    create new directory when pipeline tools called
+    '''
+    curr = os.path.join(c.proj, title)
+    c.rm_dirs.append(curr)
+    os.mkdir(curr)
+    return curr
+
+
 def dir_del(rm_dirs):
     '''
     delete specified list of folders
@@ -321,23 +331,21 @@ def concater(curr):
                     os.remove(i)
 
 
-def crinoid_multi():
+def crinoid_multi(proj, ls):
     '''
     create user-defined subprocesses to produce base-call summary
     '''
-    curr = os.path.join(c.proj, 'qc')
+    curr = os.path.join(proj, 'qc')
     os.mkdir(curr)
     crinoid_part = partial(crinoid_comp, curr)
-    pool_multi(crinoid_part, c.fastq_ls)
+    pool_multi(crinoid_part, ls)
 
 
 def scallop_multi():
     '''
     create user-defined subprocesses to trim every file in fastq_ls
     '''
-    curr = os.path.join(c.proj, 'trimmed')
-    c.rm_dirs.append(curr)
-    os.mkdir(curr)
+    curr = dir_make('trimmed')
     scallop_part = partial(scallop_comp, c.front_trim, None, curr)
     pool_multi(scallop_part, c.fastq_ls)
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
@@ -348,155 +356,147 @@ def anemone_multi():
     '''
     create user-defined subprocesses to demultiplex
     '''
-    curr = os.path.join(c.proj, 'demultiplexed')
-    rm_dirs.append(curr)
-    os.mkdir(curr)
+    curr = dir_make('demultiplexed')
     anemone_part = partial(anemone_comp, c.in1_ls, c.in2_ls, c.mismatch,
                            c.bcs_dict, curr)
     pool_multi(anemone_part, c.in1_ls)
     concater(curr)
-    t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
+    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
     if c.walkthrough:
-        crinoid_multi(curr, t_fastq_ls)
+        crinoid_multi(curr, fastq_ls)
         update = input(msg.anemone_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.anemone_up)
             if prompt in (msg.confirm):
                 c.mismatch = int(input(msg.anemone_in))
-                shutil.rmtree(rm_dirs[-1])
-                _, _, _, _ = anemone_multi(proj, bcs_dict, in1_ls, in2_ls)
-                rm_dirs.pop()
+                shutil.rmtree(c.rm_dirs[-1])
+                singles_ls, fastq_ls, in1_ls, in2_ls = anemone_multi()
+                c.rm_dirs.pop()
             else:
                 exit = input('\nexit ngsComposer? (y/n)\n')
                 if exit in (msg.confirm):
                     sys.exit('\nngsComposer is now exiting')
-    return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
+    return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
-def rotifer_multi(proj, fastq_ls, in1_ls, in2_ls):
+def rotifer_multi():
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
-    curr = proj + '/parsed'
-    rm_dirs.append(curr)
-    os.mkdir(curr)
+    curr = dir_make('parsed')
     os.mkdir(curr + '/single')
     os.mkdir(curr + '/paired')
-    rotifer_part = partial(rotifer_comp, in1_ls, in2_ls, c.R1_bases_ls,
+    rotifer_part = partial(rotifer_comp, c.in1_ls, c.in2_ls, c.R1_bases_ls,
                            c.R2_bases_ls, c.non_genomic, curr)
-    pool_multi(rotifer_part, in1_ls)
-    t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
+    pool_multi(rotifer_part, c.in1_ls)
+    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
     if c.walkthrough:
-        crinoid_multi(curr + '/single', t_singles_ls)
-        crinoid_multi(curr + '/paired', t_fastq_ls)
+        crinoid_multi(curr + '/single', singles_ls)
+        crinoid_multi(curr + '/paired', fastq_ls)
         update = input(msg.rotifer_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.rotifer_up)
             if prompt in (msg.confirm):
-                shutil.rmtree(rm_dirs[-1])
-                rm_dirs.pop()
+                shutil.rmtree(c.rm_dirs[-1])
+                c.rm_dirs.pop()
                 R1 = input(msg.rotifer_in1)
                 c.R1_bases_ls = False if R1 == '' else R1.split()
                 R2 = input(msg.rotifer_in2)
                 c.R2_bases_ls = False if R2 == '' else R2.split()
                 if c.R1_bases_ls is False and c.R2_bases_ls is False:
-                    return singles_ls, fastq_ls, in1_ls, in2_ls
-                t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = rotifer_multi(proj, fastq_ls, in1_ls, in2_ls)
+                    return c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls
+                singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multi()
             else:
                 exit = input('\nexit ngsComposer? (y/n)\n')
                 if exit in (msg.confirm):
                     sys.exit('\nngsComposer is now exiting')
-    return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
+    return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
-def scallop_end_multi(proj, fastq_ls, singles_ls):
+def scallop_end_multi():
     '''
     automated 3' end read trimming based on minimum value
     '''
-    curr = proj + '/end_trimmed'
-    rm_dirs.append(curr)
-    os.mkdir(curr)
+    curr = dir_make('end_trimmed')
     if c.R1_bases_ls or c.R2_bases_ls:
         os.mkdir(curr + '/single')
         os.mkdir(curr + '/paired')
-    if os.path.exists(rm_dirs[-2] + '/qc'):
+    if os.path.exists(c.rm_dirs[-2] + '/qc'):
         pass
-    elif os.path.exists(rm_dirs[-2] + '/single/qc'):
+    elif os.path.exists(c.rm_dirs[-2] + '/single/qc'):
         pass
     else:
         try:
-            crinoid_multi(rm_dirs[-2] + '/single', singles_ls)
-            crinoid_multi(rm_dirs[-2] + '/paired', fastq_ls)
+            crinoid_multi(c.rm_dirs[-2] + '/single', c.singles_ls)
+            crinoid_multi(c.rm_dirs[-2] + '/paired', c.fastq_ls)
         except FileNotFoundError:
-            crinoid_multi(rm_dirs[-2], fastq_ls)
+            crinoid_multi(c.rm_dirs[-2], c.fastq_ls)
     scallop_end_part = partial(scallop_end, curr, c.end_trim)
-    pool_multi(scallop_end_part, fastq_ls)
+    pool_multi(scallop_end_part, c.fastq_ls)
     if singles_ls:
         scallop_end_part = partial(scallop_end, curr, c.end_trim)
         pool_multi(scallop_end_part, singles_ls)
-    t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
+    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
     if c.walkthrough:
         if c.R1_bases_ls or c.R2_bases_ls:
-            crinoid_multi(curr + '/single', t_singles_ls)
-            crinoid_multi(curr + '/paired', t_fastq_ls)
+            crinoid_multi(curr + '/single', singles_ls)
+            crinoid_multi(curr + '/paired', fastq_ls)
         else:
-            crinoid_multi(curr, t_fastq_ls)
+            crinoid_multi(curr, fastq_ls)
         update = input(msg.scallop_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.scallop_up)
             if prompt in (msg.confirm):
-                shutil.rmtree(rm_dirs[-1])
-                rm_dirs.pop()
+                shutil.rmtree(c.rm_dirs[-1])
+                c.rm_dirs.pop()
                 c.end_trim = input(msg.scallop_in)
                 c.end_trim = False if c.end_trim == '' else int(c.end_trim)
                 if c.end_trim is False:
-                    return singles_ls, fastq_ls, in1_ls, in2_ls
-                t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = scallop_end_multi(proj, fastq_ls, singles_ls)
+                    return c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls
+                singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multi()
             else:
                 exit = input('\nexit ngsComposer? (y/n)\n')
                 if exit in (msg.confirm):
                     sys.exit('\nngsComposer is now exiting')
-    return t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls
+    return singles_ls, fastq_ls, in1_ls, in2_ls
 
 
-def krill_multi(in1_ls, in2_ls, singles_ls):
+def krill_multi():
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
-    curr = proj + '/filtered'
-    rm_dirs.append(curr)
-    os.mkdir(curr)
-    os.mkdir(curr + '/single')
-    os.mkdir(curr + '/single/pe_lib')
-    os.mkdir(curr + '/single/se_lib')
-    os.mkdir(curr + '/paired')
-    krill_part = partial(krill_comp, in1_ls, in2_ls, c.q_min, c.q_percent,
+    curr = dir_make('filtered')
+    os.mkdir(os.path.join(curr, 'single'))
+    os.mkdir(os.path.join(curr, 'single', 'pe_lib'))
+    os.mkdir(os.path.join(curr, 'single', 'se_lib'))
+    os.mkdir(os.path.join(curr, 'paired'))
+    krill_part = partial(krill_comp, c.in1_ls, c.in2_ls, c.q_min, c.q_percent,
                          curr)
-    pool_multi(krill_part, in1_ls)
-    if singles_ls:
-        krill_part = partial(krill_comp, in1_ls, in2_ls, c.q_min,
+    pool_multi(krill_part, c.in1_ls)
+    if c.singles_ls:
+        krill_part = partial(krill_comp, c.in1_ls, c.in2_ls, c.q_min,
                              c.q_percent, curr)
-        pool_multi(krill_part, singles_ls)
+        pool_multi(krill_part, c.singles_ls)
     concater(curr + '/single')
-    t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = pathfinder(curr)
+    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
     shutil.rmtree(curr + '/single/pe_lib')
     shutil.rmtree(curr + '/single/se_lib')
     if c.walkthrough:
-        crinoid_multi(curr + '/single', t_singles_ls)
-        crinoid_multi(curr + '/paired', t_fastq_ls)
+        crinoid_multi(curr + '/single', c.singles_ls)
+        crinoid_multi(curr + '/paired', c.fastq_ls)
         update = input(msg.krill_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.krill_up)
             if prompt in (msg.confirm):
-                shutil.rmtree(rm_dirs[-1])
-                rm_dirs.pop()
+                shutil.rmtree(c.rm_dirs[-1])
+                c.rm_dirs.pop()
                 c.q_min = input(msg.krill_in1)
                 c.q_percent = input(msg.krill_in2)
                 c.q_min = False if c.q_min == '' else int(c.q_min)
                 c.q_percent = False if c.q_percent == '' else int(c.q_percent)
                 if c.q_min is False or c.q_percent is False:
-                    return singles_ls, fastq_ls, in1_ls, in2_ls
-                t_singles_ls, t_fastq_ls, t_in1_ls, t_in2_ls = krill_multi(in1_ls, in2_ls, singles_ls)
+                    return c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls
+                singles_ls, fastq_ls, in1_ls, in2_ls = krill_multi()
             else:
                 exit = input('\nexit ngsComposer? (y/n)\n')
                 if exit in (msg.confirm):
@@ -512,6 +512,7 @@ if __name__ == '__main__':
         the project directory')
     args = parser.parse_args()
     c = Project()
+    tmp = Project()
     c.initialize(args.i)
     c.conf_confirm()
 
@@ -536,7 +537,6 @@ if __name__ == '__main__':
     c.index_reader()
     c.dir_test()
     r_packages()
-
 
     for k, v in c.bcs_dict.items():
         try:
@@ -567,7 +567,7 @@ if __name__ == '__main__':
     dir_size(c.proj, c.fastq_ls, fastq_test)
 
     if c.bcs_index and c.paired is True and \
-            len(fastq_ls)/2 != len(bcs_dict):
+            len(c.fastq_ls)/2 != len(c.bcs_dict):
         sys.exit('incorrect number of files based on index.txt')
     pairs_dict = is_paired(c.fastq_ls)
     in1_ls, in2_ls = input_sort(pairs_dict)
@@ -575,6 +575,7 @@ if __name__ == '__main__':
     '''
     begin calling tools
     '''
+
     import tools.helpers.messages as msg
     if c.initial_qc is True:
         print(msg.crin_title)
@@ -588,28 +589,25 @@ if __name__ == '__main__':
         print(msg.nem_title)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = anemone_multi()
         if c.rm_transit is True:
-            dir_del(rm_dirs[:-1])
+            dir_del(c.rm_dirs[:-1])
 
     if c.R1_bases_ls or c.R2_bases_ls:
         print(msg.rot_title)
-        singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multi(proj, fastq_ls,
-                in1_ls, in2_ls)
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = rotifer_multi()
         if c.rm_transit is True:
-            dir_del(rm_dirs[:-1])
+            dir_del(c.rm_dirs[:-1])
 
     if c.end_trim:
         print(msg.scal_title2)
-        singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multi(proj,
-                fastq_ls, singles_ls)
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_end_multi()
         if c.rm_transit is True:
-            dir_del(rm_dirs[:-1])
+            dir_del(c.rm_dirs[:-1])
 
     if c.q_min and c.q_percent:
         print(msg.kril_title)
-        singles_ls, fastq_ls, in1_ls, in2_ls = krill_multi(in1_ls, in2_ls,
-                singles_ls)
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = krill_multi()
         if c.rm_transit is True:
-            dir_del(rm_dirs[:-1])
+            dir_del(c.rm_dirs[:-1])
 
     print('\n',
           'paired =', c.paired, '\n',
@@ -628,8 +626,3 @@ if __name__ == '__main__':
           'q_percent =', c.q_percent, '\n',
           'end_trim =', c.end_trim, '\n',
           'rm_transit =', c.rm_transit,  '\n')
-
-
-
-
-
