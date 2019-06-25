@@ -11,13 +11,13 @@ alt_dir = False
 initial_qc = True
 
 # perform qc step at each filtering stage (time-consuming, but informative)
-walkthrough = True
+walkthrough = False
 
 # run from beginning to end without pausing at qc steps
 walkaway = True
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
-front_trim = 2
+front_trim = 6
 
 # name of file with barcodes to demultiplex forward reads (use 'False' if not demultiplexing)
 bcs_index = 'index.txt'
@@ -26,8 +26,8 @@ bcs_index = 'index.txt'
 mismatch = 1
 
 # list sequences immediately adjacent to barcodes
-R1_bases_ls = ['A', 'C', 'G', 'T']
-R2_bases_ls = ['A', 'C', 'G', 'T']
+R1_bases_ls = ['TCC', 'TCT']
+R2_bases_ls = ['TCC', 'TCT']
 
 # number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
 non_genomic = 0
@@ -39,7 +39,7 @@ q_min = 30
 q_percent = 95
 
 # trim read 3' ends automatically within boxplot lower whisker
-end_trim = 30
+end_trim = False
 
 # optionally remove each transitional file folder to save space
 rm_transit = True

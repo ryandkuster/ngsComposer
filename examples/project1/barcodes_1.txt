@@ -1,5 +1,25 @@
-	A	C	G	T
-A	sample1	sample5	sample6	sample10
-C	sample2	sample5	sample7	sample10
-G	sample3	sample5	sample8	sample10
-T	sample4	sample5	sample9	sample10
+	CACTGACA	AGATGAG	ATCATGCTC	ACACGT	CGCTGTA	CAGAGTGT	AGTGCAGT	CGAGACTA	GCTAGA	CGTGTACT	GTAGTAG	CTACAGTG	AGAGTGC	CGCTCTAT	ATCTCGCT	CATCAC
+TGTCAGTG	sample1	sample25	sample49	sample73	sample97	sample121	sample145	sample169	sample193	sample217	sample241	sample265	sample289	sample313	sample337	sample361
+CTCATCT	sample2	sample26	sample50	sample74	sample98	sample122	sample146	sample170	sample194	sample218	sample242	sample266	sample290	sample314	sample338	sample362
+GAGCATGAT	sample3	sample27	sample51	sample75	sample99	sample123	sample147	sample171	sample195	sample219	sample243	sample267	sample291	sample315	sample339	sample363
+ACGTGT	sample4	sample28	sample52	sample76	sample100	sample124	sample148	sample172	sample196	sample220	sample244	sample268	sample292	sample316	sample340	sample364
+TACAGCG	sample5	sample29	sample53	sample77	sample101	sample125	sample149	sample173	sample197	sample221	sample245	sample269	sample293	sample317	sample341	sample365
+ACACTCTG	sample6	sample30	sample54	sample78	sample102	sample126	sample150	sample174	sample198	sample222	sample246	sample270	sample294	sample318	sample342	sample366
+ACTGCACT	sample7	sample31	sample55	sample79	sample103	sample127	sample151	sample175	sample199	sample223	sample247	sample271	sample295	sample319	sample343	sample367
+TAGTCTCG	sample8	sample32	sample56	sample80	sample104	sample128	sample152	sample176	sample200	sample224	sample248	sample272	sample296	sample320	sample344	sample368
+TCTAGC	sample9	sample33	sample57	sample81	sample105	sample129	sample153	sample177	sample201	sample225	sample249	sample273	sample297	sample321	sample345	sample369
+AGTACACG	sample10	sample34	sample58	sample82	sample106	sample130	sample154	sample178	sample202	sample226	sample250	sample274	sample298	sample322	sample346	sample370
+CTACTAC	sample11	sample35	sample59	sample83	sample107	sample131	sample155	sample179	sample203	sample227	sample251	sample275	sample299	sample323	sample347	sample371
+CACTGTAG	sample12	sample36	sample60	sample84	sample108	sample132	sample156	sample180	sample204	sample228	sample252	sample276	sample300	sample324	sample348	sample372
+GCACTCT	sample13	sample37	sample61	sample85	sample109	sample133	sample157	sample181	sample205	sample229	sample253	sample277	sample301	sample325	sample349	sample373
+ATAGAGCG	sample14	sample38	sample62	sample86	sample110	sample134	sample158	sample182	sample206	sample230	sample254	sample278	sample302	sample326	sample350	sample374
+AGCGAGAT	sample15	sample39	sample63	sample87	sample111	sample135	sample159	sample183	sample207	sample231	sample255	sample279	sample303	sample327	sample351	sample375
+GTGATG	sample16	sample40	sample64	sample88	sample112	sample136	sample160	sample184	sample208	sample232	sample256	sample280	sample304	sample328	sample352	sample376
+TACTCGC	sample17	sample41	sample65	sample89	sample113	sample137	sample161	sample185	sample209	sample233	sample257	sample281	sample305	sample329	sample353	sample377
+GTAGAGT	sample18	sample42	sample66	sample90	sample114	sample138	sample162	sample186	sample210	sample234	sample258	sample282	sample306	sample330	sample354	sample378
+TGTCACAC	sample19	sample43	sample67	sample91	sample115	sample139	sample163	sample187	sample211	sample235	sample259	sample283	sample307	sample331	sample355	sample379
+GTATGTG	sample20	sample44	sample68	sample92	sample116	sample140	sample164	sample188	sample212	sample236	sample260	sample284	sample308	sample332	sample356	sample380
+CGTATCTC	sample21	sample45	sample69	sample93	sample117	sample141	sample165	sample189	sample213	sample237	sample261	sample285	sample309	sample333	sample357	sample381
+TAGCTAG	sample22	sample46	sample70	sample94	sample118	sample142	sample166	sample190	sample214	sample238	sample262	sample286	sample310	sample334	sample358	sample382
+AGACATGC	sample23	sample47	sample71	sample95	sample119	sample143	sample167	sample191	sample215	sample239	sample263	sample287	sample311	sample335	sample359	sample383
+CTAGCAGT	sample24	sample48	sample72	sample96	sample120	sample144	sample168	sample192	sample216	sample240	sample264	sample288	sample312	sample336	sample360	sample384

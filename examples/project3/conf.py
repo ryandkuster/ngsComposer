@@ -17,7 +17,7 @@ walkthrough = True
 walkaway = False
 
 # positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
-front_trim = 2
+front_trim = 6
 
 # name of file with barcodes to demultiplex forward reads (use 'False' if not demultiplexing)
 bcs_index = 'index.txt'
@@ -26,11 +26,11 @@ bcs_index = 'index.txt'
 mismatch = 1
 
 # list sequences immediately adjacent to barcodes
-R1_bases_ls = ['A', 'C', 'G', 'T']
-R2_bases_ls = False
+R1_bases_ls = ['TCC', 'TCT']
+R2_bases_ls = ['TCC', 'TCT']
 
 # number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
-non_genomic = 0
+non_genomic = 1
 
 # quality score minimum (Phred value 0-40)(use 'False' to skip)
 q_min = 30
