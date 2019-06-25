@@ -76,6 +76,8 @@ class Project:
         '''
         c.bcs_index = os.path.join(c.proj, c.bcs_index) if c.bcs_index else ''
         self.bcs_dict = {}
+        if not c.bcs_index:
+            return
         with open(self.bcs_index) as f:
             for line in f:
                 for j, item in enumerate(line.split()):
@@ -103,9 +105,8 @@ class Project:
 
 def r_packages():
     try:
-        subprocess.check_call(['Rscript', os.path.dirname(
-            os.path.abspath(sys.argv[0])) +
-            '/tests/test_packages.R'], shell=False)
+        subprocess.check_call(['Rscript', os.path.join(os.path.dirname(
+            __file__), 'tests', 'test_packages.R')], shell=False)
     except FileNotFoundError:
         sys.exit('please install latest version of R')
 
@@ -294,7 +295,7 @@ def pathfinder(curr):
                 pass
             elif os.path.getsize(fullname) == 0:
                 os.remove(fullname)
-            elif root == str(curr + '/single'):
+            elif root == str(os.path.join(curr, 'single')):
                 singles_ls.append(fullname)
             else:
                 fastq_ls.append(fullname)
@@ -361,7 +362,9 @@ def anemone_multi():
                            c.bcs_dict, curr)
     pool_multi(anemone_part, c.in1_ls)
     concater(curr)
+
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
+
     if c.walkthrough:
         crinoid_multi(curr, fastq_ls)
         update = input(msg.anemone_qc) if c.walkaway is False else 'y'
@@ -384,15 +387,17 @@ def rotifer_multi():
     create user-defined subprocesses to parse based on expected sequences
     '''
     curr = dir_make('parsed')
-    os.mkdir(curr + '/single')
-    os.mkdir(curr + '/paired')
+    os.mkdir(os.path.join(curr, 'single'))
+    os.mkdir(os.path.join(curr, 'paired'))
     rotifer_part = partial(rotifer_comp, c.in1_ls, c.in2_ls, c.R1_bases_ls,
                            c.R2_bases_ls, c.non_genomic, curr)
     pool_multi(rotifer_part, c.in1_ls)
+
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
+
     if c.walkthrough:
-        crinoid_multi(curr + '/single', singles_ls)
-        crinoid_multi(curr + '/paired', fastq_ls)
+        crinoid_multi(os.path.join(curr, 'single'), singles_ls)
+        crinoid_multi(os.path.join(curr, 'paired'), fastq_ls)
         update = input(msg.rotifer_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.rotifer_up)
@@ -419,28 +424,31 @@ def scallop_end_multi():
     '''
     curr = dir_make('end_trimmed')
     if c.R1_bases_ls or c.R2_bases_ls:
-        os.mkdir(curr + '/single')
-        os.mkdir(curr + '/paired')
-    if os.path.exists(c.rm_dirs[-2] + '/qc'):
+        os.mkdir(os.path.join(curr, 'single'))
+        os.mkdir(os.path.join(curr, 'paired'))
+    #TODO check here for project directory plus QC
+    if os.path.exists(os.path.join(c.rm_dirs[-2], 'qc')):
         pass
-    elif os.path.exists(c.rm_dirs[-2] + '/single/qc'):
+    elif os.path.exists(os.path.join(c.rm_dirs[-2], 'single', 'qc')):
         pass
     else:
         try:
-            crinoid_multi(c.rm_dirs[-2] + '/single', c.singles_ls)
-            crinoid_multi(c.rm_dirs[-2] + '/paired', c.fastq_ls)
+            crinoid_multi(os.path.join(c.rm_dirs[-2], 'single'), c.singles_ls)
+            crinoid_multi(os.path.join(c.rm_dirs[-2], 'paired'), c.fastq_ls)
         except FileNotFoundError:
             crinoid_multi(c.rm_dirs[-2], c.fastq_ls)
     scallop_end_part = partial(scallop_end, curr, c.end_trim)
     pool_multi(scallop_end_part, c.fastq_ls)
-    if singles_ls:
+    if c.singles_ls:
         scallop_end_part = partial(scallop_end, curr, c.end_trim)
-        pool_multi(scallop_end_part, singles_ls)
+        pool_multi(scallop_end_part, c.singles_ls)
+
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
+
     if c.walkthrough:
         if c.R1_bases_ls or c.R2_bases_ls:
-            crinoid_multi(curr + '/single', singles_ls)
-            crinoid_multi(curr + '/paired', fastq_ls)
+            crinoid_multi(os.path.join(curr, 'single'), singles_ls)
+            crinoid_multi(os.path.join(curr, 'paired'), fastq_ls)
         else:
             crinoid_multi(curr, fastq_ls)
         update = input(msg.scallop_qc) if c.walkaway is False else 'y'
@@ -477,13 +485,15 @@ def krill_multi():
         krill_part = partial(krill_comp, c.in1_ls, c.in2_ls, c.q_min,
                              c.q_percent, curr)
         pool_multi(krill_part, c.singles_ls)
-    concater(curr + '/single')
+    concater(os.path.join(curr, 'single'))
+
     singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
-    shutil.rmtree(curr + '/single/pe_lib')
-    shutil.rmtree(curr + '/single/se_lib')
+
+    shutil.rmtree(os.path.join(curr, 'single', 'pe_lib'))
+    shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
     if c.walkthrough:
-        crinoid_multi(curr + '/single', c.singles_ls)
-        crinoid_multi(curr + '/paired', c.fastq_ls)
+        crinoid_multi(os.path.join(curr, 'single'), singles_ls)
+        crinoid_multi(os.path.join(curr, 'paired'), fastq_ls)
         update = input(msg.krill_qc) if c.walkaway is False else 'y'
         if update not in (msg.confirm):
             prompt = input(msg.krill_up)
@@ -512,19 +522,18 @@ if __name__ == '__main__':
         the project directory')
     args = parser.parse_args()
     c = Project()
-    tmp = Project()
     c.initialize(args.i)
     c.conf_confirm()
 
 ######################################################
 # TODO delete the following (for ease of testing):
 ######################################################
-    old_dirs = [c.proj + '/qc',
-                c.proj + '/trimmed',
-                c.proj + '/demultiplexed',
-                c.proj + '/parsed',
-                c.proj + '/end_trimmed',
-                c.proj + '/filtered']
+    old_dirs = [os.path.join(c.proj, 'qc'),
+                os.path.join(c.proj, 'trimmed'),
+                os.path.join(c.proj, 'demultiplexed'),
+                os.path.join(c.proj, 'parsed'),
+                os.path.join(c.proj, 'end_trimmed'),
+                os.path.join(c.proj, 'filtered')]
     for folder in old_dirs:
         try:
             shutil.rmtree(folder)
@@ -560,7 +569,7 @@ if __name__ == '__main__':
             sys.exit(filename + ' was not expected in project directory')
 
     if c.alt_dir:
-        c.proj = initialize(c.alt_dir)
+        c.initialize(c.alt_dir)
         if len(os.listdir(c.proj)) != 0:
             sys.exit('alt_dir must be an empty directory')
 
@@ -579,7 +588,7 @@ if __name__ == '__main__':
     import tools.helpers.messages as msg
     if c.initial_qc is True:
         print(msg.crin_title)
-        crinoid_multi()
+        crinoid_multi(c.proj, c.fastq_ls)
 
     if c.front_trim > 0:
         print(msg.scal_title1)
