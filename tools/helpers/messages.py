@@ -8,6 +8,14 @@ rot_title = (sep + '\n' + ' ' * 15 + 'rotifer - motif detection' + '\n' + sep)
 kril_title = (sep + '\n' + ' ' * 15 + 'krill   - filtering' + '\n' + sep)
 
 
+walk1 = ('\nplease select from the following options:\n\n' +
+        ' 1 - accept results of current step and continue\n' +
+        ' 2 - modify parameters in the current step\n' +
+        ' 3 - continue without the current step\n' +
+        ' 4 - exit ngs-composer\n\n' +
+        'number selection > ')
+
+
 anemone_qc = ('\ncheck qc file(s) in demultiplexed directory\n\n' +
               'continue without changes to configuration settings? (y/n)\n')
 anemone_up = ('\nupdate mismatch value and rerun anemone demultiplexing ' +

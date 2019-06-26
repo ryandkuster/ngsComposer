@@ -316,7 +316,7 @@ def pathfinder(curr):
                 fastq_ls.append(fullname)
     pairs_dict = is_paired(fastq_ls)
     in1_ls, in2_ls = input_sort(pairs_dict)
-    return singles_ls, fastq_ls, in1_ls, in2_ls
+    return [singles_ls, fastq_ls, in1_ls, in2_ls]
 
 
 def concater(curr):
@@ -347,6 +347,51 @@ def concater(curr):
                     os.remove(i)
 
 
+def walkthrough(curr, tool, temp_ls, **kwargs):
+    '''
+    query user for modifying or accepting current step in pipeline
+    '''
+    if temp_ls[0]:
+        crinoid_multi(os.path.join(curr, 'single'), temp_ls[0])
+        crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
+    else:
+        crinoid_multi(curr, temp_ls[1])
+    while True:
+        choice1 = input(msg.walk1)
+        if choice1 == '1':
+            return temp_ls
+        elif choice1 == '3':
+            shutil.rmtree(c.rm_dirs[-1])
+            c.rm_dirs.pop()
+            for k, v in kwargs.items():
+                v = False if v is not c.mismatch else 'demultiplexing not performed'
+                setattr(c, k, v)
+            return [c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls]
+        elif choice1 == '4':
+            sys.exit('\nngs-composer is now exiting')
+        elif choice1 == '2':
+            break
+        else:
+            print('\nnot a valid entry  ^\n')
+    shutil.rmtree(c.rm_dirs[-1])
+    c.rm_dirs.pop()
+    while True:
+        for k, v in kwargs.items():
+            print('current value for ' + k + ' is ' + str(v))
+            v = input('new value for ' + k + '? > ')
+            v = v.strip('][').split(', ') if v.startswith('[') else v
+            v is False if v == 'False' else v
+            #TODO account for int type...
+            setattr(c, k, v)
+        try:
+            c.conf_confirm()
+            break
+        except AssertionError:
+            print('\nnot a valid entry  ^\n')
+    temp_ls = tool()
+    return temp_ls
+
+
 def crinoid_multi(proj, ls):
     '''
     create user-defined subprocesses to produce base-call summary
@@ -364,8 +409,8 @@ def scallop_multi():
     curr = dir_make('trimmed')
     scallop_part = partial(scallop_comp, c.front_trim, None, curr)
     pool_multi(scallop_part, c.fastq_ls)
-    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
-    return singles_ls, fastq_ls, in1_ls, in2_ls
+    temp_ls = pathfinder(curr)
+    return temp_ls
 
 
 def anemone_multi():
@@ -377,24 +422,11 @@ def anemone_multi():
                            c.bcs_dict, curr)
     pool_multi(anemone_part, c.in1_ls)
     concater(curr)
-
-    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
-
+    temp_ls = pathfinder(curr)
     if c.walkthrough:
-        crinoid_multi(curr, fastq_ls)
-        update = input(msg.anemone_qc) if c.walkaway is False else 'y'
-        if update not in (msg.confirm):
-            prompt = input(msg.anemone_up)
-            if prompt in (msg.confirm):
-                c.mismatch = int(input(msg.anemone_in))
-                shutil.rmtree(c.rm_dirs[-1])
-                singles_ls, fastq_ls, in1_ls, in2_ls = anemone_multi()
-                c.rm_dirs.pop()
-            else:
-                exit = input('\nexit ngsComposer? (y/n)\n')
-                if exit in (msg.confirm):
-                    sys.exit('\nngsComposer is now exiting')
-    return singles_ls, fastq_ls, in1_ls, in2_ls
+        temp_ls = walkthrough(curr, anemone_multi, temp_ls,
+                              mismatch=c.mismatch)
+    return temp_ls
 
 
 def rotifer_multi():
@@ -407,30 +439,12 @@ def rotifer_multi():
     rotifer_part = partial(rotifer_comp, c.in1_ls, c.in2_ls, c.R1_bases_ls,
                            c.R2_bases_ls, c.non_genomic, curr)
     pool_multi(rotifer_part, c.in1_ls)
-
-    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
-
+    temp_ls = pathfinder(curr)
     if c.walkthrough:
-        crinoid_multi(os.path.join(curr, 'single'), singles_ls)
-        crinoid_multi(os.path.join(curr, 'paired'), fastq_ls)
-        update = input(msg.rotifer_qc) if c.walkaway is False else 'y'
-        if update not in (msg.confirm):
-            prompt = input(msg.rotifer_up)
-            if prompt in (msg.confirm):
-                shutil.rmtree(c.rm_dirs[-1])
-                c.rm_dirs.pop()
-                R1 = input(msg.rotifer_in1)
-                c.R1_bases_ls = False if R1 == '' else R1.split()
-                R2 = input(msg.rotifer_in2)
-                c.R2_bases_ls = False if R2 == '' else R2.split()
-                if c.R1_bases_ls is False and c.R2_bases_ls is False:
-                    return c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls
-                singles_ls, fastq_ls, in1_ls, in2_ls = rotifer_multi()
-            else:
-                exit = input('\nexit ngsComposer? (y/n)\n')
-                if exit in (msg.confirm):
-                    sys.exit('\nngsComposer is now exiting')
-    return singles_ls, fastq_ls, in1_ls, in2_ls
+        temp_ls = walkthrough(curr, rotifer_multi, temp_ls,
+                              R1_bases_ls=c.R1_bases_ls,
+                              R2_bases_ls=c.R2_bases_ls)
+    return temp_ls
 
 
 def scallop_end_multi():
@@ -457,31 +471,11 @@ def scallop_end_multi():
     if c.singles_ls:
         scallop_end_part = partial(scallop_end, curr, c.end_trim)
         pool_multi(scallop_end_part, c.singles_ls)
-
-    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
-
+    temp_ls = pathfinder(curr)
     if c.walkthrough:
-        if c.R1_bases_ls or c.R2_bases_ls:
-            crinoid_multi(os.path.join(curr, 'single'), singles_ls)
-            crinoid_multi(os.path.join(curr, 'paired'), fastq_ls)
-        else:
-            crinoid_multi(curr, fastq_ls)
-        update = input(msg.scallop_qc) if c.walkaway is False else 'y'
-        if update not in (msg.confirm):
-            prompt = input(msg.scallop_up)
-            if prompt in (msg.confirm):
-                shutil.rmtree(c.rm_dirs[-1])
-                c.rm_dirs.pop()
-                c.end_trim = input(msg.scallop_in)
-                c.end_trim = False if c.end_trim == '' else int(c.end_trim)
-                if c.end_trim is False:
-                    return c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls
-                singles_ls, fastq_ls, in1_ls, in2_ls = scallop_end_multi()
-            else:
-                exit = input('\nexit ngsComposer? (y/n)\n')
-                if exit in (msg.confirm):
-                    sys.exit('\nngsComposer is now exiting')
-    return singles_ls, fastq_ls, in1_ls, in2_ls
+        temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
+                              end_trim=c.end_trim)
+    return temp_ls
 
 
 def krill_multi():
@@ -501,32 +495,13 @@ def krill_multi():
                              c.q_percent, curr)
         pool_multi(krill_part, c.singles_ls)
     concater(os.path.join(curr, 'single'))
-
-    singles_ls, fastq_ls, in1_ls, in2_ls = pathfinder(curr)
-
+    temp_ls = pathfinder(curr)
     shutil.rmtree(os.path.join(curr, 'single', 'pe_lib'))
     shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
     if c.walkthrough:
-        crinoid_multi(os.path.join(curr, 'single'), singles_ls)
-        crinoid_multi(os.path.join(curr, 'paired'), fastq_ls)
-        update = input(msg.krill_qc) if c.walkaway is False else 'y'
-        if update not in (msg.confirm):
-            prompt = input(msg.krill_up)
-            if prompt in (msg.confirm):
-                shutil.rmtree(c.rm_dirs[-1])
-                c.rm_dirs.pop()
-                c.q_min = input(msg.krill_in1)
-                c.q_percent = input(msg.krill_in2)
-                c.q_min = False if c.q_min == '' else int(c.q_min)
-                c.q_percent = False if c.q_percent == '' else int(c.q_percent)
-                if c.q_min is False or c.q_percent is False:
-                    return c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls
-                singles_ls, fastq_ls, in1_ls, in2_ls = krill_multi()
-            else:
-                exit = input('\nexit ngsComposer? (y/n)\n')
-                if exit in (msg.confirm):
-                    sys.exit('\nngsComposer is now exiting')
-    return singles_ls, fastq_ls, in1_ls, in2_ls
+        temp_ls = walkthrough(curr, krill_multi, temp_ls, q_min=c.q_min,
+                              q_percent=c.q_percent)
+    return temp_ls
 
 
 if __name__ == '__main__':
