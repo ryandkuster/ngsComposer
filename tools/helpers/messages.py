@@ -10,9 +10,10 @@ kril_title = (sep + '\n' + ' ' * 15 + 'krill   - filtering' + '\n' + sep)
 
 walk1 = ('\nplease select from the following options:\n\n' +
         ' 1 - accept results of current step and continue\n' +
-        ' 2 - modify parameters in the current step\n' +
-        ' 3 - continue without the current step\n' +
-        ' 4 - exit ngs-composer\n\n' +
+        ' 2 - modify parameters and rerun current step\n' +
+        ' 3 - remove results and bypass current step\n' +
+        ' 4 - toggle walkaway mode\n' +
+        ' 5 - exit ngs-composer\n\n' +
         'number selection > ')
 
 

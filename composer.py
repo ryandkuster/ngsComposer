@@ -21,6 +21,7 @@ class Project:
         self.in1_ls = []
         self.in2_ls = []
         self.rm_dirs = []
+        self.bypass = False
 
     def initialize(self, proj):
         '''
@@ -50,14 +51,10 @@ class Project:
         assert isinstance(self.mismatch, int)
         assert self.R1_bases_ls is False or isinstance(self.R1_bases_ls, list)
         if isinstance(self.R1_bases_ls, list):
-            test = nucleotide_test(self.R1_bases_ls)
-        if test is not True:
-            sys.exit(test)
+            nucleotide_test(self.R1_bases_ls)
         assert self.R2_bases_ls is False or isinstance(self.R2_bases_ls, list)
         if isinstance(self.R2_bases_ls, list):
-            test = nucleotide_test(self.R2_bases_ls)
-        if test is not True:
-            sys.exit(test)
+            nucleotide_test(self.R2_bases_ls)
         assert self.non_genomic is False or isinstance(self.non_genomic, int)
         if self.end_trim:
             assert 0 <= self.end_trim <= 40 and self.end_trim is not True
@@ -115,7 +112,11 @@ def nucleotide_test(ls):
         else:
             test = 'barcodes and motifs must consist of A, C, G, or T only'
             break
-    return test
+    if test is not True:
+        print(test)
+        if not c.bypass:
+            sys.exit()
+        raise AssertionError
 
 
 def r_packages():
@@ -351,12 +352,17 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
     '''
     query user for modifying or accepting current step in pipeline
     '''
+    c.bypass = True
+#TODO be sure qc folders behave with paired end situation
     if temp_ls[0]:
         crinoid_multi(os.path.join(curr, 'single'), temp_ls[0])
         crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
     else:
         crinoid_multi(curr, temp_ls[1])
+
     while True:
+        status = 'enabled' if c.walkthrough else 'about to be CANCELED!'
+        print('\nwalkthrough mode is ' + status)
         choice1 = input(msg.walk1)
         if choice1 == '1':
             return temp_ls
@@ -368,26 +374,35 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
                 setattr(c, k, v)
             return [c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls]
         elif choice1 == '4':
+            c.walkthrough = False if c.walkthrough is True else True
+        elif choice1 == '5':
             sys.exit('\nngs-composer is now exiting')
         elif choice1 == '2':
             break
         else:
-            print('\nnot a valid entry  ^\n')
+            print('\nselect an option from the list\n')
+
     shutil.rmtree(c.rm_dirs[-1])
     c.rm_dirs.pop()
+
     while True:
         for k, v in kwargs.items():
-            print('current value for ' + k + ' is ' + str(v))
+            print('\ncurrent value for ' + k + ' is ' + str(v))
             v = input('new value for ' + k + '? > ')
-            v = v.strip('][').split(', ') if v.startswith('[') else v
-            v is False if v == 'False' else v
-            #TODO account for int type...
+            if v.startswith('['):
+                v = v.strip('[\']').split(', ') 
+            elif v == 'False':
+                v = False
+            elif any(i.isdigit() for i in v):
+                v = int(v)
             setattr(c, k, v)
         try:
             c.conf_confirm()
             break
         except AssertionError:
-            print('\nnot a valid entry  ^\n')
+            print('\nnot a valid entry\n')
+
+    print('\nrerunning step with updated variables...')
     temp_ls = tool()
     return temp_ls
 
@@ -550,12 +565,10 @@ if __name__ == '__main__':
         test = bc_test(R2_bcs, names_mx, False)
         if test:
             print('redundant R2 barcodes detected in ' + v)
-        test = nucleotide_test(R1_bcs.values())
-        if test is not True:
-            sys.exit(test)
-        test = nucleotide_test(R2_bcs.values()) if len(R2_bcs) > 1 else True
-        if test is not True:
-            sys.exit(test)
+        nucleotide_test(R1_bcs.values())
+        if len(R2_bcs) > 1:
+            nucleotide_test(R2_bcs.values())
+
 
     for filename in c.fastq_ls:
         try:
