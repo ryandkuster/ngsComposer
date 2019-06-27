@@ -10,7 +10,7 @@ def scallop_main():
     '''
     in1 = args.r1
     front_trim = args.f
-    back_trim = None if args.b == 0 else args.b
+    end_trim = None if args.b == 0 else args.b
     if args.o is None:
         proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
@@ -18,40 +18,41 @@ def scallop_main():
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     out1 = os.path.join(proj, 'trimmed.' + os.path.basename(in1))
-    scallop_open(in1, front_trim, back_trim, out1)
+    scallop_open(in1, front_trim, end_trim, out1)
 
 
-def scallop_comp(front_trim, back_trim, curr, in1):
+def scallop_comp(front_trim, end_trim, curr, in1):
     '''
     composer entry point to scallop
     '''
     out1 = os.path.join(curr, os.path.basename(in1))
-    scallop_open(in1, front_trim, back_trim, out1)
+    end_trim = None if end_trim == 0 else end_trim
+    scallop_open(in1, front_trim, end_trim, out1)
 
 
-def scallop_open(in1, front_trim, back_trim, out1):
+def scallop_open(in1, front_trim, end_trim, out1):
     '''
     trim defined base numbers from the front or from the end of reads
     '''
     try:
         with gzip.open(in1, 'rt') as f, open(out1, 'w') as o:
-            scallop(front_trim, back_trim, f, o)
+            scallop(front_trim, end_trim, f, o)
     except OSError:
         with open(in1) as f, open(out1, 'w') as o:
-            scallop(front_trim, back_trim, f, o)
+            scallop(front_trim, end_trim, f, o)
 
 
-def scallop(front_trim, back_trim, f, o):
+def scallop(front_trim, end_trim, f, o):
     i = 0
     for line in f:
         i += 1
         if i % 2 == 0:
-            o.write(line.rstrip()[front_trim:back_trim] + "\n")
+            o.write(line.rstrip()[front_trim:end_trim] + "\n")
         else:
             o.write(line)
 
 
-def scallop_end(curr, end_trim, in1):
+def scallop_end(curr, auto_trim, in1):
     '''
     composer entry point for trimming based on qc stats
     '''
@@ -69,17 +70,17 @@ def scallop_end(curr, end_trim, in1):
             max_len = scallop_uniform(len_ls, max_len)
     except NameError:
         pass
-    back_trim = None
+    end_trim = None
     for base, i in enumerate(reversed(in1_mx)):
         med = (sum(i) + 1)/2
         delta = med/2 if med % 1 == 0 else (med - 0.5)/2
         q1 = scallop_stats(med - delta, i)
         q3 = scallop_stats(med + delta, i)
         lw = q1 - (1.5 * (q3 - q1))
-        if lw >= end_trim:
-            back_trim = max_len - base
+        if lw >= auto_trim:
+            end_trim = max_len - base
             break
-    scallop_comp(0, back_trim, curr, in1)
+    scallop_comp(0, end_trim, curr, in1)
 
 
 def scallop_stats(target_index, pos):

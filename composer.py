@@ -23,6 +23,24 @@ class Project:
         self.rm_dirs = []
         self.bypass = False
 
+        self.paired = False
+        self.procs = 1
+        self.alt_dir = False
+        self.initial_qc = False
+        self.all_qc = False
+        self.walkaway = True
+        self.front_trim = False
+        self.end_trim = False
+        self.bcs_index = False
+        self.mismatch = False
+        self.R1_bases_ls = False
+        self.R2_bases_ls = False
+        self.non_genomic = False
+        self.q_min = False
+        self.q_percent = False
+        self.auto_trim = False
+        self.rm_transit = False
+
     def initialize(self, proj):
         '''
         check files in project directory for completeness
@@ -41,30 +59,48 @@ class Project:
         '''
         assert self.paired is True or self.paired is False
         assert self.procs >= 1
-        assert os.path.exists(self.alt_dir) or self.alt_dir is False
-        assert self.initial_qc is True or self.initial_qc is False
-        assert self.walkthrough is True or self.walkthrough is False
-        assert self.walkaway is True or self.walkaway is False
-        assert isinstance(self.front_trim, int)
-        if self.bcs_index:
-            assert os.path.exists(os.path.join(self.proj, self.bcs_index))
-        assert isinstance(self.mismatch, int)
-        assert self.R1_bases_ls is False or isinstance(self.R1_bases_ls, list)
-        if isinstance(self.R1_bases_ls, list):
-            nucleotide_test(self.R1_bases_ls)
-        assert self.R2_bases_ls is False or isinstance(self.R2_bases_ls, list)
-        if isinstance(self.R2_bases_ls, list):
-            nucleotide_test(self.R2_bases_ls)
-        assert self.non_genomic is False or isinstance(self.non_genomic, int)
+        if self.alt_dir:
+            assert os.path.exists(self.alt_dir)
+        if self.initial_qc:
+            assert self.initial_qc is True
+        if self.all_qc:
+            assert self.all_qc is True
+        if self.walkaway:
+            assert self.walkaway is True
+        else:
+            self.all_qc = True
+        if self.front_trim:
+            assert isinstance(self.front_trim, int)
+            assert self.front_trim > 0
         if self.end_trim:
-            assert 0 <= self.end_trim <= 40 and self.end_trim is not True
+            assert isinstance(self.end_trim, int)
+            assert self.end_trim > 0
+        if self.end_trim and self.auto_trim:
+            print(msg.conf_end)
+            raise AssertionError
+        if self.bcs_index or self.mismatch:
+            assert os.path.exists(os.path.join(self.proj, self.bcs_index))
+            assert isinstance(self.mismatch, int)
+        if self.R1_bases_ls:
+            assert isinstance(self.R1_bases_ls, list)
+            nucleotide_test(self.R1_bases_ls)
+        if self.R2_bases_ls:
+            assert isinstance(self.R2_bases_ls, list)
+            nucleotide_test(self.R2_bases_ls)
+        if self.non_genomic:
+            assert isinstance(self.non_genomic, int)
+        if self.auto_trim:
+            assert isinstance(self.auto_trim, int)
+            assert 0 <= self.auto_trim <= 40 and self.auto_trim is not True
         if self.q_min or self.q_percent:
+            assert isinstance(self.q_min, int)
+            assert isinstance(self.q_percent, int)
             assert 0 <= self.q_min <= 40 and self.q_min is not True
             assert 0 <= self.q_percent <= 100 and self.q_percent is not True
             if self.q_min and self.q_percent:
                 pass
             else:
-                sys.exit('both q_min and q_percent variables must be defined')
+                sys.exit(msg.q_vars)
         assert self.rm_transit is True or self.rm_transit is False
 
     def index_reader(self):
@@ -107,10 +143,10 @@ def nucleotide_test(ls):
             test = True
             pass
         elif i.upper() in ['A', 'C', 'G', 'T']:
-            test = 'barcodes and motifs must be upper-case only'
+            test = msg.nucs1
             break
         else:
-            test = 'barcodes and motifs must consist of A, C, G, or T only'
+            test = msg.nucs2
             break
     if test is not True:
         print(test)
@@ -253,7 +289,7 @@ def dir_size(proj, fastq_ls, fastq_test):
         dir_plan += 1
     elif c.R2_bases_ls:
         dir_plan += 1
-    dir_plan = dir_plan + 1 if c.end_trim else dir_plan
+    dir_plan = dir_plan + 1 if c.auto_trim else dir_plan
     dir_plan = dir_plan + 1 if c.q_min else dir_plan
     for i in fastq_ls:
         dir_used += os.path.getsize(i)
@@ -271,6 +307,8 @@ def dir_make(title):
     '''
     create new directory when pipeline tools called
     '''
+    # TODO add following at release:
+    # curr = os.path.join(c.proj, str(len(c.rm_dirs)) + '_' + title)
     curr = os.path.join(c.proj, title)
     c.rm_dirs.append(curr)
     os.mkdir(curr)
@@ -348,21 +386,31 @@ def concater(curr):
                     os.remove(i)
 
 
+def trim_assist():
+    # TODO make function for the complex decisions with end-trimming:
+    # collapse qc data and plot
+    # change autotrim between q1, mean, median, lw
+    pass
+
+
 def walkthrough(curr, tool, temp_ls, **kwargs):
     '''
     query user for modifying or accepting current step in pipeline
     '''
     c.bypass = True
-#TODO be sure qc folders behave with paired end situation
-    if temp_ls[0]:
+    try:
         crinoid_multi(os.path.join(curr, 'single'), temp_ls[0])
         crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
-    else:
+    except FileNotFoundError:
         crinoid_multi(curr, temp_ls[1])
 
+    if c.walkaway:
+        return temp_ls
+
     while True:
-        status = 'enabled' if c.walkthrough else 'about to be CANCELED!'
+        status = msg.walk2 if not c.walkaway else msg.walk3
         print('\nwalkthrough mode is ' + status)
+        print('\nplease check the qc folders in ' + c.rm_dirs[-1])
         choice1 = input(msg.walk1)
         if choice1 == '1':
             return temp_ls
@@ -370,11 +418,11 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
             shutil.rmtree(c.rm_dirs[-1])
             c.rm_dirs.pop()
             for k, v in kwargs.items():
-                v = False if v is not c.mismatch else 'demultiplexing not performed'
+                v = False
                 setattr(c, k, v)
             return [c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls]
         elif choice1 == '4':
-            c.walkthrough = False if c.walkthrough is True else True
+            c.walkaway = True if c.walkaway is False else False
         elif choice1 == '5':
             sys.exit('\nngs-composer is now exiting')
         elif choice1 == '2':
@@ -390,7 +438,7 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
             print('\ncurrent value for ' + k + ' is ' + str(v))
             v = input('new value for ' + k + '? > ')
             if v.startswith('['):
-                v = v.strip('[\']').split(', ') 
+                v = v.strip('[\']').split(', ')
             elif v == 'False':
                 v = False
             elif any(i.isdigit() for i in v):
@@ -438,7 +486,7 @@ def anemone_multi():
     pool_multi(anemone_part, c.in1_ls)
     concater(curr)
     temp_ls = pathfinder(curr)
-    if c.walkthrough:
+    if c.all_qc:
         temp_ls = walkthrough(curr, anemone_multi, temp_ls,
                               mismatch=c.mismatch)
     return temp_ls
@@ -455,10 +503,11 @@ def rotifer_multi():
                            c.R2_bases_ls, c.non_genomic, curr)
     pool_multi(rotifer_part, c.in1_ls)
     temp_ls = pathfinder(curr)
-    if c.walkthrough:
+    if c.all_qc:
         temp_ls = walkthrough(curr, rotifer_multi, temp_ls,
                               R1_bases_ls=c.R1_bases_ls,
-                              R2_bases_ls=c.R2_bases_ls)
+                              R2_bases_ls=c.R2_bases_ls,
+                              non_genomic=c.non_genomic)
     return temp_ls
 
 
@@ -466,30 +515,39 @@ def scallop_end_multi():
     '''
     automated 3' end read trimming based on minimum value
     '''
-    curr = dir_make('end_trimmed')
+    curr = dir_make('auto_trimmed')
     if c.R1_bases_ls or c.R2_bases_ls:
         os.mkdir(os.path.join(curr, 'single'))
         os.mkdir(os.path.join(curr, 'paired'))
-    #TODO check here for project directory plus QC
-    if os.path.exists(os.path.join(c.rm_dirs[-2], 'qc')):
-        pass
-    elif os.path.exists(os.path.join(c.rm_dirs[-2], 'single', 'qc')):
-        pass
+
+    if len(c.rm_dirs) >= 2:
+        if os.path.exists(os.path.join(c.rm_dirs[-2], 'qc')):
+            pass
+        elif os.path.exists(os.path.join(c.rm_dirs[-2], 'single', 'qc')):
+            pass
+        else:
+            try:
+                crinoid_multi(os.path.join(c.rm_dirs[-2], 'single'),
+                              c.singles_ls)
+                crinoid_multi(os.path.join(c.rm_dirs[-2], 'paired'),
+                              c.fastq_ls)
+            except FileNotFoundError:
+                crinoid_multi(c.rm_dirs[-2], c.fastq_ls)
     else:
-        try:
-            crinoid_multi(os.path.join(c.rm_dirs[-2], 'single'), c.singles_ls)
-            crinoid_multi(os.path.join(c.rm_dirs[-2], 'paired'), c.fastq_ls)
-        except FileNotFoundError:
-            crinoid_multi(c.rm_dirs[-2], c.fastq_ls)
-    scallop_end_part = partial(scallop_end, curr, c.end_trim)
+        if os.path.exists(os.path.join(c.proj, 'qc')):
+            pass
+        else:
+            crinoid_multi(c.proj, c.fastq_ls)
+
+    scallop_end_part = partial(scallop_end, curr, c.auto_trim)
     pool_multi(scallop_end_part, c.fastq_ls)
     if c.singles_ls:
-        scallop_end_part = partial(scallop_end, curr, c.end_trim)
+        scallop_end_part = partial(scallop_end, curr, c.auto_trim)
         pool_multi(scallop_end_part, c.singles_ls)
     temp_ls = pathfinder(curr)
-    if c.walkthrough:
+    if c.all_qc:
         temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
-                              end_trim=c.end_trim)
+                              auto_trim=c.auto_trim)
     return temp_ls
 
 
@@ -513,7 +571,7 @@ def krill_multi():
     temp_ls = pathfinder(curr)
     shutil.rmtree(os.path.join(curr, 'single', 'pe_lib'))
     shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
-    if c.walkthrough:
+    if c.all_qc:
         temp_ls = walkthrough(curr, krill_multi, temp_ls, q_min=c.q_min,
                               q_percent=c.q_percent)
     return temp_ls
@@ -538,7 +596,7 @@ if __name__ == '__main__':
                 os.path.join(c.proj, 'trimmed'),
                 os.path.join(c.proj, 'demultiplexed'),
                 os.path.join(c.proj, 'parsed'),
-                os.path.join(c.proj, 'end_trimmed'),
+                os.path.join(c.proj, 'auto_trimmed'),
                 os.path.join(c.proj, 'filtered')]
     for folder in old_dirs:
         try:
@@ -569,7 +627,6 @@ if __name__ == '__main__':
         if len(R2_bcs) > 1:
             nucleotide_test(R2_bcs.values())
 
-
     for filename in c.fastq_ls:
         try:
             fastq_test = is_fq(filename)
@@ -591,11 +648,11 @@ if __name__ == '__main__':
     c.pairs_dict = is_paired(c.fastq_ls)
     c.in1_ls, c.in2_ls = input_sort(c.pairs_dict)
 
-    if c.initial_qc is True:
+    if c.initial_qc:
         print(msg.crin_title)
         crinoid_multi(c.proj, c.fastq_ls)
 
-    if c.front_trim > 0:
+    if c.front_trim > 0 or c.end_trim > 0:
         print(msg.scal_title1)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_multi()
 
@@ -605,13 +662,13 @@ if __name__ == '__main__':
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
-    if c.R1_bases_ls or c.R2_bases_ls:
+    if c.R1_bases_ls or c.R2_bases_ls or c.non_genomic:
         print(msg.rot_title)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = rotifer_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
-    if c.end_trim:
+    if c.auto_trim:
         print(msg.scal_title2)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_end_multi()
         if c.rm_transit is True:
@@ -628,9 +685,10 @@ if __name__ == '__main__':
           'procs =', c.procs, '\n',
           'alt_dir =', c.alt_dir, '\n',
           'initial_qc =', c.initial_qc, '\n',
-          'walkthrough =', c.walkthrough, '\n',
+          'all_qc =', c.all_qc, '\n',
           'walkaway =', c.walkaway, '\n',
           'front_trim =', c.front_trim, '\n',
+          'end_trim =', c.end_trim, '\n',
           'bcs_index =', c.bcs_index, '\n',
           'mismatch =', c.mismatch, '\n',
           'R1_bases_ls =', c.R1_bases_ls, '\n',
@@ -638,5 +696,5 @@ if __name__ == '__main__':
           'non_genomic =', c.non_genomic, '\n',
           'q_min =', c.q_min, '\n',
           'q_percent =', c.q_percent, '\n',
-          'end_trim =', c.end_trim, '\n',
+          'auto_trim =', c.auto_trim, '\n',
           'rm_transit =', c.rm_transit,  '\n')
