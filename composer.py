@@ -8,7 +8,7 @@ from functools import partial
 from multiprocessing import Pool
 
 from tools.anemone import anemone_comp, bc_reader, bc_test
-from tools.crinoid import crinoid_comp
+from tools.crinoid import crinoid_comp, visualizer, combine_matrix
 from tools.krill import krill_comp
 from tools.rotifer import rotifer_comp
 from tools.scallop import scallop_comp, scallop_end
@@ -386,31 +386,20 @@ def concater(curr):
                     os.remove(i)
 
 
-def trim_assist():
+def trim_assist(curr):
+    '''
+    accept qc raw files from previous step and assist trimming
+    '''
     # TODO make function for the complex decisions with end-trimming:
     # collapse qc data and plot
     # change autotrim between q1, mean, median, lw
+    curr = os.path.join(curr, 'single', 'qc')
+    whole = os.path.join(curr, 'combined.txt')
+    sys.exit('great work mate') #TODO DELETEME
+    open(whole).close()
+    for i in c.fastq_ls:
+        part = os.path.join(curr, 'qscores.' + os.path.basename(i))
     pass
-
-
-def combine_matrix():
-    with open(args.a1) as f1, open(args.a2) as f2:
-        a = [line.rstrip().split(',') for line in f1]
-        b = [line.rstrip().split(',') for line in f2]
-        if b:
-            pass
-        else:
-            b = [[0 for j in range(len(a[0]))] for i in range(args.l)]
-        for i, col in enumerate(b):
-            for j, score in enumerate(col):
-                try:
-                    b[i][j] = int(b[i][j]) + int(a[i][j])
-                except IndexError:
-                    break
-    with open(args.o, 'w') as o1:
-        for row in b:
-            o1.write(",".join(str(x) for x in row))
-            o1.write("\n")
 
 
 def walkthrough(curr, tool, temp_ls, **kwargs):
@@ -558,6 +547,8 @@ def scallop_end_multi():
             pass
         else:
             crinoid_multi(c.proj, c.fastq_ls)
+
+    #TODO make entry to trim_assist here if walkaway is False
 
     scallop_end_part = partial(scallop_end, curr, c.auto_trim)
     pool_multi(scallop_end_part, c.fastq_ls)
