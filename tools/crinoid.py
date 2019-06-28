@@ -58,7 +58,6 @@ def crinoid(f, out1, out2):
     max_len = 500
     score_ref_dt, score_dt, base_ref_dt, base_dt = dict_maker(max_len)
 
-
     y = 0
     for line in f:
         y += 1
@@ -134,5 +133,7 @@ if __name__ == "__main__":
             help='the full or relative path to R1 or R2 fastq file')
     parser.add_argument('-o', type=str,
             help='the full path to output directory (optional)')
+    parser.add_argument('-a', type=str,
+            help='qscores file for visualization (optional)')
     args = parser.parse_args()
     crinoid_main()
