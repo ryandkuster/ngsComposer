@@ -386,19 +386,23 @@ def concater(curr):
                     os.remove(i)
 
 
-def trim_assist(curr):
+def trim_assist():
     '''
     accept qc raw files from previous step and assist trimming
     '''
     # TODO make function for the complex decisions with end-trimming:
     # collapse qc data and plot
     # change autotrim between q1, mean, median, lw
-    curr = os.path.join(curr, 'single', 'qc')
-    whole = os.path.join(curr, 'combined.txt')
-    sys.exit('great work mate') #TODO DELETEME
-    open(whole).close()
+    curr = os.path.dirname(c.fastq_ls[0]) #TODO will this work with single?
+    try:
+        open(os.path.join(curr, 'paired', 'qc', 'combined.txt')).close()
+    except FileNotFoundError:
+        open(os.path.join(curr, 'qc', 'combined.txt'), 'a').close()
+
     for i in c.fastq_ls:
-        part = os.path.join(curr, 'qscores.' + os.path.basename(i))
+        part = os.path.join(curr, 'qc', 'qscores.' + os.path.basename(i))
+        print(part)
+    sys.exit('OKAY') #TODO
     pass
 
 
@@ -548,7 +552,9 @@ def scallop_end_multi():
         else:
             crinoid_multi(c.proj, c.fastq_ls)
 
-    #TODO make entry to trim_assist here if walkaway is False
+    if not c.walkaway:
+        trim_assist()
+        # return temp_ls
 
     scallop_end_part = partial(scallop_end, curr, c.auto_trim)
     pool_multi(scallop_end_part, c.fastq_ls)
