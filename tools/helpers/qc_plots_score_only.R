@@ -54,7 +54,7 @@ boxplot <- ggplot(qc, aes(x = position, y=score, weight=count, group=position), 
   theme_classic()+
   xlab(paste("Read Position (Total Number of reads = ",sum,")", sep="")) +
   ylab("Quality Scores (phred+33)")
-suppressMessages(ggsave(filename= paste(composer_in[2], ".tiff", sep = ""), plot=boxplot, width=15, height= 5, dpi=600, compression = "lzw"))
+suppressMessages(ggsave(filename= paste(composer_in[1], ".tiff", sep = ""), plot=boxplot, width=15, height= 5, dpi=600, compression = "lzw"))
 invisible(gc())
 
 
@@ -74,5 +74,5 @@ boxplot <- ggplot(qc, aes(x = position, y=score, weight=count, group=position), 
   theme_classic()+
   xlab(paste("Read Position (Total Number of reads = ",sum,")", sep="")) +
   ylab("Quality Scores (phred+33)")
-suppressMessages(ggsave(filename= paste(composer_in[2], "_outliers.tiff", sep = ""), plot=boxplot, width=15, height= 5, dpi=600, compression = "lzw"))
+suppressMessages(ggsave(filename= paste(composer_in[1], "_outliers.tiff", sep = ""), plot=boxplot, width=15, height= 5, dpi=600, compression = "lzw"))
 invisible(gc())

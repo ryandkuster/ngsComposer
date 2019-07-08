@@ -23,7 +23,7 @@ def crinoid_main():
     out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1))
     subprocess.check_call(['Rscript',
             os.path.abspath(sys.argv[0])[:-17] +
-            '/tests/test_packages.R'] , shell=False)
+            '/tests/test_packages.R'], shell=False)
     crinoid_open(in1, out1, out2)
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(sys.argv[0])) +
@@ -132,28 +132,35 @@ def matrix_print(mx, outfile):
 
 def visualizer(a):
     subprocess.check_call(['Rscript',
-           os.path.dirname(os.path.abspath(sys.argv[0])) +
+           os.path.dirname(os.path.abspath(__file__)) +
            '/helpers/qc_plots_score_only.R'] + [a, a], shell=False)
 
 
-def combine_matrix(a1, a2, l):
-    with open(a1) as f1, open(a2) as f2:
-        a = [line.rstrip().split(',') for line in f1]
-        b = [line.rstrip().split(',') for line in f2]
-        if b:
-            pass
-        else:
-            b = [[0 for j in range(len(a[0]))] for i in range(l)]
-        for i, col in enumerate(b):
-            for j, score in enumerate(col):
-                try:
-                    b[i][j] = int(b[i][j]) + int(a[i][j])
-                except IndexError:
-                    break
-    with open(args.o, 'w') as o1:
-        for row in b:
+def combine_matrix(in_ls, out):
+    '''
+    combine values from previously generated qc matrices
+    '''
+    # TODO update for alternate scoring systems
+    out = os.path.join(os.path.dirname(in_ls[0]), 'qc', out)
+    a2 = [[0 for j in range(41)] for i in range(1000)]
+    for i in in_ls:
+        a1 = os.path.join(os.path.dirname(i), 'qc', 'qscores.' +
+                          os.path.basename(i))
+        with open(a1) as f1:
+            a1 = [line.rstrip().split(',') for line in f1]
+            for i, col in enumerate(a2):
+                for j, score in enumerate(col):
+                    try:
+                        a2[i][j] = int(a2[i][j]) + int(a1[i][j])
+                    except IndexError:
+                        break
+
+    with open(out, 'w') as o1:
+        for row in a2:
             o1.write(",".join(str(x) for x in row))
             o1.write("\n")
+
+    visualizer(out)
 
 
 if __name__ == "__main__":

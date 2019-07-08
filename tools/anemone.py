@@ -171,6 +171,7 @@ def rename_files(file1, file2, dual_index, names_mx, proj, of1_dict,
                 y = 0
         if j == 1 and dual_index is True:
             x = element
+
     if x == 'unknown' or y == 'unknown':
         sample_id = 'unknown'
         rename1 = file1

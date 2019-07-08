@@ -30,7 +30,6 @@ class Project:
         self.all_qc = False
         self.walkaway = True
         self.front_trim = False
-        self.end_trim = False
         self.bcs_index = False
         self.mismatch = False
         self.R1_bases_ls = False
@@ -38,6 +37,7 @@ class Project:
         self.non_genomic = False
         self.q_min = False
         self.q_percent = False
+        self.trim_mode = False
         self.auto_trim = False
         self.rm_transit = False
 
@@ -72,12 +72,9 @@ class Project:
         if self.front_trim:
             assert isinstance(self.front_trim, int)
             assert self.front_trim > 0
-        if self.end_trim:
-            assert isinstance(self.end_trim, int)
-            assert self.end_trim > 0
-        if self.end_trim and self.auto_trim:
-            print(msg.conf_end)
-            raise AssertionError
+        if self.trim_mode:
+            assert isinstance(self.trim_mode, str)
+            assert self.trim_mode in ['lw', 'q1', 'mean', 'median', 'position']
         if self.bcs_index or self.mismatch:
             assert os.path.exists(os.path.join(self.proj, self.bcs_index))
             assert isinstance(self.mismatch, int)
@@ -386,24 +383,24 @@ def concater(curr):
                     os.remove(i)
 
 
-def trim_assist():
-    '''
-    accept qc raw files from previous step and assist trimming
-    '''
-    # TODO make function for the complex decisions with end-trimming:
-    # collapse qc data and plot
-    # change autotrim between q1, mean, median, lw
-    curr = os.path.dirname(c.fastq_ls[0]) #TODO will this work with single?
-    try:
-        open(os.path.join(curr, 'paired', 'qc', 'combined.txt')).close()
-    except FileNotFoundError:
-        open(os.path.join(curr, 'qc', 'combined.txt'), 'a').close()
+# def trim_assist():
+#     '''
+#     accept qc raw files from previous step and assist trimming
+#     '''
+#     # TODO make function for the complex decisions with end-trimming:
+#     # collapse qc data and plot
+#     # change autotrim between q1, mean, median, lw
+#     curr = os.path.dirname(c.fastq_ls[0]) #TODO will this work with single?
+#     try:
+#         open(os.path.join(curr, 'paired', 'qc', 'combined.txt')).close()
+#     except FileNotFoundError:
+#         open(os.path.join(curr, 'qc', 'combined.txt'), 'a').close()
 
-    for i in c.fastq_ls:
-        part = os.path.join(curr, 'qc', 'qscores.' + os.path.basename(i))
-        print(part)
-    sys.exit('OKAY') #TODO
-    pass
+#     for i in c.fastq_ls:
+#         part = os.path.join(curr, 'qc', 'qscores.' + os.path.basename(i))
+#         print(part)
+#     sys.exit('OKAY') #TODO
+#     pass
 
 
 def walkthrough(curr, tool, temp_ls, **kwargs):
@@ -416,6 +413,12 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
         crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
     except FileNotFoundError:
         crinoid_multi(curr, temp_ls[1])
+
+    #TODO ADD 'COMBINED' file here
+    if len(temp_ls[2]) > 1:
+        combine_matrix(temp_ls[2], 'R1_combined.txt')
+        combine_matrix(temp_ls[3], 'R2_combined.txt')
+    sys.exit('deleteme')
 
     if c.walkaway:
         return temp_ls
@@ -552,16 +555,14 @@ def scallop_end_multi():
         else:
             crinoid_multi(c.proj, c.fastq_ls)
 
-    if not c.walkaway:
-        trim_assist()
-        # return temp_ls
-
     scallop_end_part = partial(scallop_end, curr, c.auto_trim)
     pool_multi(scallop_end_part, c.fastq_ls)
+
     if c.singles_ls:
         scallop_end_part = partial(scallop_end, curr, c.auto_trim)
         pool_multi(scallop_end_part, c.singles_ls)
     temp_ls = pathfinder(curr)
+
     if c.all_qc:
         temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
                               auto_trim=c.auto_trim)
@@ -669,7 +670,7 @@ if __name__ == '__main__':
         print(msg.crin_title)
         crinoid_multi(c.proj, c.fastq_ls)
 
-    if c.front_trim > 0 or c.end_trim > 0:
+    if c.front_trim > 0:
         print(msg.scal_title1)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_multi()
 
@@ -705,13 +706,13 @@ if __name__ == '__main__':
           'all_qc =', c.all_qc, '\n',
           'walkaway =', c.walkaway, '\n',
           'front_trim =', c.front_trim, '\n',
-          'end_trim =', c.end_trim, '\n',
           'bcs_index =', c.bcs_index, '\n',
           'mismatch =', c.mismatch, '\n',
           'R1_bases_ls =', c.R1_bases_ls, '\n',
           'R2_bases_ls =', c.R2_bases_ls, '\n',
           'non_genomic =', c.non_genomic, '\n',
+          'auto_trim =', c.auto_trim, '\n',
+          'trim_mode =', c.trim_mode, '\n',
           'q_min =', c.q_min, '\n',
           'q_percent =', c.q_percent, '\n',
-          'auto_trim =', c.auto_trim, '\n',
           'rm_transit =', c.rm_transit,  '\n')
