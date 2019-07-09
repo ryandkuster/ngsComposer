@@ -30,16 +30,17 @@ def crinoid_main():
            '/helpers/qc_plots.R'] + [out1, out2], shell=False)
 
 
-def crinoid_comp(curr, in1):
+def crinoid_comp(curr, all_qc, in1):
     '''
     composer entry point to crinoid
     '''
     out1 = os.path.join(curr, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(curr, 'qscores.' + os.path.basename(in1))
     crinoid_open(in1, out1, out2)
-    subprocess.check_call(['Rscript',
-           os.path.dirname(os.path.abspath(sys.argv[0])) +
-           '/tools/helpers/qc_plots.R'] + [out1, out2], shell=False)
+    if all_qc == 'full':
+        subprocess.check_call(['Rscript',
+            os.path.dirname(os.path.abspath(sys.argv[0])) +
+            '/tools/helpers/qc_plots.R'] + [out1, out2], shell=False)
 
 
 def crinoid_open(in1, out1, out2):
@@ -154,6 +155,10 @@ def combine_matrix(in_ls, out):
                         a2[i][j] = int(a2[i][j]) + int(a1[i][j])
                     except IndexError:
                         break
+
+    for i in reversed(a2):
+        if sum(i) == 0:
+            a2.pop()
 
     with open(out, 'w') as o1:
         for row in a2:

@@ -8,7 +8,7 @@ from functools import partial
 from multiprocessing import Pool
 
 from tools.anemone import anemone_comp, bc_reader, bc_test
-from tools.crinoid import crinoid_comp, visualizer, combine_matrix
+from tools.crinoid import crinoid_comp, combine_matrix
 from tools.krill import krill_comp
 from tools.rotifer import rotifer_comp
 from tools.scallop import scallop_comp, scallop_end
@@ -64,11 +64,11 @@ class Project:
         if self.initial_qc:
             assert self.initial_qc is True
         if self.all_qc:
-            assert self.all_qc is True
+            assert self.all_qc in ['full', 'summary']
         if self.walkaway:
             assert self.walkaway is True
         else:
-            self.all_qc = True
+            assert self.all_qc
         if self.front_trim:
             assert isinstance(self.front_trim, int)
             assert self.front_trim > 0
@@ -414,11 +414,11 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
     except FileNotFoundError:
         crinoid_multi(curr, temp_ls[1])
 
-    #TODO ADD 'COMBINED' file here
     if len(temp_ls[2]) > 1:
-        combine_matrix(temp_ls[2], 'R1_combined.txt')
-        combine_matrix(temp_ls[3], 'R2_combined.txt')
-    sys.exit('deleteme')
+        combine_matrix(temp_ls[2], 'R1_summary.txt')
+        combine_matrix(temp_ls[3], 'R2_summary.txt')
+    if len(temp_ls[0]) > 1:
+        combine_matrix(temp_ls[0], 'singles_summary.txt')
 
     if c.walkaway:
         return temp_ls
@@ -477,7 +477,7 @@ def crinoid_multi(proj, ls):
     '''
     curr = os.path.join(proj, 'qc')
     os.mkdir(curr)
-    crinoid_part = partial(crinoid_comp, curr)
+    crinoid_part = partial(crinoid_comp, curr, c.all_qc)
     pool_multi(crinoid_part, ls)
 
 
