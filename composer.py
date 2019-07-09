@@ -30,7 +30,7 @@ class Project:
         self.all_qc = False
         self.walkaway = True
         self.front_trim = False
-        self.bcs_index = False
+        self.bcs_index = ''
         self.mismatch = False
         self.R1_bases_ls = False
         self.R2_bases_ls = False
@@ -74,9 +74,9 @@ class Project:
             assert self.front_trim > 0
         if self.trim_mode:
             assert isinstance(self.trim_mode, str)
-            assert self.trim_mode in ['lw', 'q1', 'mean', 'median', 'position']
-        if self.bcs_index or self.mismatch:
-            assert os.path.exists(os.path.join(self.proj, self.bcs_index))
+            assert self.trim_mode in ['whisker', 'quartile', 'median', 'position']
+        if self.mismatch:
+            assert os.path.exists(os.path.join(self.proj, 'index.txt'))
             assert isinstance(self.mismatch, int)
         if self.R1_bases_ls:
             assert isinstance(self.R1_bases_ls, list)
@@ -104,7 +104,8 @@ class Project:
         '''
         open bcs_index and create dictionary of associated bc keyfiles
         '''
-        c.bcs_index = os.path.join(c.proj, c.bcs_index) if c.bcs_index else ''
+        bc_path = os.path.join(self.proj, 'index.txt')
+        self.bcs_index = bc_path if os.path.exists(bc_path) else ''
         self.bcs_dict = {}
         if not c.bcs_index:
             return
@@ -256,17 +257,17 @@ def input_single(values, in1_ls, in2_ls):
     '''
     form list if paired is False, with user input if paired detection
     '''
-    ignore = False
+    c.ignore = False
     if len(values) == 1:
         for filename in values:
             in1_ls.append(filename)
-    elif ignore is True:
+    elif c.ignore is True:
         for filename in values:
             in1_ls.append(filename)
     else:
         print('unexpected paired libraries found')
         ans = input('continue treating files as single-end libraries?\n')
-        ignore = True if ans in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
+        c.ignore = True if ans in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
         for filename in values:
             in1_ls.append(filename)
     return in1_ls, in2_ls
@@ -383,26 +384,6 @@ def concater(curr):
                     os.remove(i)
 
 
-# def trim_assist():
-#     '''
-#     accept qc raw files from previous step and assist trimming
-#     '''
-#     # TODO make function for the complex decisions with end-trimming:
-#     # collapse qc data and plot
-#     # change autotrim between q1, mean, median, lw
-#     curr = os.path.dirname(c.fastq_ls[0]) #TODO will this work with single?
-#     try:
-#         open(os.path.join(curr, 'paired', 'qc', 'combined.txt')).close()
-#     except FileNotFoundError:
-#         open(os.path.join(curr, 'qc', 'combined.txt'), 'a').close()
-
-#     for i in c.fastq_ls:
-#         part = os.path.join(curr, 'qc', 'qscores.' + os.path.basename(i))
-#         print(part)
-#     sys.exit('OKAY') #TODO
-#     pass
-
-
 def walkthrough(curr, tool, temp_ls, **kwargs):
     '''
     query user for modifying or accepting current step in pipeline
@@ -414,10 +395,10 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
     except FileNotFoundError:
         crinoid_multi(curr, temp_ls[1])
 
-    if len(temp_ls[2]) > 1:
+    if len(temp_ls[2]) >= 1:
         combine_matrix(temp_ls[2], 'R1_summary.txt')
         combine_matrix(temp_ls[3], 'R2_summary.txt')
-    if len(temp_ls[0]) > 1:
+    if len(temp_ls[0]) >= 1:
         combine_matrix(temp_ls[0], 'singles_summary.txt')
 
     if c.walkaway:
@@ -555,17 +536,17 @@ def scallop_end_multi():
         else:
             crinoid_multi(c.proj, c.fastq_ls)
 
-    scallop_end_part = partial(scallop_end, curr, c.auto_trim)
+    scallop_end_part = partial(scallop_end, curr, c.auto_trim, c.trim_mode)
     pool_multi(scallop_end_part, c.fastq_ls)
 
     if c.singles_ls:
-        scallop_end_part = partial(scallop_end, curr, c.auto_trim)
+        scallop_end_part = partial(scallop_end, curr, c.auto_trim, c.trim_mode)
         pool_multi(scallop_end_part, c.singles_ls)
     temp_ls = pathfinder(curr)
 
     if c.all_qc:
         temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
-                              auto_trim=c.auto_trim)
+                              auto_trim=c.auto_trim, trim_mode=c.trim_mode)
     return temp_ls
 
 

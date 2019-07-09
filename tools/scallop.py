@@ -52,7 +52,7 @@ def scallop(front_trim, end_trim, f, o):
             o.write(line)
 
 
-def scallop_end(curr, auto_trim, in1):
+def scallop_end(curr, auto_trim, trim_mode, in1):
     '''
     composer entry point for trimming based on qc stats
     '''
@@ -65,27 +65,26 @@ def scallop_end(curr, auto_trim, in1):
         in1_mx = [[int(j) for j in i.rstrip().split(',')] for i in f]
     max_len = len(in1_mx)
     len_ls = [sum(i) for i in in1_mx]
-    try:
-        if uniform:
-            max_len = scallop_uniform(len_ls, max_len)
-    except NameError:
-        pass
     end_trim = None
     for base, i in enumerate(reversed(in1_mx)):
         med = (sum(i) + 1)/2
         delta = med/2 if med % 1 == 0 else (med - 0.5)/2
         q1 = scallop_stats(med - delta, i)
         q3 = scallop_stats(med + delta, i)
+        med = scallop_stats(med, i)
         lw = q1 - (1.5 * (q3 - q1))
-        if lw >= auto_trim:
+        trim_dict = {'whisker': lw, 'quartile': q1, 'median': med}
+        if trim_dict[trim_mode] >= auto_trim:
             end_trim = max_len - base
             break
     scallop_comp(0, end_trim, curr, in1)
 
 
 def scallop_stats(target_index, pos):
-    index = 0
-    x_adjust = 0
+    '''
+    traverse score matrix per position in read for desired index
+    '''
+    index, x_adjust, target = 0, 0, 0
     for x, count in enumerate(pos):
         index += count
         if (x_adjust == 0 and index == target_index - 0.5):
@@ -98,15 +97,6 @@ def scallop_stats(target_index, pos):
                 target = (x + x_adjust)/2
                 break
     return target
-
-
-def scallop_uniform(len_ls, max_len):
-    uniform = max_len
-    for index, i in enumerate(len_ls):
-        if i != max(len_ls):
-            uniform = index
-            break
-    return uniform
 
 
 if __name__ == '__main__':

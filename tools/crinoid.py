@@ -41,6 +41,7 @@ def crinoid_comp(curr, all_qc, in1):
         subprocess.check_call(['Rscript',
             os.path.dirname(os.path.abspath(sys.argv[0])) +
             '/tools/helpers/qc_plots.R'] + [out1, out2], shell=False)
+    #TODO add ability to create visualizations for initial qc
 
 
 def crinoid_open(in1, out1, out2):
@@ -131,10 +132,10 @@ def matrix_print(mx, outfile):
         outfile.write("\n")
 
 
-def visualizer(a):
+def visualizer(out1, out2):
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(__file__)) +
-           '/helpers/qc_plots_score_only.R'] + [a, a], shell=False)
+           '/helpers/qc_plots.R'] + [out1, out2], shell=False)
 
 
 def combine_matrix(in_ls, out):
@@ -142,30 +143,49 @@ def combine_matrix(in_ls, out):
     combine values from previously generated qc matrices
     '''
     # TODO update for alternate scoring systems
-    out = os.path.join(os.path.dirname(in_ls[0]), 'qc', out)
-    a2 = [[0 for j in range(41)] for i in range(1000)]
+    out_q = os.path.join(os.path.dirname(in_ls[0]), 'qc', 'qscores.' + out)
+    out_n = os.path.join(os.path.dirname(in_ls[0]), 'qc', 'nucleotides.' + out)
+    q2 = [[0 for j in range(41)] for i in range(1000)]
+    n2 = [[0 for j in range(5)] for i in range(1000)]
+
     for i in in_ls:
-        a1 = os.path.join(os.path.dirname(i), 'qc', 'qscores.' +
+        q1 = os.path.join(os.path.dirname(i), 'qc', 'qscores.' +
                           os.path.basename(i))
-        with open(a1) as f1:
-            a1 = [line.rstrip().split(',') for line in f1]
-            for i, col in enumerate(a2):
-                for j, score in enumerate(col):
-                    try:
-                        a2[i][j] = int(a2[i][j]) + int(a1[i][j])
-                    except IndexError:
-                        break
+        q2 = matrix_mash(in_ls, q1, q2)
+        n1 = os.path.join(os.path.dirname(i), 'qc', 'nucleotides.' +
+                          os.path.basename(i))
+        n2 = matrix_mash(in_ls, n1, n2)
 
-    for i in reversed(a2):
+    for i in reversed(q2):
         if sum(i) == 0:
-            a2.pop()
+            q2.pop()
 
-    with open(out, 'w') as o1:
-        for row in a2:
+    for i in reversed(n2):
+        if sum(i) == 0:
+            n2.pop()
+
+    with open(out_q, 'w') as o1, open(out_n, 'w') as o2:
+        for row in q2:
             o1.write(",".join(str(x) for x in row))
             o1.write("\n")
 
-    visualizer(out)
+        for row in n2:
+            o2.write(",".join(str(x) for x in row))
+            o2.write("\n")
+
+    visualizer(out_n, out_q)
+
+
+def matrix_mash(in_ls, a1, a2):
+    with open(a1) as f1:
+        a1 = [line.rstrip().split(',') for line in f1]
+        for i, col in enumerate(a2):
+            for j, score in enumerate(col):
+                try:
+                    a2[i][j] = int(a2[i][j]) + int(a1[i][j])
+                except IndexError:
+                    break
+    return a2
 
 
 if __name__ == "__main__":
