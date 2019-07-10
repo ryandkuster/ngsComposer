@@ -427,29 +427,38 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
         else:
             print('\nselect an option from the list\n')
 
-    shutil.rmtree(c.rm_dirs[-1])
-    c.rm_dirs.pop()
-
     while True:
+        print('\nvariables to modify:')
+        for i in kwargs.keys():
+            print(i)
         for k, v in kwargs.items():
             print('\ncurrent value for ' + k + ' is ' + str(v))
-            v = input('new value for ' + k + '? > ')
-            if v.startswith('['):
-                v = v.strip('[\']').split(', ')
-            elif v == 'False':
-                v = False
-            elif any(i.isdigit() for i in v):
-                v = int(v)
-            setattr(c, k, v)
+            v_new = input('press enter to keep current value or input new ' +
+                          'value for ' + k + '? > ')
+            if v_new.startswith('['):
+                v_new = v_new.strip('[\']').split(', ')
+            elif v_new == '':
+                v_new = v
+            elif v_new == 'False':
+                v_new = False
+            elif any(i.isdigit() for i in v_new):
+                v_new = int(v_new)
+            setattr(c, k, v_new)
         try:
             c.conf_confirm()
-            break
+            for k, v in kwargs.items():
+                print('\n' + k + ' : ' + str(v))
+            choice2 = input('\ncontinue?\n\n 1 - yes\n 2 - no\n\n number selection > ')
+            if choice2 == '1':
+                shutil.rmtree(c.rm_dirs[-1])
+                c.rm_dirs.pop()
+                print('\nrerunning step with updated variables...')
+                temp_ls = tool()
+                return temp_ls
+            else:
+                print('\nselect an option from the list\n')
         except AssertionError:
             print('\nnot a valid entry\n')
-
-    print('\nrerunning step with updated variables...')
-    temp_ls = tool()
-    return temp_ls
 
 
 def crinoid_multi(proj, ls):
