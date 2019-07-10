@@ -48,7 +48,7 @@ $ python3 composer.py -i <path_to_project_directory>
 ***
 
 ### Configuration
-Using a text editor, save a file containing the following variables as a python file (includes '.py' as file extension) and include it in your project directory.
+Using a text editor, save a file containing any of the following variables as a python text file (includes '.py' as file extension) and include it in your project directory.
 
 |Variable        |Usage           |Input |Recommended|
 |:-------------|:-------------|:-------------|:-------------
@@ -60,7 +60,7 @@ Using a text editor, save a file containing the following variables as a python 
 |initial_qc|create initial QC output|True or False|True
 |all_qc|perform qc step at each filtering stage (use 'full' to produce visualizations for every file, use 'summary' for a summarized version of the R1, R2, and single reads)|'full' or 'summary' (quotes required)|
 |front_trim|positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence|integer|
-|mismatch|number of mismatches (hamming distance) allowed in barcodes (must include 'index.txt' and barcodes file(s) in project directory|integer|
+|mismatch|number of mismatches (hamming distance) allowed in barcodes (must include 'index.txt' and barcodes file(s) in project directory; see "Barcode demultiplexing" below)|integer|
 |R1_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
 |R2_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
 |non_genomic|number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)|integer|
@@ -68,6 +68,8 @@ Using a text editor, save a file containing the following variables as a python 
 |q_percent|percentage of reads >= q_min quality scores|number between 0 and 100|95
 |trim_mode|basis to automatically trim 3' ends |'whisker', 'quartile', 'median', or 'mean' (quotes required)|'whisker'
 |auto_trim|using trim_mode basis, trim read at 3' ends at first position meeting this minimum value|integer between 0 and 40|20
+
+An example configuration file may look like this:
 
 **conf.py**
 
@@ -98,6 +100,20 @@ In this case, samples were double-digested with AluI and HaeIII and A-tailed bef
 Automatic end-trimming will be performed on a per-file basis based on qc metrics. Here, bases are removed from the end position until a desired metric (**trim_mode = 'median'**) is at or above a desired Phred score (**auto_trim = 30**).
 
 Only reads that have a Phred score of 30 (**q_min = 30**) acrosss at least 95 percent of the read (**q_percent = 95**) will pass to subsequent steps.
+
+
+Alternatively, a configuration file may only need to include necessary components for a run:
+
+**conf.py**
+
+```
+paired = True
+procs = 8
+mismatch = 1
+q_min = 30
+q_percent = 95
+```
+This example will demultiplex paired-end data using a mismatch value of one followed by a threshold filter for reads comprised of base-calls at or above 30 across at least 95 percent of the read.
 
 ***
 
