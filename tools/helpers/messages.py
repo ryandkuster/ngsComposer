@@ -12,6 +12,15 @@ class font_mod:
 
 conf_end = (font_mod.yellow + '\nplease use either manual or auto end trim' + font_mod.reset)
 q_vars = (font_mod.yellow + '\nboth q_min and q_percent variables must be defined' + font_mod.reset)
+trim_vars = (font_mod.yellow + '\nboth auto_trim and trim_mode variables must be defined' + font_mod.reset)
+
+paired_vars = (font_mod.yellow + '\nunexpected paired libraries found\n' + font_mod.reset +
+               '\nplease select from the following options:\n\n' +
+               font_mod.lightblue + ' 1' + font_mod.reset + ' - continue treating files as single-end libraries?\n' +
+               font_mod.lightblue + ' 2' + font_mod.reset + ' - continue treating files as paired-end libraries?\n' +
+               font_mod.lightblue + ' 3' + font_mod.reset + ' - exit ngs-composer\n\n' +
+               font_mod.lightblue + 'number selection > ' + font_mod.reset)
+
 nucs1 = (font_mod.yellow + '\nbarcodes and motifs must be upper-case only' + font_mod.reset)
 nucs2 = (font_mod.yellow + '\nbarcodes and motifs must consist of A, C, G, or T only' + font_mod.reset)
 
@@ -36,6 +45,11 @@ walk1 = ('\nplease select from the following options:\n\n' +
 walk2 = 'enabled'
 
 walk3 = (font_mod.yellow + 'about to be canceled' + font_mod.reset)
+
+walk4 = ('\nplease select from the following options:\n\n' +
+         font_mod.lightblue + ' 1' + font_mod.reset + ' - continue with modified parameters\n' +
+         font_mod.lightblue + ' 2' + font_mod.reset + ' - modify parameters\n\n' +
+         font_mod.lightblue + 'number selection > ' + font_mod.reset)
 
 trim_assist1 = ('\nplease select from the following options:\n\n' +
                 font_mod.lightblue + ' 1' + font_mod.reset + ' - accept results of current step and continue\n' +

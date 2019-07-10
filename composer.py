@@ -21,6 +21,7 @@ class Project:
         self.in1_ls = []
         self.in2_ls = []
         self.rm_dirs = []
+        self.ignore = False
         self.bypass = False
 
         self.paired = False
@@ -72,9 +73,6 @@ class Project:
         if self.front_trim:
             assert isinstance(self.front_trim, int)
             assert self.front_trim > 0
-        if self.trim_mode:
-            assert isinstance(self.trim_mode, str)
-            assert self.trim_mode in ['whisker', 'quartile', 'median', 'position']
         if self.mismatch:
             assert os.path.exists(os.path.join(self.proj, 'index.txt'))
             assert isinstance(self.mismatch, int)
@@ -86,9 +84,15 @@ class Project:
             nucleotide_test(self.R2_bases_ls)
         if self.non_genomic:
             assert isinstance(self.non_genomic, int)
-        if self.auto_trim:
+        if self.auto_trim or self.trim_mode:
             assert isinstance(self.auto_trim, int)
             assert 0 <= self.auto_trim <= 40 and self.auto_trim is not True
+            assert isinstance(self.trim_mode, str)
+            assert self.trim_mode in ['whisker', 'quartile', 'median', 'mean']
+            if self.auto_trim and self.q_percent:
+                pass
+            else:
+                sys.exit(msg.trim_vars)
         if self.q_min or self.q_percent:
             assert isinstance(self.q_min, int)
             assert isinstance(self.q_percent, int)
@@ -257,7 +261,6 @@ def input_single(values, in1_ls, in2_ls):
     '''
     form list if paired is False, with user input if paired detection
     '''
-    c.ignore = False
     if len(values) == 1:
         for filename in values:
             in1_ls.append(filename)
@@ -265,9 +268,18 @@ def input_single(values, in1_ls, in2_ls):
         for filename in values:
             in1_ls.append(filename)
     else:
-        print('unexpected paired libraries found')
-        ans = input('continue treating files as single-end libraries?\n')
-        c.ignore = True if ans in ('Y', 'y', 'Yes', 'yes', 'YES') else sys.exit()
+        while True:
+            ans = input(msg.paired_vars)
+            if ans == '1':
+                c.ignore = True
+                break
+            if ans == '2':
+                c.paired = True
+                break
+            elif ans == '3':
+                sys.exit('\nngs-composer is now exiting')
+            else:
+                print('\nselect an option from the list\n')
         for filename in values:
             in1_ls.append(filename)
     return in1_ls, in2_ls
@@ -408,6 +420,9 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
         status = msg.walk2 if not c.walkaway else msg.walk3
         print('\nwalkthrough mode is ' + status)
         print('\nplease check the qc folders in ' + c.rm_dirs[-1])
+        print('\nvariables to modify:')
+        for k, v in kwargs.items():
+            print('\n' + k + ' : ' + str(v))
         choice1 = input(msg.walk1)
         if choice1 == '1':
             return temp_ls
@@ -428,9 +443,6 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
             print('\nselect an option from the list\n')
 
     while True:
-        print('\nvariables to modify:')
-        for i in kwargs.keys():
-            print(i)
         for k, v in kwargs.items():
             print('\ncurrent value for ' + k + ' is ' + str(v))
             v_new = input('press enter to keep current value or input new ' +
@@ -446,9 +458,7 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
             setattr(c, k, v_new)
         try:
             c.conf_confirm()
-            for k, v in kwargs.items():
-                print('\n' + k + ' : ' + str(v))
-            choice2 = input('\ncontinue?\n\n 1 - yes\n 2 - no\n\n number selection > ')
+            choice2 = input(msg.walk4)
             if choice2 == '1':
                 shutil.rmtree(c.rm_dirs[-1])
                 c.rm_dirs.pop()
@@ -555,7 +565,8 @@ def scallop_end_multi():
 
     if c.all_qc:
         temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
-                              auto_trim=c.auto_trim, trim_mode=c.trim_mode)
+                              auto_trim=c.auto_trim,
+                              trim_mode=c.trim_mode)
     return temp_ls
 
 
@@ -580,7 +591,8 @@ def krill_multi():
     shutil.rmtree(os.path.join(curr, 'single', 'pe_lib'))
     shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
     if c.all_qc:
-        temp_ls = walkthrough(curr, krill_multi, temp_ls, q_min=c.q_min,
+        temp_ls = walkthrough(curr, krill_multi, temp_ls,
+                              q_min=c.q_min,
                               q_percent=c.q_percent)
     return temp_ls
 
@@ -659,6 +671,7 @@ if __name__ == '__main__':
     if c.initial_qc:
         print(msg.crin_title)
         crinoid_multi(c.proj, c.fastq_ls)
+        # TODO create manual walkthrough option here
 
     if c.front_trim > 0:
         print(msg.scal_title1)

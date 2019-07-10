@@ -67,13 +67,17 @@ def scallop_end(curr, auto_trim, trim_mode, in1):
     len_ls = [sum(i) for i in in1_mx]
     end_trim = None
     for base, i in enumerate(reversed(in1_mx)):
+        total = 0
+        for score, j in enumerate(i):
+            total += score * j
+        mean = total/sum(i)
         med = (sum(i) + 1)/2
         delta = med/2 if med % 1 == 0 else (med - 0.5)/2
         q1 = scallop_stats(med - delta, i)
         q3 = scallop_stats(med + delta, i)
         med = scallop_stats(med, i)
         lw = q1 - (1.5 * (q3 - q1))
-        trim_dict = {'whisker': lw, 'quartile': q1, 'median': med}
+        trim_dict = {'whisker': lw, 'quartile': q1, 'median': med, 'mean': mean}
         if trim_dict[trim_mode] >= auto_trim:
             end_trim = max_len - base
             break
