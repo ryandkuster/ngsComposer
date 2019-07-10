@@ -35,11 +35,10 @@ Dependencies:
 ### Basic usage
 
 Set up your project directory containing the following files:
-- 1_R1.fastq
+- fastq file(s)
 - conf.py (see "Configuration" below for detailed instructions)
 
-Optionally, paired end files can also be included in the project directory:
-- 1_R2.fastq
+Optionally, paired end files and even multiple separate libraries can be included in the project directory.
 
 From command line, run composer with the specified directory of your project
 ```bash
@@ -49,57 +48,56 @@ $ python3 composer.py -i <path_to_project_directory>
 ***
 
 ### Configuration
-Using a text editor, save a file containing the following variables as a python file (includes '.py' as file extension) and include it in your project directory:
+Using a text editor, save a file containing the following variables as a python file (includes '.py' as file extension) and include it in your project directory.
+
+|Variable        |Usage           |Input |Recommended|
+|:-------------|:-------------|:-------------|:-------------
+|paired|if fastq files should be treated as paired ends|True or False|
+|procs|choose maximum number of subprocesses that can run simultaneously|integer|
+|alt_dir|optional, full path to empty directory for file storage|e.g. '/path/to/dir/' (quotes required)|
+|walkaway|run from beginning to end without pausing at qc steps (use True to run without interruption, use False to initiate user-controlled walkthrough mode)|True or False|
+|rm_transit|optional, remove each transitional file folder to save space|True or False|
+|initial_qc|create initial QC output|True or False|True
+|all_qc|perform qc step at each filtering stage (use 'full' to produce visualizations for every file, use 'summary' for a summarized version of the R1, R2, and single reads)|'full' or 'summary' (quotes required)|
+|front_trim|positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence|integer|
+|mismatch|number of mismatches (hamming distance) allowed in barcodes (must include 'index.txt' and barcodes file(s) in project directory|integer|
+|R1_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
+|R2_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
+|non_genomic|number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)|integer|
+|q_min|quality score minimum (Phred value 0-40) applied to q_percent variable|integer between 0 and 40|30
+|q_percent|percentage of reads >= q_min quality scores|number between 0 and 100|95
+|trim_mode|basis to automatically trim 3' ends |'whisker', 'quartile', 'median', or 'mean' (quotes required)|'whisker'
+|auto_trim|using trim_mode basis, trim read at 3' ends at first position meeting this minimum value|integer between 0 and 40|20
 
 **conf.py**
 
 ```
-# if fastq files should be treated as paired ends, use 'True', else 'False'
 paired = True
-
-# choose number of subprocesses that should run simultaneously
 procs = 2
-
-# alternate directory (optionally save space by alternating storage directories)
-alt_dir = False
-
-# create initial QC output
-initial_qc = False
-
-# perform qc step at each filtering stage (time-consuming, but informative)
-walkthrough = True
-
-# run from beginning to end without pausing at qc steps
+alt_dir = '/home/user/project'
 walkaway = False
-
-# positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence
-front_trim = 0
-
-# name of  file with barcodes to demultiplex forward reads (use 'False' if not demultiplexing)
-bcs_index = 'index.txt'
-
-# number of mismatches (hamming distance) allowed in barcodes
+rm_transit = True
+initial_qc = False
+all_qc = 'summary'
+front_trim = 6
 mismatch = 1
-
-# list sequences immediately adjacent to barcodes
-R1_bases_ls = ['A', 'C', 'G', 'T']
-R2_bases_ls = ['A', 'C', 'G', 'T']
-
-# number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)
-non_genomic = 0
-
-# trim read 3' ends based on q_min threshold
-end_trim = False
-
-# quality score minimum (Phred value 0-40)(use 'False' to skip)
+R1_bases_ls = ['TCC', 'TCT']
+R2_bases_ls = ['TCC', 'TCT']
+non_genomic = 1
+trim_mode = 'median'
+auto_trim = 30
 q_min = 30
-
-# percentage of reads >/= q_min quality scores (use 'False' to skip)
 q_percent = 95
-
-# optionally remove each transitional file folder to save space
-rm_transit = False
 ```
+In the above example, a paired library will be expected (**paired = True**) and the maximum number of subprocesses spawned will be 2 (**procs = 2**).  The empty directory '/home/user/project' will contain all resulting filtered data (**alt_dir = '/home/user/project'**). The pipeline will pause after relevant steps (**walkaway = False**) so users can view qc plots and have the option of modifying or bypassing the step. To save disk space, transitional directories will be removed (**rm_transit = True**) and only the final filtered data and any qc stats created in the pipeline will remain. No qc statistics will be created on the raw data in this example (**initial_qc = False**), but for all subsequent steps a summarized version will be created that collapses all R1, R2, and/or single-end reads to provide a helpful overview of the results of a given filtering step (**all_qc = 'summary'**).
+
+A buffer sequence of length 6 (**front_trim = 6**) will be trimmed before demultiplexing, which will allow mismatch at a hamming distance of 1 (**mismatch = 1**).
+
+In this case, samples were double-digested with AluI and HaeIII and A-tailed before adapter ligation (**R1_bases_ls = ['TCC', 'TCT']** and **R2_bases_ls = ['TCC', 'TCT']**). Only reads containing these motifs will pass to subsequent steps. As the T complement from A-tailing introduces an artificial residue not present in the specimen sequenced, it can simultaneously be removed alongside motif detection (**non_genomic = 1**).
+
+Automatic end-trimming will be performed on a per-file basis based on qc metrics. Here, bases are removed from the end position until a desired metric (**trim_mode = 'median'**) is at or above a desired Phred score (**auto_trim = 30**).
+
+Only reads that have a Phred score of 30 (**q_min = 30**) acrosss at least 95 percent of the read (**q_percent = 95**) will pass to subsequent steps.
 
 ***
 
@@ -108,6 +106,8 @@ rm_transit = False
 Optionally, one or more barcode files may be included in the project directory for demultiplexing. The following files are required at minimum:
 - barcodes_1.txt
 - index.txt
+
+Naming conventions: "index.txt" is required, the barcodes file can be named as desired (see "Index file for directing multiple barcode files")
 
 The barcodes file is a tab or space delimited file including forward barcodes as rows and reverse barcodes as columns. For example, the following would be required for a dual-indexed library:
 
@@ -119,6 +119,7 @@ C	sample2	sample5	sample7	sample10
 G	sample3	sample5	sample8	sample10
 T	sample4	sample5	sample9	sample10
 ```
+Note that in the example above the reverse barcode "C" corresponds with multiple identical sample names (sample5). While not common practice, ngs-composer accomodates repeated sample names and concatenates accordingly.
 
 If reverse barcodes do not require demultiplexing, the barcode file can be set up as follows with "NA" or any other text used as a header in the first row:
 
@@ -134,7 +135,7 @@ T	sample4
 ***
 
 #### Index file for directing multiple barcode files
-The index file is a tab delimited file required to associate the barcodes file with a specific library in your project directory. It must include the filename of the forward read followed by the appropriate barcodes file:
+The index file is a tab delimited file required to associate the barcodes file with a specific library in your project directory. It must include the filename of the forward read (R1) followed by the appropriate barcodes file. Reverse reads (R2), if present, will automatically be detected and are not indicated in this file.
 
 **index.txt**
 ```
@@ -147,11 +148,9 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 ```
 1_R1.fastq  barcodes_1.txt
 2_R1.fastq  barcodes_2.txt
-3_R1.fastq  barcodes_3.txt
+3_R1.fastq  barcodes_2.txt
 ```
-
-The name of your index file must match the exact text for 'bcs_index' in the conf.py file.
-
+In this example, samples "2_R1.fastq" and "3_R1.fastq" correspond with "barcodes_2.txt"
 ***
 
 ## License
