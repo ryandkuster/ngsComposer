@@ -26,12 +26,13 @@ nucs2 = (font_mod.yellow + '\nbarcodes and motifs must consist of A, C, G, or T 
 
 
 sep = '#' * 50
-crin_title = ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'crinoid - qc stats' + font_mod.reset + '\n' + sep)
-scal_title1 = ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'scallop - trimming' + font_mod.reset + '\n' + sep)
-scal_title2 = ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'scallop - auto-trimming' + font_mod.reset + '\n' + sep)
-nem_title = ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'anemone - demultiplexing' + font_mod.reset + '\n' + sep)
-rot_title = ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'rotifer - motif detection' + font_mod.reset + '\n' + sep)
-kril_title = ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'krill   - filtering' + font_mod.reset + '\n' + sep)
+crin_title =  ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'crinoid  - qc stats' + font_mod.reset + '\n' + sep)
+scal_title1 = ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'scallop  - trimming' + font_mod.reset + '\n' + sep)
+scal_title2 = ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'scallop  - auto-trimming' + font_mod.reset + '\n' + sep)
+nem_title =   ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'anemone  - demultiplexing' + font_mod.reset + '\n' + sep)
+rot_title =   ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'rotifer  - motif detection' + font_mod.reset + '\n' + sep)
+kril_title =  ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'krill    - filtering' + font_mod.reset + '\n' + sep)
+porf_title =  ('\n' + sep + '\n' + ' ' * 15 + font_mod.lightblue + 'porifera - adapter removal' + font_mod.reset + '\n' + sep)
 
 
 walk1 = ('\nplease select from the following options:\n\n' +

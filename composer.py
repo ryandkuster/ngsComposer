@@ -10,6 +10,7 @@ from multiprocessing import Pool
 from tools.anemone import anemone_comp, bc_reader, bc_test
 from tools.crinoid import crinoid_comp, combine_matrix
 from tools.krill import krill_comp
+from tools.porifera import porifera_comp
 from tools.rotifer import rotifer_comp
 from tools.scallop import scallop_comp, scallop_end
 
@@ -36,10 +37,12 @@ class Project:
         self.R1_bases_ls = False
         self.R2_bases_ls = False
         self.non_genomic = False
-        self.q_min = False
-        self.q_percent = False
         self.trim_mode = False
         self.auto_trim = False
+        self.q_min = False
+        self.q_percent = False
+        self.dapt_path = ''
+        self.min_start = False
         self.rm_transit = False
 
     def initialize(self, proj):
@@ -102,12 +105,16 @@ class Project:
                 pass
             else:
                 sys.exit(msg.q_vars)
+        if self.min_start:
+            assert isinstance(self.min_start, int)
         assert self.rm_transit is True or self.rm_transit is False
 
     def index_reader(self):
         '''
         open bcs_index and create dictionary of associated bc keyfiles
         '''
+        dapt_path = os.path.join(self.proj, 'adapters.txt')
+        self.dapt_path = dapt_path if os.path.exists(dapt_path) else ''
         bc_path = os.path.join(self.proj, 'index.txt')
         self.bcs_index = bc_path if os.path.exists(bc_path) else ''
         self.bcs_dict = {}
@@ -129,6 +136,8 @@ class Project:
         self.fastq_ls = []
         for filename in os.listdir(self.proj):
             if filename == os.path.basename(self.bcs_index):
+                pass
+            elif filename == os.path.basename(self.dapt_path):
                 pass
             elif os.path.join(self.proj, filename) in self.bcs_dict.values():
                 pass
@@ -318,7 +327,7 @@ def dir_make(title):
     create new directory when pipeline tools called
     '''
     # TODO add following at release:
-    # curr = os.path.join(c.proj, str(len(c.rm_dirs)) + '_' + title)
+#    curr = os.path.join(c.proj, str(len(c.rm_dirs)) + '_' + title)
     curr = os.path.join(c.proj, title)
     c.rm_dirs.append(curr)
     os.mkdir(curr)
@@ -532,15 +541,13 @@ def scallop_end_multi():
     automated 3' end read trimming based on minimum value
     '''
     curr = dir_make('auto_trimmed')
-    if c.R1_bases_ls or c.R2_bases_ls:
-        os.mkdir(os.path.join(curr, 'single'))
-        os.mkdir(os.path.join(curr, 'paired'))
 
     if len(c.rm_dirs) >= 2:
         if os.path.exists(os.path.join(c.rm_dirs[-2], 'qc')):
             pass
         elif os.path.exists(os.path.join(c.rm_dirs[-2], 'single', 'qc')):
-            pass
+            os.mkdir(os.path.join(curr, 'single'))
+            os.mkdir(os.path.join(curr, 'paired'))
         else:
             try:
                 crinoid_multi(os.path.join(c.rm_dirs[-2], 'single'),
@@ -597,6 +604,26 @@ def krill_multi():
     return temp_ls
 
 
+def porifera_multi():
+    '''
+    create user-defined subprocesses to detect and remove adapter sequences
+    '''
+    curr = dir_make('adapted')
+
+    if len(c.rm_dirs) >= 2:
+        if os.path.exists(os.path.join(c.rm_dirs[-2], 'single')):
+            os.mkdir(os.path.join(curr, 'single'))
+            os.mkdir(os.path.join(curr, 'paired'))
+
+    porifera_part = partial(porifera_comp, curr, c.dapt_path, c.min_start,
+                            c.mismatch)
+    pool_multi(porifera_part, c.fastq_ls)
+    if c.singles_ls:
+        pool_multi(porifera_part, c.singles_ls)
+    temp_ls = pathfinder(curr)
+    return temp_ls
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='composer is a base-call\
         error-filtering and read preprocessing pipeline for fastq libraries - \
@@ -617,7 +644,8 @@ if __name__ == '__main__':
                 os.path.join(c.proj, 'demultiplexed'),
                 os.path.join(c.proj, 'parsed'),
                 os.path.join(c.proj, 'auto_trimmed'),
-                os.path.join(c.proj, 'filtered')]
+                os.path.join(c.proj, 'filtered'),
+                os.path.join(c.proj, 'adapted')]
     for folder in old_dirs:
         try:
             shutil.rmtree(folder)
@@ -671,7 +699,6 @@ if __name__ == '__main__':
     if c.initial_qc:
         print(msg.crin_title)
         crinoid_multi(c.proj, c.fastq_ls)
-        # TODO create manual walkthrough option here
 
     if c.front_trim > 0:
         print(msg.scal_title1)
@@ -701,6 +728,12 @@ if __name__ == '__main__':
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
+    if c.dapt_path:
+        print(msg.porf_title)
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = porifera_multi()
+        if c.rm_transit is True:
+            dir_del(c.rm_dirs[:-1])
+
     print('\n',
           'paired =', c.paired, '\n',
           'procs =', c.procs, '\n',
@@ -718,4 +751,7 @@ if __name__ == '__main__':
           'trim_mode =', c.trim_mode, '\n',
           'q_min =', c.q_min, '\n',
           'q_percent =', c.q_percent, '\n',
+          'dapt_path =',  c.dapt_path, '\n',
+          'min_start =',  c.min_start, '\n',
           'rm_transit =', c.rm_transit,  '\n')
+
