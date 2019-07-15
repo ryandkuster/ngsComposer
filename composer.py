@@ -4,11 +4,12 @@ import os
 import shutil
 import subprocess
 import sys
+from argparse import RawTextHelpFormatter
 from functools import partial
 from multiprocessing import Pool
 
 from tools.anemone import anemone_comp, bc_reader, bc_test
-from tools.crinoid import crinoid_comp, combine_matrix
+from tools.crinoid import combine_matrix, crinoid_comp
 from tools.krill import krill_comp
 from tools.porifera import porifera_comp
 from tools.rotifer import rotifer_comp
@@ -625,11 +626,22 @@ def porifera_multi():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='composer is a base-call\
-        error-filtering and read preprocessing pipeline for fastq libraries - \
-        see https://github.com/ryandkuster/composer for usage')
-    parser.add_argument('-i', type=str, help='the full or relative path to \
-        the project directory')
+    parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
+        ' ' * 15 + 'NGS-COMPOSER:\n' +
+        '#' * 50 + '\n' +
+        'ngs-composer is an empiracal, base-call filtering ' +
+        'pipeline for preprocessing fastq libraries\n\n' +
+        'basic usage: python3 composer.py -i <path_to_project_directory>\n\n' +
+        'pipeline tools may be called individually from tools folder:\n\n' +
+        '    scallop.py  - trimming\n' +
+        '    anemone.py  - demultiplexing\n' +
+        '    rotifer.py  - motif detection\n' +
+        '    krill.py    - quality filtering\n' +
+        '    porifera.py - adapter removal\n\n' +
+        'see https://github.com/ryandkuster/composer for full usage notes\n\n' +
+        ''), formatter_class=RawTextHelpFormatter)
+    parser.add_argument('-i', type=str, help='the full or relative path to ' +
+        'the project directory')
     args = parser.parse_args()
     c = Project()
     c.initialize(args.i)
@@ -754,4 +766,3 @@ if __name__ == '__main__':
           'dapt_path =',  c.dapt_path, '\n',
           'min_start =',  c.min_start, '\n',
           'rm_transit =', c.rm_transit,  '\n')
-
