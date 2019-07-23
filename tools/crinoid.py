@@ -19,12 +19,13 @@ def crinoid_main():
         proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
+    phred64 = False if args.s is None else True
     out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1))
     subprocess.check_call(['Rscript',
             os.path.abspath(sys.argv[0])[:-17] +
             '/tests/test_packages.R'], shell=False)
-    crinoid_open(in1, out1, out2)
+    crinoid_open(in1, out1, out2, phred64)
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(sys.argv[0])) +
            '/helpers/qc_plots.R'] + [out1, out2], shell=False)
@@ -44,24 +45,24 @@ def crinoid_comp(curr, all_qc, in1):
     #TODO add ability to create visualizations for initial qc
 
 
-def crinoid_open(in1, out1, out2):
+def crinoid_open(in1, out1, out2, phred64):
     '''
     produce raw counts of nucleotide and qscore occurrences
     '''
     try:
         with gzip.open(in1, 'rt') as f:
-            crinoid(f, out1, out2)
+            crinoid(f, out1, out2, phred64)
     except OSError:
         with open(in1) as f:
-            crinoid(f, out1, out2)
+            crinoid(f, out1, out2, phred64)
 
 
-def crinoid(f, out1, out2):
+def crinoid(f, out1, out2, phred64):
     #TODO avoid using '500' as default max_len
     #TODO add option to evaluate raw file alone (should R fail)
 
     max_len = 500
-    score_ref_dt, score_dt, base_ref_dt, base_dt = dict_maker(max_len)
+    score_ref_dt, score_dt, base_ref_dt, base_dt = dict_maker(max_len, phred64)
 
     y = 0
     for line in f:
@@ -85,11 +86,13 @@ def crinoid(f, out1, out2):
         matrix_print(score_mx, o2)
 
 
-def dict_maker(max_len):
+def dict_maker(max_len, phred64):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
-    score_ref_dt = dict(zip(scores[:41], scores[-int(len(scores)/2):
-                        -int(len(scores)/2)+41]))
+    if phred64:
+        score_ref_dt = dict(zip(scores[31:95], range(0, 43)))
+    else:
+	    score_ref_dt = dict(zip(scores[:43], range(0, 43)))
     score_dt = {i: {j: 0 for j in score_ref_dt.keys()}
                 for i in range(max_len)}
     base_ref_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
@@ -196,5 +199,8 @@ if __name__ == "__main__":
             help='the full path to output directory (optional)')
     parser.add_argument('-a', type=str,
             help='qscores file for visualization (optional)')
+    parser.add_argument('-s', type=str,
+            help='type True for phred 64 samples (default phred 33)')
+
     args = parser.parse_args()
     crinoid_main()
