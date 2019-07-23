@@ -1,6 +1,6 @@
 <a href="https://imgur.com/yllhM4C"><img src="https://i.imgur.com/yllhM4C.png" title="source: imgur.com" /></a>
 
-# ngsComposer: for the next generation of sequencing!
+# ngsComposer: empirically better
 
 Base-call error-filtering and read preprocessing pipeline designed by biologists
 
@@ -44,6 +44,8 @@ From command line, run composer with the specified directory of your project
 ```bash
 $ python3 composer.py -i <path_to_project_directory>
 ```
+
+If this is the first time running the pipeline, you may need to wait for R to install the appropriate packages and dependencies.
 
 ***
 
@@ -91,15 +93,15 @@ auto_trim = 30
 q_min = 30
 q_percent = 95
 ```
-In the above example, a paired library will be expected (**paired = True**) and the maximum number of subprocesses spawned will be 2 (**procs = 2**).  The empty directory '/home/user/project' will contain all resulting filtered data (**alt_dir = '/home/user/project'**). The pipeline will pause after relevant steps (**walkaway = False**) so users can view qc plots and have the option of modifying or bypassing the step. To save disk space, transitional directories will be removed (**rm_transit = True**) and only the final filtered data and any qc stats created in the pipeline will remain. No qc statistics will be created on the raw data in this example (**initial_qc = False**), but for all subsequent steps a summarized version will be created that collapses all R1, R2, and/or single-end reads to provide a helpful overview of the results of a given filtering step (**all_qc = 'summary'**).
+*In the above example, a paired library will be expected (**paired = True**) and the maximum number of subprocesses spawned will be 2 (**procs = 2**).  The empty directory '/home/user/project' will contain all resulting filtered data (**alt_dir = '/home/user/project'**). The pipeline will pause after relevant steps (**walkaway = False**) so users can view qc plots and have the option of modifying or bypassing the step. To save disk space, transitional directories will be removed (**rm_transit = True**) and only the final filtered data and any qc stats created in the pipeline will remain. No qc statistics will be created on the raw data in this example (**initial_qc = False**), but for all subsequent steps a summarized version will be created that collapses all R1, R2, and/or single-end reads to provide a helpful overview of the results of a given filtering step (**all_qc = 'summary'**).*
 
-A buffer sequence of length 6 (**front_trim = 6**) will be trimmed before demultiplexing, which will allow mismatch at a hamming distance of 1 (**mismatch = 1**).
+*A buffer sequence of length 6 (**front_trim = 6**) will be trimmed before demultiplexing, which will allow mismatch at a hamming distance of 1 (**mismatch = 1**).*
 
-In this case, samples were double-digested with AluI and HaeIII and A-tailed before adapter ligation (**R1_bases_ls = ['TCC', 'TCT']** and **R2_bases_ls = ['TCC', 'TCT']**). Only reads containing these motifs will pass to subsequent steps. As the T complement from A-tailing introduces an artificial residue not present in the specimen sequenced, it can simultaneously be removed alongside motif detection (**non_genomic = 1**).
+*In this case, samples were double-digested with AluI and HaeIII and A-tailed before adapter ligation (**R1_bases_ls = ['TCC', 'TCT']** and **R2_bases_ls = ['TCC', 'TCT']**). Only reads containing these motifs will pass to subsequent steps. As the T complement from A-tailing introduces an artificial residue not present in the specimen sequenced, it can simultaneously be removed alongside motif detection (**non_genomic = 1**).*
 
-Automatic end-trimming will be performed on a per-file basis based on qc metrics. Here, bases are removed from the end position until a desired metric (**trim_mode = 'median'**) is at or above a desired Phred score (**auto_trim = 30**).
+*Automatic end-trimming will be performed on a per-file basis based on qc metrics. Here, bases are removed from the end position until a desired metric (**trim_mode = 'median'**) is at or above a desired Phred score (**auto_trim = 30**).*
 
-Only reads that have a Phred score of 30 (**q_min = 30**) acrosss at least 95 percent of the read (**q_percent = 95**) will pass to subsequent steps.
+*Only reads that have a Phred score of 30 (**q_min = 30**) acrosss at least 95 percent of the read (**q_percent = 95**) will pass to subsequent steps.*
 
 
 Alternatively, a configuration file may only need to include necessary components for a run:
@@ -113,7 +115,7 @@ mismatch = 1
 q_min = 30
 q_percent = 95
 ```
-This example will demultiplex paired-end data using a mismatch value of one followed by a threshold filter for reads comprised of base-calls at or above 30 across at least 95 percent of the read.
+*This example will demultiplex paired-end data using a mismatch value of one followed by a threshold filter for reads comprised of base-calls at or above 30 across at least 95 percent of the read.*
 
 ***
 
@@ -135,7 +137,7 @@ C	sample2	sample5	sample7	sample10
 G	sample3	sample5	sample8	sample10
 T	sample4	sample5	sample9	sample10
 ```
-Note that in the example above the reverse barcode "C" corresponds with multiple identical sample names (sample5). While not common practice, ngs-composer accomodates repeated sample names and concatenates accordingly.
+*Note that in the example above the reverse barcode "C" corresponds with multiple identical sample names (sample5). While not common practice, ngs-composer accomodates repeated sample names and concatenates accordingly.*
 
 If reverse barcodes do not require demultiplexing, the barcode file can be set up as follows with "NA" or any other text used as a header in the first row:
 
@@ -166,7 +168,7 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 2_R1.fastq  barcodes_2.txt
 3_R1.fastq  barcodes_2.txt
 ```
-In this example, samples "2_R1.fastq" and "3_R1.fastq" correspond with "barcodes_2.txt"
+*In this example, samples "2_R1.fastq" and "3_R1.fastq" correspond with "barcodes_2.txt"*
 ***
 
 ## License
