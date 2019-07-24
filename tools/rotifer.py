@@ -200,9 +200,9 @@ if __name__ == "__main__":
     parser.add_argument('-r2', type=str,
             help='the full or relative path to R2 fastq file (optional)')
     parser.add_argument('-m1', type=str, nargs='+',
-            help='space separated list of motifs expected in R1')
+            help='space separated list of motifs expected in R1 (no brackets)')
     parser.add_argument('-m2', type=str, nargs='+',
-            help='space separated list of motifs expected in R2')
+            help='space separated list of motifs expected in R2 (no brackets)')
     parser.add_argument('-n', type=int,
             help='number of non-genomic bases to remove from read start (integer)')
     parser.add_argument('-o', type=str,

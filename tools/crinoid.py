@@ -9,9 +9,6 @@ def crinoid_main():
     '''
     standalone, command line entry point to crinoid using stdin
     '''
-    if args.a:
-        visualizer(args.a)
-        sys.exit()
     in1 = args.r1
     if args.o is None:
         proj = os.path.dirname(os.path.abspath(in1))
@@ -22,6 +19,9 @@ def crinoid_main():
     phred64 = False if args.s is None else True
     out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1))
+    if args.a:
+        visualizer(out1, out2)
+        sys.exit()
     subprocess.check_call(['Rscript',
             os.path.abspath(sys.argv[0])[:-17] +
             '/tests/test_packages.R'], shell=False)
@@ -37,7 +37,7 @@ def crinoid_comp(curr, all_qc, in1):
     '''
     out1 = os.path.join(curr, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(curr, 'qscores.' + os.path.basename(in1))
-    crinoid_open(in1, out1, out2)
+    crinoid_open(in1, out1, out2, False)
     if all_qc == 'full':
         subprocess.check_call(['Rscript',
             os.path.dirname(os.path.abspath(sys.argv[0])) +
@@ -198,9 +198,10 @@ if __name__ == "__main__":
     parser.add_argument('-o', type=str,
             help='the full path to output directory (optional)')
     parser.add_argument('-a', type=str,
-            help='qscores file for visualization (optional)')
+            help='create visualizations on existing qscore and nucleotide \
+                raw data (optional, requires -r1 input)')
     parser.add_argument('-s', type=str,
-            help='type True for phred 64 samples (default phred 33)')
+            help='type True for phred 64 samples (optional, default phred 33)')
 
     args = parser.parse_args()
     crinoid_main()

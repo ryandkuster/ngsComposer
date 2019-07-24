@@ -547,8 +547,7 @@ def scallop_end_multi():
         if os.path.exists(os.path.join(c.rm_dirs[-2], 'qc')):
             pass
         elif os.path.exists(os.path.join(c.rm_dirs[-2], 'single', 'qc')):
-            os.mkdir(os.path.join(curr, 'single'))
-            os.mkdir(os.path.join(curr, 'paired'))
+            pass
         else:
             try:
                 crinoid_multi(os.path.join(c.rm_dirs[-2], 'single'),
@@ -562,6 +561,10 @@ def scallop_end_multi():
             pass
         else:
             crinoid_multi(c.proj, c.fastq_ls)
+
+    if os.path.exists(os.path.join(c.rm_dirs[-2], 'single')):
+        os.mkdir(os.path.join(curr, 'single'))
+        os.mkdir(os.path.join(curr, 'paired'))
 
     scallop_end_part = partial(scallop_end, curr, c.auto_trim, c.trim_mode)
     pool_multi(scallop_end_part, c.fastq_ls)
