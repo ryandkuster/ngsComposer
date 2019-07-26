@@ -6,12 +6,21 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
 
 ## Features
 
+- Full start-to-finish pipeline for many library types
 - Few dependencies (Python3 and R)
 - Easy to learn
 - Supports variable length barcodes and dual-indexing
 - Trims buffer sequences and quality filters on a read-by-read basis
 - Accepts project directory of multiple libraries
 - Designed by biologists (please don't run away!)
+
+## Contents
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Configuration](#configuration)
+  - [Demultiplexing](#demultiplexing)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
 
 ## Installation
@@ -29,6 +38,7 @@ Dependencies:
 	reshape
 	Hmisc
 
+For help troubleshooting installation, see the troubleshooting section
 
 ## Usage
 
@@ -40,7 +50,7 @@ Set up your project directory containing the following files:
 
 Optionally, paired end files and even multiple separate libraries can be included in the project directory.
 
-From command line, run composer with the specified directory of your project
+From command line, run ngsComposer with the specified directory of your project
 ```bash
 $ python3 composer.py -i <path_to_project_directory>
 ```
@@ -50,7 +60,7 @@ If this is the first time running the pipeline, you may need to wait for R to in
 ***
 
 ### Configuration
-Using a text editor, save a file containing any of the following variables as a python text file (includes '.py' as file extension) and include it in your project directory.
+Using a text editor, save a file containing any of the following variables as a python script called 'conf.py' (includes '.py' as file extension) and include it in your project directory.
 
 |Variable        |Usage           |Input |
 |:-------------|:-------------|:-------------|
@@ -62,7 +72,7 @@ Using a text editor, save a file containing any of the following variables as a 
 |initial_qc|create initial QC output|True or False|
 |all_qc|perform qc step at each filtering stage (use 'full' to produce visualizations for every file, use 'summary' for a summarized version of the R1, R2, and single reads)|'full' or 'summary' (quotes required)|
 |front_trim|positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence|integer|
-|mismatch|number of mismatches (hamming distance) allowed in barcodes (must include 'index.txt' and barcodes file(s) in project directory; see "Barcode demultiplexing" below)|integer|
+|mismatch|number of mismatches (hamming distance) allowed in barcodes (must include 'index.txt' and barcodes file(s) in project directory; see "Demultiplexing" below)|integer|
 |R1_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
 |R2_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
 |non_genomic|number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)|integer|
@@ -70,6 +80,7 @@ Using a text editor, save a file containing any of the following variables as a 
 |q_percent|percentage of reads >= q_min quality scores|number between 0 and 100|
 |trim_mode|basis to automatically trim 3' ends |'whisker', 'quartile', 'median', or 'mean' (quotes required)|
 |auto_trim|using trim_mode basis, trim read at 3' ends at first position meeting this minimum value|integer between 0 and 40|
+|phred64|defaults to phred33, use True if using phred64 qscores|True or False|
 
 An example configuration file may look like this:
 
@@ -119,7 +130,7 @@ q_percent = 95
 
 ***
 
-### Barcode demultiplexing
+### Demultiplexing
 #### Barcodes file(s)
 Optionally, one or more barcode files may be included in the project directory for demultiplexing. The following files are required at minimum:
 - barcodes_1.txt
@@ -137,7 +148,7 @@ C	sample2	sample5	sample7	sample10
 G	sample3	sample5	sample8	sample10
 T	sample4	sample5	sample9	sample10
 ```
-*Note that in the example above the reverse barcode "C" corresponds with multiple identical sample names (sample5). While not common practice, ngs-composer accomodates repeated sample names and concatenates accordingly.*
+*Note that in the example above the reverse barcode "C" corresponds with multiple identical sample names (sample5). While not common practice, ngsComposer accomodates repeated sample names and concatenates accordingly.*
 
 If reverse barcodes do not require demultiplexing, the barcode file can be set up as follows with "NA" or any other text used as a header in the first row:
 
@@ -170,6 +181,40 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 ```
 *In this example, samples "2_R1.fastq" and "3_R1.fastq" correspond with "barcodes_2.txt"*
 ***
+
+## Troubleshooting
+
+### Python installation
+To view Python version, from the terminal type:
+
+```bash
+$ python3 --version
+```
+
+If python3 is not found, you can try one of the python3 releases from the Python Software Foundation <a href="https://www.python.org/downloads/">downloads page</a>.
+
+Alternatively, a package manager is an easy way to install Python from the terminal. For Ubuntu, Python can be installed directly using apt (replace 'X' with an existing version in the apt repository):
+
+```bash
+$ sudo apt-get update
+$ sudo apt-get install python3.X
+```
+
+### R installation
+To view R version, from the terminal type:
+
+```bash
+$ R --version
+```
+
+To install the newest version of R, see the releases available at the Comprehensive R Archive Network <a href="https://cran.r-project.org/">downloads page</a>.
+
+For Ubuntu, R can be installed directly using apt:
+
+```bash
+$ sudo apt update
+$ sudo apt install r-base
+```
 
 ## License
 
