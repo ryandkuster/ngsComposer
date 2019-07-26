@@ -31,7 +31,12 @@ conf_confirm19 = (font_mod.yellow + '\n\nq_min must be an integer between 0 and 
 conf_confirm20 = (font_mod.yellow + '\n\nq_percent must be an integer between 0 and 100\n'  + font_mod.reset)
 conf_confirm21 = (font_mod.yellow + '\n\nrm_dirs must be True or False\n'  + font_mod.reset)
 conf_confirm22 = (font_mod.yellow + '\n\nmin_start must be an integer\n'  + font_mod.reset)
-conf_confirm23 = (font_mod.yellow + '\n\nphred64 must be True or False\n'  + font_mod.reset)
+conf_confirm23 = (font_mod.yellow + '\n\n\'adapters.txt\', min_start, and adapter_mismatch must be present\n'  + font_mod.reset)
+conf_confirm24 = (font_mod.yellow + '\n\nadapter_mismatch must be an integer\n'  + font_mod.reset)
+conf_confirm25 = (font_mod.yellow + '\n\nphred64 must be True or False\n'  + font_mod.reset)
+
+
+is_fq1 = (font_mod.yellow + '\n\nproject directory should not contain subdirectories\n'  + font_mod.reset)
 
 
 paired_vars = (font_mod.yellow + '\nunexpected paired libraries found\n' + font_mod.reset +
@@ -42,8 +47,9 @@ paired_vars = (font_mod.yellow + '\nunexpected paired libraries found\n' + font_
                font_mod.lightblue + 'number selection > ' + font_mod.reset)
 
 
-nucleotide_test1 = (font_mod.yellow + '\nbarcodes and motifs must be upper-case only' + font_mod.reset)
-nucleotide_test2 = (font_mod.yellow + '\nbarcodes and motifs must consist of A, C, G, or T only' + font_mod.reset)
+nucleotide_test1 = (font_mod.yellow + '\nempty list, sequence motif(s) expected\n' + font_mod.reset)
+nucleotide_test2 = (font_mod.yellow + '\nbarcodes and motifs must be upper-case only\n' + font_mod.reset)
+nucleotide_test3 = (font_mod.yellow + '\nbarcodes and motifs must consist of A, C, G, or T only\n' + font_mod.reset)
 
 
 sep = '#' * 50

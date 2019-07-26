@@ -120,10 +120,22 @@ class Project:
                 raise Exception(msg.conf_confirm20)
         if not isinstance(self.rm_transit, bool):
             raise Exception(msg.conf_confirm21)
-        if self.min_start and not isinstance(self.min_start, int):
-            raise Exception(msg.conf_confirm22)
+        if self.min_start:
+            if not isinstance(self.min_start, int):
+                raise Exception(msg.conf_confirm22)
+            if not self.adapter_mismatch:
+                raise Exception(msg.conf_confirm23)
+            if not os.path.exists(os.path.join(self.proj, 'adapters.txt')):
+                raise Exception(msg.conf_confirm23)
+        if self.adapter_mismatch:
+            if not isinstance(self.adapter_mismatch, int):
+                raise Exception(msg.conf_confirm24)
+            if not self.min_start:
+                raise Exception(msg.conf_confirm23)
+            if not os.path.exists(os.path.join(self.proj, 'adapters.txt')):
+                raise Exception(msg.conf_confirm23)
         if not isinstance(self.phred64, bool):
-            raise Exception(msg.conf_confirm23)
+            raise Exception(msg.conf_confirm25)
 
     def index_reader(self):
         '''
@@ -131,6 +143,10 @@ class Project:
         '''
         adapters = os.path.join(self.proj, 'adapters.txt')
         self.adapters = adapters if os.path.exists(adapters) else ''
+        if self.adapters:
+            with open(self.adapters) as f:
+                adapters_ls = [line.rstrip() for line in f]
+                nucleotide_test(adapters_ls)
         bc_path = os.path.join(self.proj, 'index.txt')
         self.bcs_index = bc_path if os.path.exists(bc_path) else ''
         self.bcs_dict = {}
@@ -164,16 +180,20 @@ class Project:
 
 
 def nucleotide_test(ls):
+    '''
+    test list of sequences for proper formatting
+    '''
+    test = msg.nucleotide_test1
     nuc_ls = (j for i in ls for j in i)
     for i in nuc_ls:
         if i in ['A', 'C', 'G', 'T']:
             test = True
             pass
         elif i.upper() in ['A', 'C', 'G', 'T']:
-            test = msg.nucleotide_test1
+            test = msg.nucleotide_test2
             break
         else:
-            test = msg.nucleotide_test2
+            test = msg.nucleotide_test3
             break
     if test is not True:
         print(test)
@@ -183,6 +203,9 @@ def nucleotide_test(ls):
 
 
 def r_packages():
+    '''
+    test R and packages and install dependencies if needed
+    '''
     try:
         subprocess.check_call(['Rscript', os.path.join(os.path.dirname(
             __file__), 'tests', 'test_packages.R')], shell=False)
@@ -194,14 +217,17 @@ def is_fq(filename):
     '''
     test first read structure if fastq
     '''
-    with open(filename) as f:
-        for i, line in enumerate(f):
-            if i == 0 and line[0] != '@':
-                return
-            if i == 2 and line[0] != '+':
-                return
-            else:
-                return 1
+    try:
+        with open(filename) as f:
+            for i, line in enumerate(f):
+                if i == 0 and line[0] != '@':
+                    return
+                if i == 2 and line[0] != '+':
+                    return
+                else:
+                    return 1
+    except IsADirectoryError:
+        raise Exception(msg.is_fq1)
 
 
 def is_gz(filename):
@@ -342,9 +368,7 @@ def dir_make(title):
     '''
     create new directory when pipeline tools called
     '''
-    # TODO add following at release:
-#    curr = os.path.join(c.proj, str(len(c.rm_dirs)) + '_' + title)
-    curr = os.path.join(c.proj, title)
+    curr = os.path.join(c.proj, str(len(c.rm_dirs)) + '_' + title)
     c.rm_dirs.append(curr)
     os.mkdir(curr)
     return curr
@@ -666,26 +690,6 @@ if __name__ == '__main__':
     c.initialize(args.i)
     import tools.helpers.messages as msg
     c.conf_confirm()
-
-######################################################
-# TODO delete the following (for ease of testing):
-######################################################
-    old_dirs = [os.path.join(c.proj, 'qc'),
-                os.path.join(c.proj, 'trimmed'),
-                os.path.join(c.proj, 'demultiplexed'),
-                os.path.join(c.proj, 'parsed'),
-                os.path.join(c.proj, 'auto_trimmed'),
-                os.path.join(c.proj, 'filtered'),
-                os.path.join(c.proj, 'adapted')]
-    for folder in old_dirs:
-        try:
-            shutil.rmtree(folder)
-            dir_name = os.path.basename(folder)
-            print('\ncomposer is removing the ' + dir_name + ' directory')
-        except FileNotFoundError:
-            pass
-######################################################
-
     c.index_reader()
     c.dir_test()
     r_packages()
@@ -769,9 +773,10 @@ if __name__ == '__main__':
           'paired =', c.paired, '\n',
           'procs =', c.procs, '\n',
           'alt_dir =', c.alt_dir, '\n',
+          'walkaway =', c.walkaway, '\n',
+          'rm_transit =', c.rm_transit, '\n',
           'initial_qc =', c.initial_qc, '\n',
           'all_qc =', c.all_qc, '\n',
-          'walkaway =', c.walkaway, '\n',
           'front_trim =', c.front_trim, '\n',
           'bcs_index =', c.bcs_index, '\n',
           'mismatch =', c.mismatch, '\n',
@@ -784,4 +789,5 @@ if __name__ == '__main__':
           'q_percent =', c.q_percent, '\n',
           'adapters =',  c.adapters, '\n',
           'min_start =',  c.min_start, '\n',
-          'rm_transit =', c.rm_transit,  '\n')
+          'adapter_mismatch =', c.adapter_mismatch, '\n',
+          'phred64 =', c.phred64, '\n')

@@ -1,4 +1,4 @@
-# EARLY RELEASE VERSION: please use at your own discretion, ngsComposer comes with no warranty and users assume responsibilty for data wrangling/mangling :)
+# EARLY RELEASE VERSION: please use at your own discretion
 
 <a href="https://imgur.com/yllhM4C"><img src="https://i.imgur.com/yllhM4C.png" title="source: imgur.com" /></a>
 
@@ -70,7 +70,7 @@ Using a text editor, save a file containing any of the following variables as a 
 |paired|if fastq files should be treated as paired ends|True or False|
 |procs|choose maximum number of subprocesses that can run simultaneously|integer|
 |alt_dir|optional, full path to empty directory for file storage|e.g. '/path/to/dir/' (quotes required)|
-|walkaway|run from beginning to end without pausing at qc steps (use True to run without interruption, use False to initiate user-controlled walkthrough mode)|True or False|
+|walkaway|run from beginning to end without pausing at qc steps (use True to run without interruption, use False to initiate user-controlled walkthrough mode: requires all_qc)|True or False|
 |rm_transit|optional, remove each transitional file folder to save space|True or False|
 |initial_qc|create initial QC output|True or False|
 |all_qc|perform qc step at each filtering stage (use 'full' to produce visualizations for every file, use 'summary' for a summarized version of the R1, R2, and single reads)|'full' or 'summary' (quotes required)|
@@ -79,12 +79,12 @@ Using a text editor, save a file containing any of the following variables as a 
 |R1_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
 |R2_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
 |non_genomic|number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)|integer|
-|q_min|quality score minimum (Phred value 0-40) applied to q_percent variable|integer between 0 and 40|
-|q_percent|percentage of reads >= q_min quality scores|number between 0 and 100|
 |trim_mode|basis to automatically trim 3' ends |'whisker', 'quartile', 'median', or 'mean' (quotes required)|
 |auto_trim|using trim_mode basis, trim read at 3' ends at first position meeting this minimum value|integer between 0 and 40|
-|min_start|number of positions from end of read to begin adapter alignment|integer|
-|adapter_mismatch|number of mismatches (hamming distance) allowed in adapters (must include 'adapters.txt' file in project directory)|integer|
+|q_min|quality score minimum (Phred value 0-40) applied to q_percent variable|integer between 0 and 40|
+|q_percent|percentage of reads >= q_min quality scores|number between 0 and 100|
+|min_start|number of positions from end of read to begin adapter alignment (requires 'adapters.txt' and adapter_mismatch)|integer|
+|adapter_mismatch|number of mismatches (hamming distance) allowed in adapters (requires 'adapters.txt' and min_start)|integer|
 |phred64|defaults to phred33, use True if using phred64 qscores|True or False|
 
 An example configuration file may look like this:
