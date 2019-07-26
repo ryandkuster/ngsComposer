@@ -97,7 +97,7 @@ if __name__ == "__main__":
     parser.add_argument('-r1', type=str,
             help='the full or relative path to R1 or R2 fastq file')
     parser.add_argument('-a', type=str,
-            help='adapter sequence')
+            help='the full or relative path to adapter sequences file')
     parser.add_argument('-n', type=int,
             help='number of bases from end of read to begin adapter alignment')
     parser.add_argument('-m', type=int,

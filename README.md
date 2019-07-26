@@ -1,3 +1,5 @@
+# EARLY RELEASE VERSION: please use at your own discretion, ngsComposer comes with no warranty and users assume responsibilty for data wrangling/mangling :)
+
 <a href="https://imgur.com/yllhM4C"><img src="https://i.imgur.com/yllhM4C.png" title="source: imgur.com" /></a>
 
 # ngsComposer: empirically better
@@ -81,6 +83,8 @@ Using a text editor, save a file containing any of the following variables as a 
 |q_percent|percentage of reads >= q_min quality scores|number between 0 and 100|
 |trim_mode|basis to automatically trim 3' ends |'whisker', 'quartile', 'median', or 'mean' (quotes required)|
 |auto_trim|using trim_mode basis, trim read at 3' ends at first position meeting this minimum value|integer between 0 and 40|
+|min_start|number of positions from end of read to begin adapter alignment|integer|
+|adapter_mismatch|number of mismatches (hamming distance) allowed in adapters (must include 'adapters.txt' file in project directory)|integer|
 |phred64|defaults to phred33, use True if using phred64 qscores|True or False|
 
 An example configuration file may look like this:
@@ -182,6 +186,32 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 ```
 *In this example, samples "2_R1.fastq" and "3_R1.fastq" correspond with "barcodes_2.txt"*
 ***
+### Adapters
+#### Adapters file
+Optionally, 'adapters.txt' may be included in the project directory for recognition and removal of adapters.
+
+**adapters.txt**
+```
+CGCTCAGTTC
+TATCTGACCT
+ATATGAGACG
+CTTATGGAAT
+TAATCTCGTC
+GCGCGATGTT
+AGAGCACTAG
+TGCCTTGATC
+CTACTCAGTC
+TCGTCTGACT
+GAACATACGG
+CCTATGACTC
+TAATGGCAAG
+GTGCCGCTTC
+CGGCAATGGA
+GCCGTAACCG
+AACCATTCTC 
+```
+*Each of the above sample adapters is presented in 5' to 3' orientation and may have restriction motifs added if desired. Porifera.py creates all reverse-complements before alignment*
+
 
 ### Standalone
 All tools available in the ngsComposer pipeline can be called individually from the command line. Please see the <a href="https://github.com/ryandkuster/composer/tree/master/tools">ngsComposer Standalone Tools page</a> for usage.

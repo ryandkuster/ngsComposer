@@ -42,9 +42,11 @@ class Project:
         self.auto_trim = False
         self.q_min = False
         self.q_percent = False
-        self.dapt_path = ''
+        self.adapters = ''
         self.min_start = False
+        self.adapter_mismatch = False
         self.rm_transit = False
+        self.phred64 = False
 
     def initialize(self, proj):
         '''
@@ -62,70 +64,73 @@ class Project:
         '''
         test user-input from configuration file
         '''
-        if self.paired not in [True, False]:
-            raise Exception(msg.ex1)
+        if not isinstance(self.paired, bool):
+            raise Exception(msg.conf_confirm1)
         if self.procs < 1 or not isinstance(self.procs, int):
-            raise Exception(msg.ex2)
+            raise Exception(msg.conf_confirm2)
         if self.alt_dir and not os.path.exists(self.alt_dir):
-            raise Exception(msg.ex3)
-        if self.initial_qc and self.initial_qc not in [True, False]:
-            raise Exception(msg.ex4)
+            raise Exception(msg.conf_confirm3)
+        if not isinstance(self.initial_qc, bool):
+            raise Exception(msg.conf_confirm4)
         if self.all_qc and self.all_qc not in ['full', 'summary']:
-            raise Exception(msg.ex5)
-        if self.walkaway not in [True, False]:
-            raise Exception(msg.ex6)
+            raise Exception(msg.conf_confirm5)
+        if not isinstance(self.walkaway, bool):
+            raise Exception(msg.conf_confirm6)
         if self.walkaway is False and not self.all_qc:
-            raise Exception(msg.ex7)
+            raise Exception(msg.conf_confirm7)
         if self.front_trim and not isinstance(self.front_trim, int):
-            raise Exception(msg.ex8)
+            raise Exception(msg.conf_confirm8)
         if self.front_trim and self.front_trim < 1:
-            raise Exception(msg.ex9)
+            raise Exception(msg.conf_confirm9)
         if self.mismatch:
             if not os.path.exists(os.path.join(self.proj, 'index.txt')):
-                raise Exception(msg.ex10)
+                raise Exception(msg.conf_confirm10)
             if not isinstance(self.mismatch, int) or self.mismatch < 0:
-                raise Exception(msg.ex11)
+                raise Exception(msg.conf_confirm11)
         if self.R1_bases_ls:
             if not isinstance(self.R1_bases_ls, list):
-                raise Exception(msg.ex12)
+                raise Exception(msg.conf_confirm12)
             nucleotide_test(self.R1_bases_ls)
         if self.R2_bases_ls:
             if not isinstance(self.R2_bases_ls, list):
-                raise Exception(msg.ex13)
+                raise Exception(msg.conf_confirm13)
             nucleotide_test(self.R2_bases_ls)
         if self.non_genomic:
             if not isinstance(self.non_genomic, int) or self.non_genomic < 1:
-                raise Exception(msg.ex14)
-
-        #TODO continue with exceptions...
+                raise Exception(msg.conf_confirm14)
         if self.auto_trim or self.trim_mode:
-            assert isinstance(self.auto_trim, int)
-            assert 0 <= self.auto_trim <= 40 and self.auto_trim is not True
-            assert isinstance(self.trim_mode, str)
-            assert self.trim_mode in ['whisker', 'quartile', 'median', 'mean']
-            if self.auto_trim and self.q_percent:
-                pass
-            else:
-                sys.exit(msg.trim_vars)
+            if not self.auto_trim or not self.trim_mode:
+                raise Exception(msg.conf_confirm15)
+            if not isinstance(self.auto_trim, int) or self.auto_trim is True:
+                raise Exception(msg.conf_confirm16)
+            if not 0 <= self.auto_trim <= 42:
+                raise Exception(msg.conf_confirm16)
+            if self.trim_mode not in ['whisker', 'quartile', 'median', 'mean']:
+                raise Exception(msg.conf_confirm17)
         if self.q_min or self.q_percent:
-            assert isinstance(self.q_min, int)
-            assert isinstance(self.q_percent, int)
-            assert 0 <= self.q_min <= 40 and self.q_min is not True
-            assert 0 <= self.q_percent <= 100 and self.q_percent is not True
-            if self.q_min and self.q_percent:
-                pass
-            else:
-                sys.exit(msg.q_vars)
-        if self.min_start:
-            assert isinstance(self.min_start, int)
-        assert self.rm_transit is True or self.rm_transit is False
+            if not self.q_min or not self.q_percent:
+                raise Exception(msg.conf_confirm18)
+            if not isinstance(self.q_min, int):
+                raise Exception(msg.conf_confirm19)
+            if not 0 <= self.q_min <= 42:
+                raise Exception(msg.conf_confirm19)
+            if not isinstance(self.q_percent, int):
+                raise Exception(msg.conf_confirm20)
+            if not 0 <= self.q_percent <= 100:
+                raise Exception(msg.conf_confirm20)
+        if not isinstance(self.rm_transit, bool):
+            raise Exception(msg.conf_confirm21)
+        if self.min_start and not isinstance(self.min_start, int):
+            raise Exception(msg.conf_confirm22)
+        if not isinstance(self.phred64, bool):
+            raise Exception(msg.conf_confirm23)
 
     def index_reader(self):
         '''
         open bcs_index and create dictionary of associated bc keyfiles
         '''
-        dapt_path = os.path.join(self.proj, 'adapters.txt')
-        self.dapt_path = dapt_path if os.path.exists(dapt_path) else ''
+        adapters = os.path.join(self.proj, 'adapters.txt')
+        self.adapters = adapters if os.path.exists(adapters) else ''
         bc_path = os.path.join(self.proj, 'index.txt')
         self.bcs_index = bc_path if os.path.exists(bc_path) else ''
         self.bcs_dict = {}
@@ -148,7 +153,7 @@ class Project:
         for filename in os.listdir(self.proj):
             if filename == os.path.basename(self.bcs_index):
                 pass
-            elif filename == os.path.basename(self.dapt_path):
+            elif filename == os.path.basename(self.adapters):
                 pass
             elif os.path.join(self.proj, filename) in self.bcs_dict.values():
                 pass
@@ -165,17 +170,16 @@ def nucleotide_test(ls):
             test = True
             pass
         elif i.upper() in ['A', 'C', 'G', 'T']:
-            test = msg.nucs1
+            test = msg.nucleotide_test1
             break
         else:
-            test = msg.nucs2
+            test = msg.nucleotide_test2
             break
     if test is not True:
-        #TODO make this error an exception message
         print(test)
         if not c.bypass:
             sys.exit()
-        raise AssertionError
+        raise Exception
 
 
 def r_packages():
@@ -438,13 +442,13 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
         return temp_ls
 
     while True:
-        status = msg.walk2 if not c.walkaway else msg.walk3
+        status = msg.walkthrough2 if not c.walkaway else msg.walkthrough3
         print('\nwalkthrough mode is ' + status)
         print('\nplease check the qc folders in ' + c.rm_dirs[-1])
         print('\nvariables to modify:')
         for k, v in kwargs.items():
             print('\n' + k + ' : ' + str(v))
-        choice1 = input(msg.walk1)
+        choice1 = input(msg.walkthrough1)
         if choice1 == '1':
             return temp_ls
         elif choice1 == '3':
@@ -479,7 +483,7 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
             setattr(c, k, v_new)
         try:
             c.conf_confirm()
-            choice2 = input(msg.walk4)
+            choice2 = input(msg.walkthrough4)
             if choice2 == '1':
                 shutil.rmtree(c.rm_dirs[-1])
                 c.rm_dirs.pop()
@@ -630,8 +634,8 @@ def porifera_multi():
             os.mkdir(os.path.join(curr, 'single'))
             os.mkdir(os.path.join(curr, 'paired'))
 
-    porifera_part = partial(porifera_comp, curr, c.dapt_path, c.min_start,
-                            c.mismatch)
+    porifera_part = partial(porifera_comp, curr, c.adapters, c.min_start,
+                            c.adapter_mismatch)
     pool_multi(porifera_part, c.fastq_ls)
     if c.singles_ls:
         pool_multi(porifera_part, c.singles_ls)
@@ -643,16 +647,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
         '#' * 50 + '\n' +
-        'ngs-composer is an empiracal, base-call filtering ' +
+        'ngs-composer is an empirical, base-call filtering ' +
         'pipeline for preprocessing fastq libraries\n\n' +
         'basic usage: python3 composer.py -i <path_to_project_directory>\n\n' +
         'pipeline tools may be called individually from tools folder:\n\n' +
+        '    crinoid.py  - qc stats\n' +
         '    scallop.py  - trimming\n' +
         '    anemone.py  - demultiplexing\n' +
         '    rotifer.py  - motif detection\n' +
         '    krill.py    - quality filtering\n' +
         '    porifera.py - adapter removal\n\n' +
-        'see https://github.com/ryandkuster/composer for full usage notes\n\n' +
+        'see https://github.com/ryandkuster/ngs-composer for full usage notes\n\n' +
         ''), formatter_class=RawTextHelpFormatter)
     parser.add_argument('-i', type=str, help='the full or relative path to ' +
         'the project directory')
@@ -754,7 +759,7 @@ if __name__ == '__main__':
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
-    if c.dapt_path:
+    if c.adapters:
         print(msg.porf_title)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = porifera_multi()
         if c.rm_transit is True:
@@ -777,6 +782,6 @@ if __name__ == '__main__':
           'trim_mode =', c.trim_mode, '\n',
           'q_min =', c.q_min, '\n',
           'q_percent =', c.q_percent, '\n',
-          'dapt_path =',  c.dapt_path, '\n',
+          'adapters =',  c.adapters, '\n',
           'min_start =',  c.min_start, '\n',
           'rm_transit =', c.rm_transit,  '\n')

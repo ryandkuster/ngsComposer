@@ -1,5 +1,3 @@
-<a href="https://imgur.com/uQ0kCRk"><img src="https://i.imgur.com/uQ0kCRk.png" title="source: imgur.com" /></a>
-
 # ngsComposer standalone tools
 
 A guide to using the individual tools in the ngsComposer pipeline
