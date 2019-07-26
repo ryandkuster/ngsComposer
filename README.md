@@ -19,6 +19,7 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
 - [Usage](#usage)
   - [Configuration](#configuration)
   - [Demultiplexing](#demultiplexing)
+  - [Standalone Tools](#standalone)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 
@@ -181,6 +182,9 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 ```
 *In this example, samples "2_R1.fastq" and "3_R1.fastq" correspond with "barcodes_2.txt"*
 ***
+
+### Standalone
+All tools available in the ngsComposer pipeline can be called individually from the command line. Please see the <a href="https://github.com/ryandkuster/composer/tree/master/tools">ngsComposer Standalone Tools page</a> for usage.
 
 ## Troubleshooting
 
