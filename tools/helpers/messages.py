@@ -9,6 +9,29 @@ class font_mod:
     bold = '\u001b[1m'
     reset = '\u001b[0m'
 
+ex1 = (font_mod.yellow + 'paired must be True or False'  + font_mod.reset)
+ex2 = (font_mod.yellow + 'procs must be an integer >= 1'  + font_mod.reset)
+ex3 = (font_mod.yellow + 'path to alt_dir not found'  + font_mod.reset)
+ex4 = (font_mod.yellow + 'initial_qc must be True or False'  + font_mod.reset)
+ex5 = (font_mod.yellow + 'all_qc must be False, \'full\', or \'summary\' (quotes required)'  + font_mod.reset)
+ex6 = (font_mod.yellow + 'walkaway must be True or False'  + font_mod.reset)
+ex7 = (font_mod.yellow + 'all_qc must be defined for walkthrough mode'  + font_mod.reset)
+ex8 = (font_mod.yellow + 'front_trim must be an integer'  + font_mod.reset)
+ex9 = (font_mod.yellow + 'front_trim can\'t be less than 1'  + font_mod.reset)
+ex10 = (font_mod.yellow + 'mismatch defined, expected \'index.txt\' in project directory' + font_mod.reset)
+ex11 = (font_mod.yellow + 'mismatch must be an integer >= 0'  + font_mod.reset)
+ex12 = (font_mod.yellow + 'R1_bases_ls must be a list of motifs (quotes and brackets required)'  + font_mod.reset)
+ex13 = (font_mod.yellow + 'R2_bases_ls must be a list of motifs (quotes and brackets required)'  + font_mod.reset)
+ex14 = (font_mod.yellow + 'non_genomic must be an integer >= 1'  + font_mod.reset)
+ex15 = (font_mod.yellow + ''  + font_mod.reset)
+ex16 = (font_mod.yellow + ''  + font_mod.reset)
+ex17 = (font_mod.yellow + ''  + font_mod.reset)
+ex18 = (font_mod.yellow + ''  + font_mod.reset)
+ex19 = (font_mod.yellow + ''  + font_mod.reset)
+ex20 = (font_mod.yellow + ''  + font_mod.reset)
+
+
+
 
 conf_end = (font_mod.yellow + '\nplease use either manual or auto end trim' + font_mod.reset)
 q_vars = (font_mod.yellow + '\nboth q_min and q_percent variables must be defined' + font_mod.reset)

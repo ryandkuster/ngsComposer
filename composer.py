@@ -62,32 +62,42 @@ class Project:
         '''
         test user-input from configuration file
         '''
-        assert self.paired is True or self.paired is False
-        assert self.procs >= 1
-        if self.alt_dir:
-            assert os.path.exists(self.alt_dir)
-        if self.initial_qc:
-            assert self.initial_qc is True
-        if self.all_qc:
-            assert self.all_qc in ['full', 'summary']
-        if self.walkaway:
-            assert self.walkaway is True
-        else:
-            assert self.all_qc
-        if self.front_trim:
-            assert isinstance(self.front_trim, int)
-            assert self.front_trim > 0
+        if self.paired not in [True, False]:
+            raise Exception(msg.ex1)
+        if self.procs < 1 or not isinstance(self.procs, int):
+            raise Exception(msg.ex2)
+        if self.alt_dir and not os.path.exists(self.alt_dir):
+            raise Exception(msg.ex3)
+        if self.initial_qc and self.initial_qc not in [True, False]:
+            raise Exception(msg.ex4)
+        if self.all_qc and self.all_qc not in ['full', 'summary']:
+            raise Exception(msg.ex5)
+        if self.walkaway not in [True, False]:
+            raise Exception(msg.ex6)
+        if self.walkaway is False and not self.all_qc:
+            raise Exception(msg.ex7)
+        if self.front_trim and not isinstance(self.front_trim, int):
+            raise Exception(msg.ex8)
+        if self.front_trim and self.front_trim < 1:
+            raise Exception(msg.ex9)
         if self.mismatch:
-            assert os.path.exists(os.path.join(self.proj, 'index.txt'))
-            assert isinstance(self.mismatch, int)
+            if not os.path.exists(os.path.join(self.proj, 'index.txt')):
+                raise Exception(msg.ex10)
+            if not isinstance(self.mismatch, int) or self.mismatch < 0:
+                raise Exception(msg.ex11)
         if self.R1_bases_ls:
-            assert isinstance(self.R1_bases_ls, list)
+            if not isinstance(self.R1_bases_ls, list):
+                raise Exception(msg.ex12)
             nucleotide_test(self.R1_bases_ls)
         if self.R2_bases_ls:
-            assert isinstance(self.R2_bases_ls, list)
+            if not isinstance(self.R2_bases_ls, list):
+                raise Exception(msg.ex13)
             nucleotide_test(self.R2_bases_ls)
         if self.non_genomic:
-            assert isinstance(self.non_genomic, int)
+            if not isinstance(self.non_genomic, int) or self.non_genomic < 1:
+                raise Exception(msg.ex14)
+
+        #TODO continue with exceptions...
         if self.auto_trim or self.trim_mode:
             assert isinstance(self.auto_trim, int)
             assert 0 <= self.auto_trim <= 40 and self.auto_trim is not True
@@ -161,6 +171,7 @@ def nucleotide_test(ls):
             test = msg.nucs2
             break
     if test is not True:
+        #TODO make this error an exception message
         print(test)
         if not c.bypass:
             sys.exit()
@@ -477,7 +488,7 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
                 return temp_ls
             else:
                 print('\nselect an option from the list\n')
-        except AssertionError:
+        except Exception:
             print('\nnot a valid entry\n')
 
 
