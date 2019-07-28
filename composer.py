@@ -8,6 +8,7 @@ from argparse import RawTextHelpFormatter
 from functools import partial
 from multiprocessing import Pool
 
+import tools.helpers.messages as msg
 from tools.anemone import anemone_comp, bc_reader, bc_test
 from tools.crinoid import combine_matrix, crinoid_comp
 from tools.krill import krill_comp
@@ -179,6 +180,17 @@ class Project:
                 self.fastq_ls.append(os.path.join(self.proj, filename))
 
 
+def r_packages():
+    '''
+    test R and packages and install dependencies if needed
+    '''
+    try:
+        subprocess.check_call(['Rscript', os.path.join(os.path.dirname(
+            __file__), 'tests', 'test_packages.R')], shell=False)
+    except FileNotFoundError:
+        sys.exit('please install latest version of R')
+
+
 def nucleotide_test(ls):
     '''
     test list of sequences for proper formatting
@@ -200,17 +212,6 @@ def nucleotide_test(ls):
         if not c.bypass:
             sys.exit()
         raise Exception
-
-
-def r_packages():
-    '''
-    test R and packages and install dependencies if needed
-    '''
-    try:
-        subprocess.check_call(['Rscript', os.path.join(os.path.dirname(
-            __file__), 'tests', 'test_packages.R')], shell=False)
-    except FileNotFoundError:
-        sys.exit('please install latest version of R')
 
 
 def is_fq(filename):
@@ -445,82 +446,6 @@ def concater(curr):
                     os.remove(i)
 
 
-def walkthrough(curr, tool, temp_ls, **kwargs):
-    '''
-    query user for modifying or accepting current step in pipeline
-    '''
-    c.bypass = True
-    try:
-        crinoid_multi(os.path.join(curr, 'single'), temp_ls[0])
-        crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
-    except FileNotFoundError:
-        crinoid_multi(curr, temp_ls[1])
-
-    if len(temp_ls[2]) >= 1:
-        combine_matrix(temp_ls[2], 'R1_summary.txt')
-    if len(temp_ls[3]) >= 1:
-        combine_matrix(temp_ls[3], 'R2_summary.txt')
-    if len(temp_ls[0]) >= 1:
-        combine_matrix(temp_ls[0], 'singles_summary.txt')
-
-    if c.walkaway:
-        return temp_ls
-
-    while True:
-        status = msg.walkthrough2 if not c.walkaway else msg.walkthrough3
-        print('\nwalkthrough mode is ' + status)
-        print('\nplease check the qc folders in ' + c.rm_dirs[-1])
-        print('\nvariables to modify:')
-        for k, v in kwargs.items():
-            print('\n' + k + ' : ' + str(v))
-        choice1 = input(msg.walkthrough1)
-        if choice1 == '1':
-            return temp_ls
-        elif choice1 == '3':
-            shutil.rmtree(c.rm_dirs[-1])
-            c.rm_dirs.pop()
-            for k, v in kwargs.items():
-                v = False
-                setattr(c, k, v)
-            return [c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls]
-        elif choice1 == '4':
-            c.walkaway = True if c.walkaway is False else False
-        elif choice1 == '5':
-            sys.exit('\nngs-composer is now exiting')
-        elif choice1 == '2':
-            break
-        else:
-            print('\nselect an option from the list\n')
-
-    while True:
-        for k, v in kwargs.items():
-            print('\ncurrent value for ' + k + ' is ' + str(v))
-            v_new = input('press enter to keep current value or input new ' +
-                          'value for ' + k + '? > ')
-            if v_new.startswith('['):
-                v_new = v_new.strip('[\']').split(', ')
-            elif v_new == '':
-                v_new = v
-            elif v_new == 'False':
-                v_new = False
-            elif any(i.isdigit() for i in v_new):
-                v_new = int(v_new)
-            setattr(c, k, v_new)
-        try:
-            c.conf_confirm()
-            choice2 = input(msg.walkthrough4)
-            if choice2 == '1':
-                shutil.rmtree(c.rm_dirs[-1])
-                c.rm_dirs.pop()
-                print('\nrerunning step with updated variables...')
-                temp_ls = tool()
-                return temp_ls
-            else:
-                print('\nselect an option from the list\n')
-        except Exception:
-            print('\nnot a valid entry\n')
-
-
 def crinoid_multi(proj, ls):
     '''
     create user-defined subprocesses to produce base-call summary
@@ -669,6 +594,82 @@ def porifera_multi():
     return temp_ls
 
 
+def walkthrough(curr, tool, temp_ls, **kwargs):
+    '''
+    query user for modifying or accepting current step in pipeline
+    '''
+    c.bypass = True
+    try:
+        crinoid_multi(os.path.join(curr, 'single'), temp_ls[0])
+        crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
+    except FileNotFoundError:
+        crinoid_multi(curr, temp_ls[1])
+
+    if len(temp_ls[2]) >= 1:
+        combine_matrix(temp_ls[2], 'R1_summary.txt')
+    if len(temp_ls[3]) >= 1:
+        combine_matrix(temp_ls[3], 'R2_summary.txt')
+    if len(temp_ls[0]) >= 1:
+        combine_matrix(temp_ls[0], 'singles_summary.txt')
+
+    if c.walkaway:
+        return temp_ls
+
+    while True:
+        status = msg.walkthrough2 if not c.walkaway else msg.walkthrough3
+        print('\nwalkthrough mode is ' + status)
+        print('\nplease check the qc folders in ' + c.rm_dirs[-1])
+        print('\nvariables to modify:')
+        for k, v in kwargs.items():
+            print('\n' + k + ' : ' + str(v))
+        choice1 = input(msg.walkthrough1)
+        if choice1 == '1':
+            return temp_ls
+        elif choice1 == '3':
+            shutil.rmtree(c.rm_dirs[-1])
+            c.rm_dirs.pop()
+            for k, v in kwargs.items():
+                v = False
+                setattr(c, k, v)
+            return [c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls]
+        elif choice1 == '4':
+            c.walkaway = True if c.walkaway is False else False
+        elif choice1 == '5':
+            sys.exit('\nngs-composer is now exiting')
+        elif choice1 == '2':
+            break
+        else:
+            print('\nselect an option from the list\n')
+
+    while True:
+        for k, v in kwargs.items():
+            print('\ncurrent value for ' + k + ' is ' + str(v))
+            v_new = input('press enter to keep current value or input new ' +
+                          'value for ' + k + '? > ')
+            if v_new.startswith('['):
+                v_new = v_new.strip('[\']').split(', ')
+            elif v_new == '':
+                v_new = v
+            elif v_new == 'False':
+                v_new = False
+            elif any(i.isdigit() for i in v_new):
+                v_new = int(v_new)
+            setattr(c, k, v_new)
+        try:
+            c.conf_confirm()
+            choice2 = input(msg.walkthrough4)
+            if choice2 == '1':
+                shutil.rmtree(c.rm_dirs[-1])
+                c.rm_dirs.pop()
+                print('\nrerunning step with updated variables...')
+                temp_ls = tool()
+                return temp_ls
+            else:
+                print('\nselect an option from the list\n')
+        except Exception:
+            print('\nnot a valid entry\n')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
@@ -690,7 +691,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     c = Project()
     c.initialize(args.i)
-    import tools.helpers.messages as msg
     c.conf_confirm()
     c.index_reader()
     c.dir_test()
