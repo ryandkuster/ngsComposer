@@ -85,7 +85,7 @@ Using a text editor, save a file containing any of the following variables as a 
 |q_percent|percentage of reads >= q_min quality scores|number between 0 and 100|
 |min_start|number of positions from end of read to begin adapter alignment (requires 'adapters.txt' and adapter_mismatch)|integer|
 |adapter_mismatch|number of mismatches (hamming distance) allowed in adapters (requires 'adapters.txt' and min_start)|integer|
-|phred64|defaults to phred33, use True if using phred64 qscores|True or False|
+|p64|defaults to phred+33, use True if using phred+64 qscores|True or False|
 
 An example configuration file may look like this:
 

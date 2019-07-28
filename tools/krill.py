@@ -18,17 +18,18 @@ def krill_main():
         proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
+    p64 = args.s if args.s else False
     pe_1 = os.path.join(proj, 'pe.' + os.path.basename(in1))
     se_1 = os.path.join(proj, 'se.' + os.path.basename(in1))
     if in2:
         pe_2 = os.path.join(proj, 'pe.' + os.path.basename(in2))
         se_2 = os.path.join(proj, 'se.' + os.path.basename(in2))
-        krill_open(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2)
+        krill_open(q_min, q_percent, p64, in1, in2, pe_1, pe_2, se_1, se_2)
     else:
-        krill_single_open(q_min, q_percent, in1, se_1)
+        krill_single_open(q_min, q_percent, p64, in1, se_1)
 
 
-def krill_comp(in1_ls, in2_ls, q_min, q_percent, curr, in1):
+def krill_comp(in1_ls, in2_ls, q_min, q_percent, p64, curr, in1):
     '''
     composer entry point to krill
     '''
@@ -38,13 +39,13 @@ def krill_comp(in1_ls, in2_ls, q_min, q_percent, curr, in1):
         in2 = in2_ls[in1_ls.index(in1)]
         pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
         se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
-        krill_open(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2)
+        krill_open(q_min, q_percent, p64, in1, in2, pe_1, pe_2, se_1, se_2)
     except (IndexError, ValueError) as e:
         se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
-        krill_single_open(q_min, q_percent, in1, se_1)
+        krill_single_open(q_min, q_percent, p64, in1, se_1)
 
 
-def krill_open(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2):
+def krill_open(q_min, q_percent, p64, in1, in2, pe_1, pe_2, se_1, se_2):
     '''
     quality filter test for single and paired-end reads
     '''
@@ -54,21 +55,23 @@ def krill_open(q_min, q_percent, in1, in2, pe_1, pe_2, se_1, se_2):
                 open(pe_2, "w") as pe_o2,\
                 open(se_1, "w") as se_o1,\
                 open(se_2, "w") as se_o2:
-            krill(q_min, q_percent, f1, f2, pe_o1, pe_o2, se_o1, se_o2)
+            krill(q_min, q_percent, p64, f1, f2, pe_o1, pe_o2, se_o1, se_o2)
     except OSError:
         with open(in1) as f1, open(in2) as f2,\
                 open(pe_1, "w") as pe_o1,\
                 open(pe_2, "w") as pe_o2,\
                 open(se_1, "w") as se_o1,\
                 open(se_2, "w") as se_o2:
-            krill(q_min, q_percent, f1, f2, pe_o1, pe_o2, se_o1, se_o2)
+            krill(q_min, q_percent, p64, f1, f2, pe_o1, pe_o2, se_o1, se_o2)
 
 
-def krill(q_min, q_percent, f1, f2, pe_o1, pe_o2, se_o1, se_o2):
+def krill(q_min, q_percent, p64, f1, f2, pe_o1, pe_o2, se_o1, se_o2):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
-    val = dict(zip(scores[:int(len(scores)/2)],
-                   scores[-int(len(scores)/2):]))
+    if p64:
+        val = dict(zip(scores[31:95], range(0, 43)))
+    else:
+        val = dict(zip(scores[:43], range(0, 43)))
     y, entry1, entry2 = 0, "", ""
     for line1, line2 in zip(f1, f2):
         y += 1
@@ -91,23 +94,25 @@ def krill(q_min, q_percent, f1, f2, pe_o1, pe_o2, se_o1, se_o2):
             y, entry1, entry2 = 0, "", ""
 
 
-def krill_single_open(q_min, q_percent, in1, se_1):
+def krill_single_open(q_min, q_percent, p64, in1, se_1):
     '''
     quality filter test for single-end reads
     '''
     try:
         with gzip.open(in1, 'rt') as f1, open(se_1, "w") as se_o1:
-            krill_single(q_min, q_percent, f1, se_o1)
+            krill_single(q_min, q_percent, p64, f1, se_o1)
     except OSError:
         with open(in1) as f1, open(se_1, "w") as se_o1:
-            krill_single(q_min, q_percent, f1, se_o1)
+            krill_single(q_min, q_percent, p64, f1, se_o1)
 
 
-def krill_single(q_min, q_percent, f1, se_o1):
+def krill_single(q_min, q_percent, p64, f1, se_o1):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
-    val = dict(zip(scores[:int(len(scores)/2)],
-               scores[-int(len(scores)/2):]))
+    if p64:
+        val = dict(zip(scores[31:95], range(0, 43)))
+    else:
+        val = dict(zip(scores[:43], range(0, 43)))
     y, entry1 = 0, ""
     for line1 in f1:
         y += 1
@@ -146,5 +151,7 @@ if __name__ == "__main__":
             help='the percent frequency minimum qscore must occur per read (integer)')
     parser.add_argument('-o', type=str,
             help='the full path to output directory (optional)')
+    parser.add_argument('-s', type=str,
+            help='type True for phred 64 samples (optional, default phred 33)')
     args = parser.parse_args()
     krill_main()

@@ -46,7 +46,7 @@ class Project:
         self.min_start = False
         self.adapter_mismatch = False
         self.rm_transit = False
-        self.phred64 = False
+        self.p64 = False
 
     def initialize(self, proj):
         '''
@@ -134,7 +134,7 @@ class Project:
                 raise Exception(msg.conf_confirm23)
             if not os.path.exists(os.path.join(self.proj, 'adapters.txt')):
                 raise Exception(msg.conf_confirm23)
-        if not isinstance(self.phred64, bool):
+        if not isinstance(self.p64, bool):
             raise Exception(msg.conf_confirm25)
 
     def index_reader(self):
@@ -458,6 +458,7 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
 
     if len(temp_ls[2]) >= 1:
         combine_matrix(temp_ls[2], 'R1_summary.txt')
+    if len(temp_ls[3]) >= 1:
         combine_matrix(temp_ls[3], 'R2_summary.txt')
     if len(temp_ls[0]) >= 1:
         combine_matrix(temp_ls[0], 'singles_summary.txt')
@@ -526,7 +527,8 @@ def crinoid_multi(proj, ls):
     '''
     curr = os.path.join(proj, 'qc')
     os.mkdir(curr)
-    crinoid_part = partial(crinoid_comp, curr, c.all_qc)
+    all_qc = 'full' if proj == c.proj else c.all_qc
+    crinoid_part = partial(crinoid_comp, curr, all_qc, c.p64)
     pool_multi(crinoid_part, ls)
 
 
@@ -630,11 +632,11 @@ def krill_multi():
     os.mkdir(os.path.join(curr, 'single', 'se_lib'))
     os.mkdir(os.path.join(curr, 'paired'))
     krill_part = partial(krill_comp, c.in1_ls, c.in2_ls, c.q_min, c.q_percent,
-                         curr)
+                         c.p64, curr)
     pool_multi(krill_part, c.in1_ls)
     if c.singles_ls:
         krill_part = partial(krill_comp, c.in1_ls, c.in2_ls, c.q_min,
-                             c.q_percent, curr)
+                             c.q_percent, c.p64, curr)
         pool_multi(krill_part, c.singles_ls)
     concater(os.path.join(curr, 'single'))
     temp_ls = pathfinder(curr)
@@ -790,4 +792,4 @@ if __name__ == '__main__':
           'adapters =',  c.adapters, '\n',
           'min_start =',  c.min_start, '\n',
           'adapter_mismatch =', c.adapter_mismatch, '\n',
-          'phred64 =', c.phred64, '\n')
+          'phred64 =', c.p64, '\n')

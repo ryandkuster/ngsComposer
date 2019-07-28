@@ -16,7 +16,7 @@ def crinoid_main():
         proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
-    phred64 = False if args.s is None else True
+    p64 = False if args.s is None else True
     out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1))
     if args.a:
@@ -25,19 +25,19 @@ def crinoid_main():
     subprocess.check_call(['Rscript',
             os.path.abspath(sys.argv[0])[:-17] +
             '/tests/test_packages.R'], shell=False)
-    crinoid_open(in1, out1, out2, phred64)
+    crinoid_open(in1, out1, out2, p64)
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(sys.argv[0])) +
            '/helpers/qc_plots.R'] + [out1, out2], shell=False)
 
 
-def crinoid_comp(curr, all_qc, in1):
+def crinoid_comp(curr, all_qc, p64, in1):
     '''
     composer entry point to crinoid
     '''
     out1 = os.path.join(curr, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(curr, 'qscores.' + os.path.basename(in1))
-    crinoid_open(in1, out1, out2, False)
+    crinoid_open(in1, out1, out2, p64)
     if all_qc == 'full':
         subprocess.check_call(['Rscript',
             os.path.dirname(os.path.abspath(sys.argv[0])) +
@@ -45,24 +45,24 @@ def crinoid_comp(curr, all_qc, in1):
     #TODO add ability to create visualizations for initial qc
 
 
-def crinoid_open(in1, out1, out2, phred64):
+def crinoid_open(in1, out1, out2, p64):
     '''
     produce raw counts of nucleotide and qscore occurrences
     '''
     try:
         with gzip.open(in1, 'rt') as f:
-            crinoid(f, out1, out2, phred64)
+            crinoid(f, out1, out2, p64)
     except OSError:
         with open(in1) as f:
-            crinoid(f, out1, out2, phred64)
+            crinoid(f, out1, out2, p64)
 
 
-def crinoid(f, out1, out2, phred64):
+def crinoid(f, out1, out2, p64):
     #TODO avoid using '500' as default max_len
     #TODO add option to evaluate raw file alone (should R fail)
 
     max_len = 500
-    score_ref_dt, score_dt, base_ref_dt, base_dt = dict_maker(max_len, phred64)
+    score_ref_dt, score_dt, base_ref_dt, base_dt = dict_maker(max_len, p64)
 
     y = 0
     for line in f:
@@ -86,10 +86,10 @@ def crinoid(f, out1, out2, phred64):
         matrix_print(score_mx, o2)
 
 
-def dict_maker(max_len, phred64):
+def dict_maker(max_len, p64):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
-    if phred64:
+    if p64:
         score_ref_dt = dict(zip(scores[31:95], range(0, 43)))
     else:
 	    score_ref_dt = dict(zip(scores[:43], range(0, 43)))
