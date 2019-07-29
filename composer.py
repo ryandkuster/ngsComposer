@@ -59,7 +59,7 @@ class Project:
             import conf as config
             c.__dict__.update(config.__dict__)
         else:
-            sys.exit('project directory not found')
+            sys.exit(msg.initialize1)
 
     def conf_confirm(self):
         '''
@@ -188,7 +188,7 @@ def r_packages():
         subprocess.check_call(['Rscript', os.path.join(os.path.dirname(
             __file__), 'tests', 'test_packages.R')], shell=False)
     except FileNotFoundError:
-        sys.exit('please install latest version of R')
+        sys.exit(msg.r_packages1)
 
 
 def nucleotide_test(ls):
@@ -321,7 +321,7 @@ def input_single(values, in1_ls, in2_ls):
             in1_ls.append(filename)
     else:
         while True:
-            ans = input(msg.paired_vars)
+            ans = input(msg.input_single1)
             if ans == '1':
                 c.ignore = True
                 break
@@ -361,9 +361,14 @@ def dir_size(proj, fastq_ls, fastq_test):
         dir_plan = dir_used * dir_plan if fastq_test\
                 else dir_used * dir_plan * 5
     if dir_plan >= drive_free:
-        sys.exit('an estimated ' + str(dir_plan) + ' bytes are required to ' +
-                 'process, consider rm_transit or alt_dir variables')
-
+        while True:
+            choice = input(msg.dir_size1 + str(dir_plan) + msg.dir_size2)
+            if choice == '1':
+                break
+            elif choice == '2':
+                sys.exit()
+            else:
+                print('\nselect an option from the list\n')
 
 def dir_make(title):
     '''

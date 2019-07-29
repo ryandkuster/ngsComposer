@@ -2,7 +2,7 @@
 
 <a href="https://imgur.com/yllhM4C"><img src="https://i.imgur.com/yllhM4C.png" title="source: imgur.com" /></a>
 
-# ngsComposer: empirically better
+# ngsComposer: empirically different
 
 Base-call error-filtering and read preprocessing pipeline designed by biologists
 
