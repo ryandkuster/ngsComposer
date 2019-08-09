@@ -58,71 +58,41 @@ def crinoid_open(in1, out1, out2, p64):
 
 
 def crinoid(f, out1, out2, p64):
-    #TODO avoid using '500' as default max_len
     #TODO add option to evaluate raw file alone (should R fail)
-
-    max_len = 500
-    score_ref_dt, score_dt, base_ref_dt, base_dt = dict_maker(max_len, p64)
-
+    scores = open(os.path.dirname(os.path.abspath(__file__)) +
+                  '/helpers/scores.txt').read().split()
+    if p64:
+        score_dt = dict(zip(scores[31:95], range(0, 43)))
+    else:
+        score_dt = dict(zip(scores[:43], range(0, 43)))
+    base_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
+    score_mx = [[0 for j in range(43)]]
+    base_mx = [[0 for j in range(5)]]
     y = 0
     for line in f:
         y += 1
         if y == 2:
             for i, base in enumerate(line.rstrip()):
-                base_dt[i][base] += 1
+                try:
+                    base_mx[i][base_dt[base]] += 1
+                except IndexError:
+                    base_mx = bespoke_matrix(base_mx, 5)
+                    base_mx[i][base_dt[base]] += 1
         if y == 4:
             for i, base in enumerate(line.rstrip()):
-                score_dt[i][base] += 1
+                try:
+                    score_mx[i][score_dt[base]] += 1
+                except IndexError:
+                    score_mx = bespoke_matrix(score_mx, 43)
+                    score_mx[i][score_dt[base]] += 1
             y = 0
-
     with open(out1, "w") as o1, open(out2, "w") as o2:
-        base_mx = [[0] * len(base_dt[0]) for i in range(max_len)]
-        score_mx = [[0] * len(score_dt[0]) for i in range(max_len)]
-        base_mx = output_prep(base_dt, base_mx, base_ref_dt, 0)
-        score_mx = output_prep(score_dt, score_mx, score_ref_dt, 0)
-        base_mx = matrix_succinct(base_mx)
-        score_mx = matrix_succinct(score_mx)
         matrix_print(base_mx, o1)
         matrix_print(score_mx, o2)
 
 
-def dict_maker(max_len, p64):
-    scores = open(os.path.dirname(os.path.abspath(__file__)) +
-                  '/helpers/scores.txt').read().split()
-    if p64:
-        score_ref_dt = dict(zip(scores[31:95], range(0, 43)))
-    else:
-	    score_ref_dt = dict(zip(scores[:43], range(0, 43)))
-    score_dt = {i: {j: 0 for j in score_ref_dt.keys()}
-                for i in range(max_len)}
-    base_ref_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
-    base_dt = {i: {j: 0 for j in base_ref_dt.keys()}
-               for i in range(max_len)}
-    return score_ref_dt, score_dt, base_ref_dt, base_dt
-
-
-def output_prep(dt1, mx, dt2, col):
-    '''
-    use recursion to extract counts from nested dictionaries
-    '''
-    for k1, v1 in dt1.items():
-        if isinstance(v1, dict):
-            output_prep(v1, mx, dt2, k1)
-        else:
-            for k2, v2 in dt2.items():
-                if k1 == k2:
-                    mx[int(col)][int(v2)] = v1
-    return mx
-
-
-def matrix_succinct(mx):
-    '''
-    identify and rows in matrix containing zeroes
-    '''
-    for i, row in enumerate(mx):
-        if sum(row) == 0:
-            del mx[i:]
-            break
+def bespoke_matrix(mx, max_len):
+    mx.append([0 for j in range(max_len)])
     return mx
 
 
