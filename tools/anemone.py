@@ -12,13 +12,13 @@ def anemone_main():
     in1 = args.r1
     out1 = os.path.basename(in1)
     try:
-        in2 = args.r2
+        in2 = args.r2 if args.r2 else False
         out2 = os.path.basename(in2)
     except TypeError:
         in2 = False
         out2 = False
     bcs_file = args.c
-    mismatch = args.m
+    mismatch = args.m if args.m else 0
     if args.o is None:
         proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:

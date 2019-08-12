@@ -169,7 +169,7 @@ if __name__ == "__main__":
             help='the full path to output directory (optional)')
     parser.add_argument('-a', type=str,
             help='create visualizations on existing qscore and nucleotide \
-                raw data (optional, requires -r1 input)')
+                raw data (optional, use "True", requires base name for -r1)')
     parser.add_argument('-s', type=str,
             help='type True for phred 64 samples (optional, default phred 33)')
 

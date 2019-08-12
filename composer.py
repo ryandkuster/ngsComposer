@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import gzip
 import os
 import shutil
@@ -46,7 +47,7 @@ class Project:
         self.adapters = ''
         self.min_start = False
         self.adapter_mismatch = False
-        self.rm_transit = False
+        self.rm_transit = True
         self.p64 = False
 
     def initialize(self, proj):
@@ -353,6 +354,7 @@ def dir_size(proj, fastq_ls, fastq_test):
         dir_plan += 1
     dir_plan = dir_plan + 1 if c.auto_trim else dir_plan
     dir_plan = dir_plan + 1 if c.q_min else dir_plan
+    dir_plan = dir_plan + 1 if c.adapters else dir_plan
     for i in fastq_ls:
         dir_used += os.path.getsize(i)
     if c.rm_transit:
@@ -776,25 +778,31 @@ if __name__ == '__main__':
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
-    print('\n',
-          'paired =', c.paired, '\n',
-          'procs =', c.procs, '\n',
-          'alt_dir =', c.alt_dir, '\n',
-          'walkaway =', c.walkaway, '\n',
-          'rm_transit =', c.rm_transit, '\n',
-          'initial_qc =', c.initial_qc, '\n',
-          'all_qc =', c.all_qc, '\n',
-          'front_trim =', c.front_trim, '\n',
-          'bcs_index =', c.bcs_index, '\n',
-          'mismatch =', c.mismatch, '\n',
-          'R1_bases_ls =', c.R1_bases_ls, '\n',
-          'R2_bases_ls =', c.R2_bases_ls, '\n',
-          'non_genomic =', c.non_genomic, '\n',
-          'auto_trim =', c.auto_trim, '\n',
-          'trim_mode =', c.trim_mode, '\n',
-          'q_min =', c.q_min, '\n',
-          'q_percent =', c.q_percent, '\n',
-          'adapters =',  c.adapters, '\n',
-          'min_start =',  c.min_start, '\n',
-          'adapter_mismatch =', c.adapter_mismatch, '\n',
-          'phred64 =', c.p64, '\n')
+
+
+    log = (str(datetime.datetime.now()).split('.')[0] + '\n\n' +
+           'paired = ' + str(c.paired) + '\n' +
+           'procs = ' + str(c.procs) + '\n' +
+           'alt_dir = ' + str(c.alt_dir) + '\n' +
+           'walkaway = ' + str(c.walkaway) + '\n' +
+           'rm_transit = ' + str(c.rm_transit) + '\n' +
+           'initial_qc = ' + str(c.initial_qc) + '\n' +
+           'all_qc = ' + str(c.all_qc) + '\n' +
+           'front_trim = ' + str(c.front_trim) + '\n' +
+           'bcs_index = ' + str(c.bcs_index) + '\n' +
+           'mismatch = ' + str(c.mismatch) + '\n' +
+           'R1_bases_ls = ' + str(c.R1_bases_ls) + '\n' +
+           'R2_bases_ls = ' + str(c.R2_bases_ls) + '\n' +
+           'non_genomic = ' + str(c.non_genomic) + '\n' +
+           'auto_trim = ' + str(c.auto_trim) + '\n' +
+           'trim_mode = ' + str(c.trim_mode) + '\n' +
+           'q_min = ' + str(c.q_min) + '\n' +
+           'q_percent = ' + str(c.q_percent) + '\n' +
+           'adapters = ' + str(c.adapters) + '\n' +
+           'min_start = ' + str(c.min_start) + '\n' +
+           'adapter_mismatch = ' + str(c.adapter_mismatch) + '\n' +
+           'phred64 = ' + str(c.p64) + '\n')
+
+    print(log)
+    with open(os.path.join(c.proj, 'summary.txt'), 'w') as out:
+        out.write(log)
