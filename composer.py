@@ -372,6 +372,7 @@ def dir_size(proj, fastq_ls, fastq_test):
             else:
                 print('\nselect an option from the list\n')
 
+
 def dir_make(title):
     '''
     create new directory when pipeline tools called
@@ -529,15 +530,16 @@ def scallop_end_multi():
                               c.fastq_ls)
             except FileNotFoundError:
                 crinoid_multi(c.rm_dirs[-2], c.fastq_ls)
+
+        if os.path.exists(os.path.join(c.rm_dirs[-2], 'single')):
+            os.mkdir(os.path.join(curr, 'single'))
+            os.mkdir(os.path.join(curr, 'paired'))
+
     else:
         if os.path.exists(os.path.join(c.proj, 'qc')):
             pass
         else:
             crinoid_multi(c.proj, c.fastq_ls)
-
-    if os.path.exists(os.path.join(c.rm_dirs[-2], 'single')):
-        os.mkdir(os.path.join(curr, 'single'))
-        os.mkdir(os.path.join(curr, 'paired'))
 
     scallop_end_part = partial(scallop_end, curr, c.auto_trim, c.trim_mode)
     pool_multi(scallop_end_part, c.fastq_ls)
@@ -777,8 +779,6 @@ if __name__ == '__main__':
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = porifera_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
-
-
 
     log = (str(datetime.datetime.now()).split('.')[0] + '\n\n' +
            'paired = ' + str(c.paired) + '\n' +
