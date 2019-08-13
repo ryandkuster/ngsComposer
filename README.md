@@ -175,8 +175,6 @@ G	sample3
 T	sample4
 ```
 
-***
-
 #### Index file for directing multiple barcode files
 The index file is a tab delimited file required to associate the barcodes file with a specific library in your project directory. It must include the filename of the forward read (R1) followed by the appropriate barcodes file. Reverse reads (R2), if present, will automatically be detected and are not indicated in this file.
 
