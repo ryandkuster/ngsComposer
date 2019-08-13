@@ -16,6 +16,8 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
 - Accepts project directory of multiple libraries
 - Designed by biologists (please don't run away!)
 
+<a href="https://imgur.com/J2KuMBX"><img src="https://imgur.com/J2KuMBX.png" title="source: imgur.com" /></a>
+
 ## Contents
 - [Installation](#installation)
 - [Usage](#usage)
