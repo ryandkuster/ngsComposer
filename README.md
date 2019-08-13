@@ -203,6 +203,9 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 #### Adapters file
 Optionally, 'adapters.txt' may be included in the project directory for recognition and removal of adapters.
 
+<a href=https://imgur.com/KITtkHM"><img src="https://imgur.com/KITtkHM.png" title="source: imgur.com" width=400/></a>
+
+
 **adapters.txt**
 ```
 CGCTCAGTTC
