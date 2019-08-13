@@ -31,7 +31,7 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
 Clone or download the Git repository to your desired tool folder
 
 ```bash
-$ git clone https://github.com/ryandkuster/composer.git
+$ git clone https://github.com/ryandkuster/ngsComposer.git
 ```
 
 Dependencies:
