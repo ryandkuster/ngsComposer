@@ -65,7 +65,7 @@ If this is the first time running the pipeline, you may need to wait for R to in
 ### Overview
 The order of steps in the ngsComposer pipeline are outlined in the following figure:
 
-<a href="https://imgur.com/J2KuMBX"><img src="https://imgur.com/J2KuMBX.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/f03nQiv"><img src="https://imgur.com/f03nQiv.png" title="source: imgur.com" /></a>
 
 The steps implemented are first specified in a configuration file.
 
