@@ -51,7 +51,7 @@ Set up your project directory containing the following files:
 - fastq file(s)
 - conf.py (see "Configuration" below for detailed instructions)
 
-<a href="https://imgur.com/jDV9lAM"><img src="https://imgur.com/jDV9lAM.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/SYiOxfR"><img src="https://imgur.com/SYiOxfR.png" title="source: imgur.com" width=400 /></a>
 
 Optionally, paired end files and even multiple separate libraries can be included in the project directory.
 
@@ -152,7 +152,7 @@ Optionally, one or more barcode files may be included in the project directory f
 - barcodes_1.txt
 - index.txt
 
-<a href="https://imgur.com/q59RpLC"><img src="https://imgur.com/q59RpLC.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/VlLCeY4"><img src="https://imgur.com/VlLCeY4.png" title="source: imgur.com" width=400 /></a>
 
 Naming conventions: "index.txt" is required, the barcodes file can be named as desired (see "Index file for directing multiple barcode files")
 
@@ -187,7 +187,7 @@ The index file is a tab delimited file required to associate the barcodes file w
 1_R1.fastq  barcodes_1.txt
 ```
 
-<a href="https://imgur.com/INgsfrg"><img src="https://imgur.com/INgsfrg.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/SKgOnNE"><img src="https://imgur.com/SKgOnNE.png" title="source: imgur.com" width=600/></a>
 
 Alternatively, multiple barcoding schemes may be included to accomodate multiple libraries. For example:
 
