@@ -51,6 +51,8 @@ Set up your project directory containing the following files:
 - fastq file(s)
 - conf.py (see "Configuration" below for detailed instructions)
 
+<a href="https://imgur.com/jDV9lAM"><img src="https://imgur.com/jDV9lAM.png" title="source: imgur.com" /></a>
+
 Optionally, paired end files and even multiple separate libraries can be included in the project directory.
 
 From command line, run ngsComposer with the specified directory of your project
@@ -150,6 +152,8 @@ Optionally, one or more barcode files may be included in the project directory f
 - barcodes_1.txt
 - index.txt
 
+<a href="https://imgur.com/q59RpLC"><img src="https://imgur.com/q59RpLC.png" title="source: imgur.com" /></a>
+
 Naming conventions: "index.txt" is required, the barcodes file can be named as desired (see "Index file for directing multiple barcode files")
 
 The barcodes file is a tab or space delimited file including forward barcodes as rows and reverse barcodes as columns. For example, the following would be required for a dual-indexed library:
@@ -182,6 +186,8 @@ The index file is a tab delimited file required to associate the barcodes file w
 ```
 1_R1.fastq  barcodes_1.txt
 ```
+
+<a href="https://imgur.com/INgsfrg"><img src="https://imgur.com/INgsfrg.png" title="source: imgur.com" /></a>
 
 Alternatively, multiple barcoding schemes may be included to accomodate multiple libraries. For example:
 
