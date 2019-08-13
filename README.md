@@ -69,6 +69,7 @@ The order of steps in the ngsComposer pipeline are outlined in the following fig
 
 The steps implemented are first specified in a configuration file.
 
+***
 
 ### Configuration
 Using a text editor, save a file containing any of the following variables as a python script called 'conf.py' (includes '.py' as file extension) and include it in your project directory.
