@@ -16,8 +16,6 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
 - Accepts project directory of multiple libraries
 - Designed by biologists (please don't run away!)
 
-<a href="https://imgur.com/J2KuMBX"><img src="https://imgur.com/J2KuMBX.png" title="source: imgur.com" /></a>
-
 ## Contents
 - [Installation](#installation)
 - [Usage](#usage)
@@ -63,6 +61,14 @@ $ python3 composer.py -i <path_to_project_directory>
 If this is the first time running the pipeline, you may need to wait for R to install the appropriate packages and dependencies.
 
 ***
+
+### Overview
+The order of steps in the ngsComposer pipeline are outlined in the following figure:
+
+<a href="https://imgur.com/J2KuMBX"><img src="https://imgur.com/J2KuMBX.png" title="source: imgur.com" /></a>
+
+The steps implemented are first specified in a configuration file.
+
 
 ### Configuration
 Using a text editor, save a file containing any of the following variables as a python script called 'conf.py' (includes '.py' as file extension) and include it in your project directory.
