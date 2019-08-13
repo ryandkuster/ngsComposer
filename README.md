@@ -187,7 +187,7 @@ The index file is a tab delimited file required to associate the barcodes file w
 1_R1.fastq  barcodes_1.txt
 ```
 
-<a href="https://imgur.com/SKgOnNE"><img src="https://imgur.com/SKgOnNE.png" title="source: imgur.com" width=600/></a>
+<a href="https://imgur.com/mnrrviL"><img src="https://imgur.com/mnrrviL.png" title="source: imgur.com" width=600/></a>
 
 Alternatively, multiple barcoding schemes may be included to accomodate multiple libraries. For example:
 
