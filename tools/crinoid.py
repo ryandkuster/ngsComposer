@@ -42,7 +42,6 @@ def crinoid_comp(curr, all_qc, p64, in1):
         subprocess.check_call(['Rscript',
             os.path.dirname(os.path.abspath(sys.argv[0])) +
             '/tools/helpers/qc_plots.R'] + [out1, out2], shell=False)
-    #TODO add ability to create visualizations for initial qc
 
 
 def crinoid_open(in1, out1, out2, p64):
@@ -58,7 +57,6 @@ def crinoid_open(in1, out1, out2, p64):
 
 
 def crinoid(f, out1, out2, p64):
-    #TODO add option to evaluate raw file alone (should R fail)
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
     if p64:

@@ -372,10 +372,10 @@ def second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj):
     if out2:
         in2 = proj + '/temp_unknown.' + out2
         anemone_open(in1, in2, out1, out2, of1_ls,
-                of2_ls, mismatch, bcs, proj, False)
+                     of2_ls, mismatch, bcs, proj, False)
     else:
         anemone_single_open(in1, out1, of1_ls, mismatch,
-                       bcs, proj, False)
+                            bcs, proj, False)
 
 
 if __name__ == '__main__':

@@ -77,7 +77,10 @@ def scallop_end(curr, auto_trim, trim_mode, in1):
         q3 = scallop_stats(med + delta, i)
         med = scallop_stats(med, i)
         lw = q1 - (1.5 * (q3 - q1))
-        trim_dict = {'whisker': lw, 'quartile': q1, 'median': med, 'mean': mean}
+        trim_dict = {'whisker': lw,
+                     'quartile': q1,
+                     'median': med,
+                     'mean': mean}
         if trim_dict[trim_mode] >= auto_trim:
             end_trim = max_len - base
             break

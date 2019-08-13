@@ -27,13 +27,13 @@ def rotifer_main():
         pe_2 = os.path.join(proj, 'pe.' + os.path.basename(in2))
         se_2 = os.path.join(proj, 'se.' + os.path.basename(in2))
         rotifer_open(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1,
-                se_2, trim)
+                     se_2, trim)
     else:
         rotifer_single_open(R1_bases_ls, in1, se_1, trim)
 
 
 def rotifer_comp(in1_ls, in2_ls, R1_bases_ls, R2_bases_ls, trim,
-            curr, in1):
+                 curr, in1):
     '''
     composer entry point to rotifer
     '''
@@ -44,13 +44,13 @@ def rotifer_comp(in1_ls, in2_ls, R1_bases_ls, R2_bases_ls, trim,
         pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
         se_2 = os.path.join(curr, 'single', os.path.basename(in2))
         rotifer_open(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1,
-                se_2, trim)
+                     se_2, trim)
     except (IndexError, ValueError) as e:
         rotifer_single_open(R1_bases_ls, in1, se_1, trim)
 
 
 def rotifer_open(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2,
-            trim):
+                 trim):
     '''
     parse single and paired-end reads for recognized motifs
     '''
@@ -62,7 +62,7 @@ def rotifer_open(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2,
                 open(se_2, "w") as se_o2:
             if trim:
                 rotifer_trim(R1_bases_ls, R2_bases_ls, f1, f2, pe_o1, pe_o2,
-                        se_o1, se_o2, trim)
+                             se_o1, se_o2, trim)
             else:
                 rotifer(R1_bases_ls, R2_bases_ls, f1, f2, pe_o1, pe_o2, se_o1,
                         se_o2)
@@ -74,20 +74,20 @@ def rotifer_open(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2,
                 open(se_2, "w") as se_o2:
             if trim:
                 rotifer_trim(R1_bases_ls, R2_bases_ls, f1, f2, pe_o1, pe_o2,
-                        se_o1, se_o2, trim)
+                             se_o1, se_o2, trim)
             else:
                 rotifer(R1_bases_ls, R2_bases_ls, f1, f2, pe_o1, pe_o2, se_o1,
                         se_o2)
 
 
 def rotifer_trim(R1_bases_ls, R2_bases_ls, f1, f2, pe_o1, pe_o2, se_o1, se_o2,
-            trim):
+                 trim):
     y, entry1, entry2 = 0, "", ""
     for line1, line2 in zip(f1, f2):
         y += 1
         if y == 2:
-            rotifer1 = rotifer_test(line1, R1_bases_ls) if R1_bases_ls else False
-            rotifer2 = rotifer_test(line2, R2_bases_ls) if R2_bases_ls else False
+            rot1 = rotifer_test(line1, R1_bases_ls) if R1_bases_ls else False
+            rot2 = rotifer_test(line2, R2_bases_ls) if R2_bases_ls else False
             line1 = line1[trim:]
             line2 = line2[trim:]
         if y == 4:
@@ -95,14 +95,14 @@ def rotifer_trim(R1_bases_ls, R2_bases_ls, f1, f2, pe_o1, pe_o2, se_o1, se_o2,
             line2 = line2[trim:]
             entry1 = entry1 + line1
             entry2 = entry2 + line2
-            if rotifer1 is False and rotifer2 is False:
+            if rot1 is False and rot2 is False:
                 pe_o1.write(entry1)
                 pe_o2.write(entry2)
-            elif rotifer1 is False and rotifer2 is True:
+            elif rot1 is False and rot2 is True:
                 se_o1.write(entry1)
-            elif rotifer1 is True and rotifer2 is False:
+            elif rot1 is True and rot2 is False:
                 se_o2.write(entry2)
-            elif rotifer1 is True and rotifer2 is True:
+            elif rot1 is True and rot2 is True:
                 pass
             y, entry1, entry2, line1, line2 = 0, "", "", "", ""
         entry1 = entry1 + line1
@@ -116,17 +116,17 @@ def rotifer(R1_bases_ls, R2_bases_ls, f1, f2, pe_o1, pe_o2, se_o1, se_o2):
         entry1 = entry1 + line1
         entry2 = entry2 + line2
         if y == 2:
-            rotifer1 = rotifer_test(line1, R1_bases_ls) if R1_bases_ls else False
-            rotifer2 = rotifer_test(line2, R2_bases_ls) if R2_bases_ls else False
+            rot1 = rotifer_test(line1, R1_bases_ls) if R1_bases_ls else False
+            rot2 = rotifer_test(line2, R2_bases_ls) if R2_bases_ls else False
         if y == 4:
-            if rotifer1 is False and rotifer2 is False:
+            if rot1 is False and rot2 is False:
                 pe_o1.write(entry1)
                 pe_o2.write(entry2)
-            elif rotifer1 is False and rotifer2 is True:
+            elif rot1 is False and rot2 is True:
                 se_o1.write(entry1)
-            elif rotifer1 is True and rotifer2 is False:
+            elif rot1 is True and rot2 is False:
                 se_o2.write(entry2)
-            elif rotifer1 is True and rotifer2 is True:
+            elif rot1 is True and rot2 is True:
                 pass
             y, entry1, entry2 = 0, "", ""
 
@@ -154,14 +154,14 @@ def rotifer_single_trim(R1_bases_ls, f1, se_o1, trim):
     for line1 in f1:
         y += 1
         if y == 2:
-            rotifer1 = rotifer_test(line1, R1_bases_ls)
+            rot1 = rotifer_test(line1, R1_bases_ls)
             line1 = line1[trim:]
         if y == 4:
             line1 = line1[trim:]
             entry1 = entry1 + line1
-            if rotifer1 is False:
+            if rot1 is False:
                 se_o1.write(entry1)
-            elif rotifer1 is True:
+            elif rot1 is True:
                 pass
             y, entry1, line1 = 0, "", ""
         entry1 = entry1 + line1
@@ -173,11 +173,11 @@ def rotifer_single(R1_bases_ls, f1, se_o1):
         y += 1
         entry1 = entry1 + line1
         if y == 2:
-            rotifer1 = rotifer_test(line1, R1_bases_ls)
+            rot1 = rotifer_test(line1, R1_bases_ls)
         if y == 4:
-            if rotifer1 is False:
+            if rot1 is False:
                 se_o1.write(entry1)
-            elif rotifer1 is True:
+            elif rot1 is True:
                 pass
             y, entry1 = 0, ""
 

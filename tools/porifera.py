@@ -65,7 +65,7 @@ def porifera(f, adapter, min_start, mismatch, o):
             z = adapt_align(line, adapter, min_start, mismatch)
         if y == 2 or y == 4:
             line = line[:z]
-        entry = entry + line  + "\n"
+        entry = entry + line + "\n"
         if y == 4:
             o.write(entry)
             y, entry = 0, ""
@@ -106,4 +106,3 @@ if __name__ == "__main__":
             help='the full path to output directory (optional)')
     args = parser.parse_args()
     porifera_main()
-
