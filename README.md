@@ -270,6 +270,6 @@ $ sudo apt install r-base
 
 ## License
 
-<a href="https://github.com/ryandkuster/composer/blob/master/LICENSE">GNU General Public License v2.0</a>
+<a href="https://github.com/ryandkuster/composer/blob/master/LICENSE">Apache License Version 2.0</a>
 
 <a href="https://imgur.com/uQ0kCRk"><img src="https://i.imgur.com/uQ0kCRk.png" title="source: imgur.com" /></a>
