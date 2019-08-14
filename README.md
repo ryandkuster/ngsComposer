@@ -187,18 +187,20 @@ The index file is a tab delimited file required to associate the barcodes file w
 1_R1.fastq  barcodes_1.txt
 ```
 
-<a href="https://imgur.com/mnrrviL"><img src="https://imgur.com/mnrrviL.png" title="source: imgur.com" width=600 /></a>
-
 Alternatively, multiple barcoding schemes may be included to accomodate multiple libraries. For example:
 
 **index.txt**
 ```
-1_R1.fastq  barcodes_1.txt
-2_R1.fastq  barcodes_2.txt
-3_R1.fastq  barcodes_2.txt
+1_R1.fastq  1_bcs.txt
+2_R1.fastq  2_bcs.txt
 ```
-*In this example, samples "2_R1.fastq" and "3_R1.fastq" correspond with "barcodes_2.txt"*
+
+<a href="https://imgur.com/mnrrviL"><img src="https://imgur.com/mnrrviL.png" title="source: imgur.com" width=600 /></a>
+
+*In this example, sample "1_R1.fastq" and "1_R2.fastq" correspond with "1_bcs.txt" and "2_R1.fastq" and "2_R2.fastq" correspond with "2_bcs.txt"*
+
 ***
+
 ### Adapters
 #### Adapters file
 Optionally, 'adapters.txt' may be included in the project directory for recognition and removal of adapters.
