@@ -26,13 +26,13 @@ def crinoid_main():
     if args.a:
         visualizer(out1, out2)
         sys.exit()
-#    subprocess.check_call(['Rscript',
-#            os.path.abspath(os.path.join(os.path.dirname(__file__),
-#            '..', 'tests', 'test_packages.R'))], shell=False)
+    subprocess.check_call(['Rscript',
+            os.path.abspath(os.path.join(os.path.dirname(__file__),
+            '..', 'tests', 'test_packages.R'))], shell=False)
     crinoid_open(in1, out1, out2, p64)
-#    subprocess.check_call(['Rscript',
-#            os.path.abspath(os.path.join(os.path.dirname(__file__),
-#            'helpers', 'qc_plots.R'))] + [out1, out2], shell=False)
+    subprocess.check_call(['Rscript',
+            os.path.abspath(os.path.join(os.path.dirname(__file__),
+            'helpers', 'qc_plots.R'))] + [out1, out2], shell=False)
 
 
 def crinoid_comp(curr, all_qc, p64, in1):
@@ -97,13 +97,13 @@ def crinoid(in1, f, out1, out2, p64):
     '''
     produce raw counts of nucleotide and qscore occurrences
     '''
-    k_score = 5
-    k_seq = 5
+    k_score = 9
+    k_seq = 7
     kmer_seq_dt = {}
     kmer_score_dt = {}
 
     n = 4000000
-    procs = 4
+    procs = args.p
     total = []
     subset = int(n/procs)
     for i in range(procs):
@@ -138,7 +138,7 @@ def crinoid(in1, f, out1, out2, p64):
     score_mx = [[0 for j in range(43)]]
     base_mx = [[0 for j in range(5)]]
 
-#    base_mx = dicto_iter(kmer_seq_dt, k_seq, base_mx, base_dt)
+    base_mx = dicto_iter(kmer_seq_dt, k_seq, base_mx, base_dt)
     score_mx = dicto_iter(kmer_score_dt, k_score, score_mx, score_dt)
     base_mx = matrix_succinct(base_mx)
     score_mx = matrix_succinct(score_mx)
@@ -155,10 +155,11 @@ def crinoid(in1, f, out1, out2, p64):
 #    '''
 #    produce raw counts of nucleotide and qscore occurrences
 #    '''
-#    k_score = kmer_test(f)
-#    f.close()
-
-#    k_seq = 6
+##    k_score = kmer_test(f)
+##    f.close()
+##    k_seq = 6
+#    k_score = 5
+#    k_seq = 5
 #    kmer_seq_dt = {}
 #    kmer_score_dt = {}
 
@@ -234,6 +235,9 @@ def dicto_iter(motif_dt, k, mx, ref_dt):
 
 
 def bespoke_matrix(mx):
+    '''
+    
+    '''
     mx.append([0 for j in range(len(mx[0]))])
     return mx
 
@@ -325,6 +329,7 @@ if __name__ == "__main__":
                 raw data (optional, use "True", requires base name for -r1)')
     parser.add_argument('-s', type=str,
             help='type True for phred 64 samples (optional, default phred 33)')
-
+    parser.add_argument('-p', type=int,
+            help='number of processes')
     args = parser.parse_args()
     crinoid_main()
