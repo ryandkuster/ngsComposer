@@ -20,7 +20,6 @@ def crinoid_main():
         proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
-    procs = args.p if args.p else 1
     p64 = False if args.s is None else True
     out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1))
@@ -30,7 +29,7 @@ def crinoid_main():
     subprocess.check_call(['Rscript',
             os.path.abspath(os.path.join(os.path.dirname(__file__),
             '..', 'tests', 'test_packages.R'))], shell=False)
-    crinoid_open(in1, out1, out2, procs, p64)
+    crinoid_open(in1, out1, out2, p64)
     subprocess.check_call(['Rscript',
             os.path.abspath(os.path.join(os.path.dirname(__file__),
             'helpers', 'qc_plots.R'))] + [out1, out2], shell=False)
@@ -42,83 +41,40 @@ def crinoid_comp(curr, all_qc, p64, in1):
     '''
     out1 = os.path.join(curr, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(curr, 'qscores.' + os.path.basename(in1))
-    crinoid_open(in1, out1, out2, procs, p64)
+    crinoid_open(in1, out1, out2, p64)
     if all_qc == 'full':
         subprocess.check_call(['Rscript',
             os.path.dirname(os.path.abspath(sys.argv[0])) +
             '/tools/helpers/qc_plots.R'] + [out1, out2], shell=False)
 
 
-def crinoid_open(in1, out1, out2, procs, p64):
+def crinoid_open(in1, out1, out2, p64):
     '''
     open as gzipped file object if gzipped
     '''
     try:
         with gzip.open(in1, 'rt') as f:
-            k_score = kmer_test(f)
-        with gzip.open(in1, 'rt') as f:
-            crinoid(f, out1, out2, procs, p64, k_score)
+            crinoid(in1, f, out1, out2, p64)
     except OSError:
         with open(in1) as f:
-            k_score = kmer_test(f)
-        with open(in1) as f:
-            crinoid(f, out1, out2, procs, p64, k_score)
+            crinoid(in1, f, out1, out2, p64)
 
 
-def kmer_test(f):
-    '''
-    read first __ lines and evaluate score composition
-    '''
-    char_count = []
-    for i, line in enumerate(f):
-        if (i + 1) % 4 == 0:
-            for j in line.rstrip():
-                if j not in char_count:
-                    char_count.append(j)
-        if i == 4000:
-            break
-    k_score = 3 if len(char_count) > 4 else 9
-    return k_score
-
-
-def crinoid(f, out1, out2, procs, p64, k_score):
+def crinoid(in1, f, out1, out2, p64):
     '''
     produce raw counts of nucleotide and qscore occurrences
     '''
-    #TODO implement p64 scoring scheme
+#    k_score = kmer_test(f)
+#    f.close()
+    k_score = 3 #TODO default: 3 implement pre-test above, close file, reopen
     k_seq = 6
-
-    if procs > 1:
-        results = parallel_crinoid(f, k_seq, k_score, procs)
-    else:
-        results = motif_counter(k_seq, k_score, f)
-
-    scores = open(os.path.dirname(os.path.abspath(__file__)) +
-                  '/helpers/scores.txt').read().split()
-    score_dt = dict(zip(scores[:43], range(0, 43)))
-    base_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
-    score_mx = [[0 for j in range(43)]]
-    base_mx = [[0 for j in range(5)]]
-    base_mx = dicto_iter(results[0], k_seq, base_mx, base_dt)
-    score_mx = dicto_iter(results[1], k_score, score_mx, score_dt)
-    base_mx = matrix_succinct(base_mx)
-    score_mx = matrix_succinct(score_mx)
-
-    with open(out1, "w") as o1, open(out2, "w") as o2:
-        matrix_print(base_mx, o1)
-        matrix_print(score_mx, o2)
-
-
-class Test:
-    pass
-
-
-def parallel_crinoid(f, k_seq, k_score, procs):
     kmer_seq_dt = {}
     kmer_score_dt = {}
+    n = 4000000 #TODO default: 4000000
+    procs = args.p
     total = []
-    subset = round(1000000/procs) * 4
-    #TODO list comprehension
+    subset = int(n/procs)
+
     for i in range(procs):
         text_slice(f, subset)
         total.append(Test.next_lines)
@@ -148,7 +104,41 @@ def parallel_crinoid(f, k_seq, k_score, procs):
             sub_scores = i[1]
             kmer_seq_dt = motif_total(sub_seqs, kmer_seq_dt)
             kmer_score_dt = motif_total(sub_scores, kmer_score_dt)
-    return [kmer_seq_dt, kmer_score_dt]
+
+    scores = open(os.path.dirname(os.path.abspath(__file__)) +
+                  '/helpers/scores.txt').read().split()
+    score_dt = dict(zip(scores[:43], range(0, 43)))
+    base_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
+    score_mx = [[0 for j in range(43)]]
+    base_mx = [[0 for j in range(5)]]
+    base_mx = dicto_iter(kmer_seq_dt, k_seq, base_mx, base_dt)
+    score_mx = dicto_iter(kmer_score_dt, k_score, score_mx, score_dt)
+    base_mx = matrix_succinct(base_mx)
+    score_mx = matrix_succinct(score_mx)
+
+    with open(out1, "w") as o1, open(out2, "w") as o2:
+        matrix_print(base_mx, o1)
+        matrix_print(score_mx, o2)
+
+
+def kmer_test(f):
+    '''
+    read first __ lines and evaluate score composition
+    '''
+    char_count = []
+    for i, line in enumerate(f):
+        if (i + 1) % 4 == 0:
+            for j in line.rstrip():
+                if j not in char_count:
+                    char_count.append(j)
+        if i == 4000:
+            break
+    k_score = 3 if len(char_count) > 4 else 9
+    return k_score
+
+
+class Test:
+    pass
 
 
 def text_slice(file_opened, n):
@@ -169,21 +159,9 @@ def motif_counter(k_seq, k_score, total):
         if y == 2:
             okay_mer(line.rstrip(), k_seq, kmer_seq_dt)
         if y == 4:
-            okay_mer(line.rstrip(), k_score, kmer_score_dt)
+            strung_out(line.rstrip(), k_score, kmer_score_dt)
             y = 0
     return [kmer_seq_dt, kmer_score_dt]
-
-
-def motif_total(i, dt):
-    '''
-    add newly-discovered motif counts to grand total dictionaries
-    '''
-    for k, v in i.items():
-        if k in dt.keys():
-            dt[k] = [a + b for a, b in zip_longest(v, dt[k], fillvalue=0)]
-        else:
-            dt[k] = v
-    return dt
 
 
 def okay_mer(line, k, motif_dt):
@@ -206,6 +184,50 @@ def okay_mer(line, k, motif_dt):
         else:
             motif_dt[motif] = [0 for seg in range(segment)]
             motif_dt[motif][i] += 1
+
+
+def strung_out(line, k, motif_dt):
+    '''
+    subset line by k and count motifs in dictionaries
+    '''
+    segment = math.ceil(len(line.rstrip())/k)
+    for i in range(segment):
+        if i == 1 and len(set(line[k:(segment - 1) * k])) == 1:
+            motif = line[k: 2 * k]
+            for j in range(i, segment - 1):
+                dict_check(motif, motif_dt, j, segment)
+            dict_check(line[(segment - 1) * k:], motif_dt, segment - 1, segment)
+            break
+        s = i * k
+        f = s + k
+        motif = line[s:f]
+        dict_check(motif, motif_dt, i, segment)
+
+
+def dict_check(motif, motif_dt, i, segment):
+    if(motif) in motif_dt.keys():
+        try:
+            motif_dt[motif][i] += 1
+        except IndexError:
+            diff = i - (len(motif_dt[motif])) + 1
+            for l in range(diff):
+                motif_dt[motif].append(0)
+            motif_dt[motif][i] += 1
+    else:
+        motif_dt[motif] = [0 for seg in range(segment)]
+        motif_dt[motif][i] += 1
+
+
+def motif_total(i, dt):
+    '''
+    add newly-discovered motif counts to grand total dictionaries
+    '''
+    for k, v in i.items():
+        if k in dt.keys():
+            dt[k] = [a + b for a, b in zip_longest(v, dt[k], fillvalue=0)]
+        else:
+            dt[k] = v
+    return dt
 
 
 def dicto_iter(motif_dt, k, mx, ref_dt):
@@ -327,6 +349,6 @@ if __name__ == "__main__":
     parser.add_argument('-s', type=str,
             help='type True for phred 64 samples (optional, default phred 33)')
     parser.add_argument('-p', type=int,
-            help='number of subprocesses')
+            help='number of processes')
     args = parser.parse_args()
     crinoid_main()

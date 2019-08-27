@@ -458,11 +458,23 @@ def crinoid_multi(proj, ls):
     '''
     create user-defined subprocesses to produce base-call summary
     '''
+    
     curr = os.path.join(proj, 'qc')
     os.mkdir(curr)
     all_qc = 'full' if proj == c.proj else c.all_qc
     crinoid_part = partial(crinoid_comp, curr, all_qc, c.p64)
-    pool_multi(crinoid_part, ls)
+#    pool_multi(crinoid_part, ls)
+    pool_special(crinoid_part, ls)
+
+
+def pool_special(pool_part, pool_ls):
+    '''
+    create n subprocesses of a special tool
+    '''
+    if int((c.procs - 1)/len(pool_ls)) <= 1:
+    pool = Pool(c.procs)
+    pool.map(pool_part, pool_ls)
+    pool.close()
 
 
 def scallop_multi():
