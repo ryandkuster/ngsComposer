@@ -7,7 +7,7 @@ import sys
 from itertools import islice, zip_longest
 import multiprocessing
 from functools import partial
-from operator import itemgetter
+
 
 def crinoid_main():
     '''
@@ -59,19 +59,22 @@ def crinoid_open(in1, out1, out2, p64):
         with open(in1) as f:
             crinoid(in1, f, out1, out2, p64)
 
-######################
-# new crinoid begin
-######################
 
 class Test:
     pass
 
 
-def next_n_lines(file_opened, n):
+def text_slice(file_opened, n):
+    '''
+    grab next n lines from input fastq
+    '''
     Test.next_lines = [x for x in islice(file_opened, n)]
 
 
-def clowntown(k_seq, k_score, total):
+def motif_counter(k_seq, k_score, total):
+    '''
+    subprocess of crinoid to count seq, score motifs
+    '''
     kmer_seq_dt, kmer_score_dt = {}, {}
     y = 0
     for line in total:
@@ -84,52 +87,60 @@ def clowntown(k_seq, k_score, total):
     return [kmer_seq_dt, kmer_score_dt]
 
 
-def whynot(i, listo):
+def motif_total(i, dt):
+    '''
+    add newly-discovered motif counts to grand total dictionaries
+    '''
     for k, v in i.items():
-        if k in listo.keys():
-            listo[k] = [a + b for a, b in zip_longest(v, listo[k], fillvalue=0)]
+        if k in dt.keys():
+            dt[k] = [a + b for a, b in zip_longest(v, dt[k], fillvalue=0)]
         else:
-            listo[k] = v
-    return listo
+            dt[k] = v
+    return dt
 
 
 def crinoid(in1, f, out1, out2, p64):
     '''
     produce raw counts of nucleotide and qscore occurrences
     '''
-    k_score = 9
-    k_seq = 7
+#    k_score = kmer_test(f)
+#    f.close()
+    k_score = 3
+    k_seq = 6
     kmer_seq_dt = {}
     kmer_score_dt = {}
-
     n = 4000000
     procs = args.p
     total = []
     subset = int(n/procs)
+
     for i in range(procs):
-        next_n_lines(f, subset)
+        text_slice(f, subset)
         total.append(Test.next_lines)
+
     pool = multiprocessing.Pool(procs)
-    party = partial(clowntown, k_seq, k_score)
+    party = partial(motif_counter, k_seq, k_score)
     sub_vals = pool.map(party, total)
+
     for i in sub_vals:
         sub_seqs = i[0]
         sub_scores = i[1]
-        kmer_seq_dt = whynot(sub_seqs, kmer_seq_dt)
-        kmer_score_dt = whynot(sub_scores, kmer_score_dt)
+        kmer_seq_dt = motif_total(sub_seqs, kmer_seq_dt)
+        kmer_score_dt = motif_total(sub_scores, kmer_score_dt)
+
     while Test.next_lines != []:
         total = []
         for i in range(procs):
-            next_n_lines(f, subset)
+            text_slice(f, subset)
             total.append(Test.next_lines)
         pool = multiprocessing.Pool(procs)
-        party = partial(clowntown, k_seq, k_score)
+        party = partial(motif_counter, k_seq, k_score)
         sub_vals = pool.map(party, total)
         for i in sub_vals:
             sub_seqs = i[0]
             sub_scores = i[1]
-            kmer_seq_dt = whynot(sub_seqs, kmer_seq_dt)
-            kmer_score_dt = whynot(sub_scores, kmer_score_dt)
+            kmer_seq_dt = motif_total(sub_seqs, kmer_seq_dt)
+            kmer_score_dt = motif_total(sub_scores, kmer_score_dt)
 
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
@@ -137,58 +148,20 @@ def crinoid(in1, f, out1, out2, p64):
     base_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
     score_mx = [[0 for j in range(43)]]
     base_mx = [[0 for j in range(5)]]
-
     base_mx = dicto_iter(kmer_seq_dt, k_seq, base_mx, base_dt)
     score_mx = dicto_iter(kmer_score_dt, k_score, score_mx, score_dt)
     base_mx = matrix_succinct(base_mx)
     score_mx = matrix_succinct(score_mx)
+
     with open(out1, "w") as o1, open(out2, "w") as o2:
         matrix_print(base_mx, o1)
         matrix_print(score_mx, o2)
 
-#############################
-# ENDDDD
-#############################
-
-
-#def crinoid(in1, f, out1, out2, p64):
-#    '''
-#    produce raw counts of nucleotide and qscore occurrences
-#    '''
-##    k_score = kmer_test(f)
-##    f.close()
-##    k_seq = 6
-#    k_score = 5
-#    k_seq = 5
-#    kmer_seq_dt = {}
-#    kmer_score_dt = {}
-
-#    with open(in1) as f:
-#        y = 0
-#        for line in f:
-#            y += 1
-#            if y == 2:
-#                okay_mer(line.rstrip(), k_seq, kmer_seq_dt)
-#            if y == 4:
-#                okay_mer(line.rstrip(), k_score, kmer_score_dt)
-#                y = 0
-#    scores = open(os.path.dirname(os.path.abspath(__file__)) +
-#                  '/helpers/scores.txt').read().split()
-#    score_dt = dict(zip(scores[:43], range(0, 43)))
-#    base_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
-#    score_mx = [[0 for j in range(43)]]
-#    base_mx = [[0 for j in range(5)]]
-
-#    base_mx = dicto_iter(kmer_seq_dt, k_seq, base_mx, base_dt)
-#    score_mx = dicto_iter(kmer_score_dt, k_score, score_mx, score_dt)
-#    base_mx = matrix_succinct(base_mx)
-#    score_mx = matrix_succinct(score_mx)
-#    with open(out1, "w") as o1, open(out2, "w") as o2:
-#        matrix_print(base_mx, o1)
-#        matrix_print(score_mx, o2)
-
 
 def kmer_test(f):
+    '''
+    read first __ lines and evaluate score composition
+    '''
     char_count = []
     for i, line in enumerate(f):
         if (i + 1) % 4 == 0:
@@ -202,6 +175,9 @@ def kmer_test(f):
 
 
 def okay_mer(line, k, motif_dt):
+    '''
+    subset line by k and count motifs in dictionaries
+    '''
     segment = math.ceil(len(line.rstrip())/k)
     for i in range(segment):
         s = i * k
@@ -221,6 +197,9 @@ def okay_mer(line, k, motif_dt):
 
 
 def dicto_iter(motif_dt, k, mx, ref_dt):
+    '''
+    transform the dictionaries into usable matrices for R plots
+    '''
     for motif, count in motif_dt.items():
         for i, window in enumerate(count):
             for j, char in enumerate(motif):
@@ -236,7 +215,7 @@ def dicto_iter(motif_dt, k, mx, ref_dt):
 
 def bespoke_matrix(mx):
     '''
-    
+    add row to matrix to accomodate variance in read lengths
     '''
     mx.append([0 for j in range(len(mx[0]))])
     return mx
@@ -263,6 +242,9 @@ def matrix_succinct(mx):
 
 
 def visualizer(out1, out2):
+    '''
+    produce images using existing, raw nucleotide and qscore files
+    '''
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(__file__)) +
            '/helpers/qc_plots.R'] + [out1, out2], shell=False)
@@ -307,6 +289,9 @@ def combine_matrix(in_ls, out):
 
 
 def matrix_mash(in_ls, a1, a2):
+    '''
+    modify existing qscore files into matrices, combine with a2
+    '''
     with open(a1) as f1:
         a1 = [line.rstrip().split(',') for line in f1]
         for i, col in enumerate(a2):
