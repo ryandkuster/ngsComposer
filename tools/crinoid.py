@@ -1,8 +1,12 @@
+import math
 import argparse
 import gzip
 import os
 import subprocess
 import sys
+from itertools import islice, zip_longest
+import multiprocessing
+from functools import partial
 
 
 def crinoid_main():
@@ -16,6 +20,7 @@ def crinoid_main():
         proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
+    procs = args.p if args.p else 1
     p64 = False if args.s is None else True
     out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1))
@@ -25,72 +30,206 @@ def crinoid_main():
     subprocess.check_call(['Rscript',
             os.path.abspath(os.path.join(os.path.dirname(__file__),
             '..', 'tests', 'test_packages.R'))], shell=False)
-    crinoid_open(in1, out1, out2, p64)
+    crinoid_open(in1, out1, out2, procs, p64)
     subprocess.check_call(['Rscript',
             os.path.abspath(os.path.join(os.path.dirname(__file__),
             'helpers', 'qc_plots.R'))] + [out1, out2], shell=False)
 
 
-def crinoid_comp(curr, all_qc, p64, in1):
+def crinoid_comp(curr, all_qc, procs, p64, in1):
     '''
     composer entry point to crinoid
     '''
     out1 = os.path.join(curr, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(curr, 'qscores.' + os.path.basename(in1))
-    crinoid_open(in1, out1, out2, p64)
+    crinoid_open(in1, out1, out2, procs, p64)
     if all_qc == 'full':
         subprocess.check_call(['Rscript',
             os.path.dirname(os.path.abspath(sys.argv[0])) +
             '/tools/helpers/qc_plots.R'] + [out1, out2], shell=False)
 
 
-def crinoid_open(in1, out1, out2, p64):
+def crinoid_open(in1, out1, out2, procs, p64):
     '''
-    produce raw counts of nucleotide and qscore occurrences
+    open as gzipped file object if gzipped
     '''
     try:
         with gzip.open(in1, 'rt') as f:
-            crinoid(f, out1, out2, p64)
+            k_score = kmer_test(f)
+        with gzip.open(in1, 'rt') as f:
+            crinoid(f, out1, out2, procs, p64, k_score)
     except OSError:
         with open(in1) as f:
-            crinoid(f, out1, out2, p64)
+            k_score = kmer_test(f)
+        with open(in1) as f:
+            crinoid(f, out1, out2, procs, p64, k_score)
 
 
-def crinoid(f, out1, out2, p64):
+def kmer_test(f):
+    '''
+    read first __ lines and evaluate score composition
+    '''
+    char_count = []
+    for i, line in enumerate(f):
+        if (i + 1) % 4 == 0:
+            for j in line.rstrip():
+                if j not in char_count:
+                    char_count.append(j)
+        if i == 4000:
+            break
+    k_score = 3 if len(char_count) > 4 else 9
+    return k_score
+
+
+def crinoid(f, out1, out2, procs, p64, k_score):
+    '''
+    produce raw counts of nucleotide and qscore occurrences
+    '''
+    #TODO implement p64 scoring scheme
+    k_seq = 6
+
+    if procs > 1:
+        results = parallel_crinoid(f, k_seq, k_score, procs)
+    else:
+        results = motif_counter(k_seq, k_score, f)
+
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
-    if p64:
-        score_dt = dict(zip(scores[31:95], range(0, 43)))
-    else:
-        score_dt = dict(zip(scores[:43], range(0, 43)))
+    score_dt = dict(zip(scores[:43], range(0, 43)))
     base_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
     score_mx = [[0 for j in range(43)]]
     base_mx = [[0 for j in range(5)]]
-    y = 0
-    for line in f:
-        y += 1
-        if y == 2:
-            for i, base in enumerate(line.rstrip()):
-                try:
-                    base_mx[i][base_dt[base]] += 1
-                except IndexError:
-                    base_mx = bespoke_matrix(base_mx, 5)
-                    base_mx[i][base_dt[base]] += 1
-        if y == 4:
-            for i, base in enumerate(line.rstrip()):
-                try:
-                    score_mx[i][score_dt[base]] += 1
-                except IndexError:
-                    score_mx = bespoke_matrix(score_mx, 43)
-                    score_mx[i][score_dt[base]] += 1
-            y = 0
+    base_mx = dicto_iter(results[0], k_seq, base_mx, base_dt)
+    score_mx = dicto_iter(results[1], k_score, score_mx, score_dt)
+    base_mx = matrix_succinct(base_mx)
+    score_mx = matrix_succinct(score_mx)
+
     with open(out1, "w") as o1, open(out2, "w") as o2:
         matrix_print(base_mx, o1)
         matrix_print(score_mx, o2)
 
 
-def bespoke_matrix(mx, max_len):
-    mx.append([0 for j in range(max_len)])
+class Test:
+    pass
+
+
+def parallel_crinoid(f, k_seq, k_score, procs):
+    kmer_seq_dt = {}
+    kmer_score_dt = {}
+    total = []
+    subset = round(1000000/procs) * 4
+    #TODO list comprehension
+    for i in range(procs):
+        text_slice(f, subset)
+        total.append(Test.next_lines)
+    #TODO consider making these into functions?
+    pool = multiprocessing.Pool(procs)
+    party = partial(motif_counter, k_seq, k_score)
+    sub_vals = pool.map(party, total)
+    pool.close()
+
+    for i in sub_vals:
+        sub_seqs = i[0]
+        sub_scores = i[1]
+        kmer_seq_dt = motif_total(sub_seqs, kmer_seq_dt)
+        kmer_score_dt = motif_total(sub_scores, kmer_score_dt)
+
+    while Test.next_lines != []:
+        total = []
+        for i in range(procs):
+            text_slice(f, subset)
+            total.append(Test.next_lines)
+        pool = multiprocessing.Pool(procs)
+        party = partial(motif_counter, k_seq, k_score)
+        sub_vals = pool.map(party, total)
+        pool.close()
+        for i in sub_vals:
+            sub_seqs = i[0]
+            sub_scores = i[1]
+            kmer_seq_dt = motif_total(sub_seqs, kmer_seq_dt)
+            kmer_score_dt = motif_total(sub_scores, kmer_score_dt)
+    return [kmer_seq_dt, kmer_score_dt]
+
+
+def text_slice(file_opened, n):
+    '''
+    grab next n lines from input fastq
+    '''
+    Test.next_lines = [x for x in islice(file_opened, n)]
+
+
+def motif_counter(k_seq, k_score, total):
+    '''
+    subprocess of crinoid to count seq, score motifs
+    '''
+    kmer_seq_dt, kmer_score_dt = {}, {}
+    y = 0
+    for line in total:
+        y += 1
+        if y == 2:
+            okay_mer(line.rstrip(), k_seq, kmer_seq_dt)
+        if y == 4:
+            okay_mer(line.rstrip(), k_score, kmer_score_dt)
+            y = 0
+    return [kmer_seq_dt, kmer_score_dt]
+
+
+def motif_total(i, dt):
+    '''
+    add newly-discovered motif counts to grand total dictionaries
+    '''
+    for k, v in i.items():
+        if k in dt.keys():
+            dt[k] = [a + b for a, b in zip_longest(v, dt[k], fillvalue=0)]
+        else:
+            dt[k] = v
+    return dt
+
+
+def okay_mer(line, k, motif_dt):
+    '''
+    subset line by k and count motifs in dictionaries
+    '''
+    segment = math.ceil(len(line.rstrip())/k)
+    for i in range(segment):
+        s = i * k
+        f = s + k
+        motif = line[s:f]
+        if(motif) in motif_dt.keys():
+            try:
+                motif_dt[motif][i] += 1
+            except IndexError:
+                diff = i - (len(motif_dt[motif])) + 1
+                for l in range(diff):
+                    motif_dt[motif].append(0)
+                motif_dt[motif][i] += 1
+        else:
+            motif_dt[motif] = [0 for seg in range(segment)]
+            motif_dt[motif][i] += 1
+
+
+def dicto_iter(motif_dt, k, mx, ref_dt):
+    '''
+    transform the dictionaries into usable matrices for R plots
+    '''
+    for motif, count in motif_dt.items():
+        for i, window in enumerate(count):
+            for j, char in enumerate(motif):
+                pos = (i * k) + j
+
+                try:
+                    mx[pos][ref_dt[char]] += window
+                except IndexError:
+                    mx = bespoke_matrix(mx)
+                    mx[pos][ref_dt[char]] += window
+    return mx
+
+
+def bespoke_matrix(mx):
+    '''
+    add row to matrix to accomodate variance in read lengths
+    '''
+    mx.append([0 for j in range(len(mx[0]))])
     return mx
 
 
@@ -103,7 +242,21 @@ def matrix_print(mx, outfile):
         outfile.write("\n")
 
 
+def matrix_succinct(mx):
+    '''
+    identify and remove rows containing zeroes
+    '''
+    for i, row in enumerate(mx):
+        if sum(row) == 0:
+            del mx[i:]
+            break
+    return mx
+
+
 def visualizer(out1, out2):
+    '''
+    produce images using existing, raw nucleotide and qscore files
+    '''
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(__file__)) +
            '/helpers/qc_plots.R'] + [out1, out2], shell=False)
@@ -148,6 +301,9 @@ def combine_matrix(in_ls, out):
 
 
 def matrix_mash(in_ls, a1, a2):
+    '''
+    modify existing qscore files into matrices, combine with a2
+    '''
     with open(a1) as f1:
         a1 = [line.rstrip().split(',') for line in f1]
         for i, col in enumerate(a2):
@@ -170,6 +326,7 @@ if __name__ == "__main__":
                 raw data (optional, use "True", requires base name for -r1)')
     parser.add_argument('-s', type=str,
             help='type True for phred 64 samples (optional, default phred 33)')
-
+    parser.add_argument('-p', type=int,
+            help='number of subprocesses')
     args = parser.parse_args()
     crinoid_main()

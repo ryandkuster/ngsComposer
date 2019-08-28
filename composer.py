@@ -11,8 +11,7 @@ from multiprocessing import Pool
 
 import tools.helpers.messages as msg
 from tools.anemone import anemone_comp, bc_reader, bc_test
-#from tools.crinoid import combine_matrix, crinoid_comp
-from tools.crinoid_kmer import combine_matrix, crinoid_comp
+from tools.crinoid import combine_matrix, crinoid_comp
 from tools.krill import krill_comp
 from tools.porifera import porifera_comp
 from tools.rotifer import rotifer_comp
