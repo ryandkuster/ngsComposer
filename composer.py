@@ -459,15 +459,10 @@ def crinoid_multi(proj, ls):
     '''
     create user-defined subprocesses to produce base-call summary
     '''
-    
     curr = os.path.join(proj, 'qc')
     os.mkdir(curr)
     all_qc = 'full' if proj == c.proj else c.all_qc
-    subs = int((c.procs - 1)/len(ls)) - 1
-    if subs < 2:
-        crinoid_part = partial(crinoid_comp, curr, all_qc, 1, c.p64)
-    else:
-        crinoid_part = partial(crinoid_comp, curr, all_qc, subs, c.p64)
+    crinoid_part = partial(crinoid_comp, curr, all_qc, 1, c.p64)
     pool_multi(crinoid_part, ls)
 
 
