@@ -11,7 +11,8 @@ from multiprocessing import Pool
 
 import tools.helpers.messages as msg
 from tools.anemone import anemone_comp, bc_reader, bc_test
-from tools.crinoid import combine_matrix, crinoid_comp
+#from tools.crinoid import combine_matrix, crinoid_comp
+from tools.crinoid_kmer import combine_matrix, crinoid_comp
 from tools.krill import krill_comp
 from tools.porifera import porifera_comp
 from tools.rotifer import rotifer_comp
@@ -462,19 +463,12 @@ def crinoid_multi(proj, ls):
     curr = os.path.join(proj, 'qc')
     os.mkdir(curr)
     all_qc = 'full' if proj == c.proj else c.all_qc
-    crinoid_part = partial(crinoid_comp, curr, all_qc, c.p64)
-#    pool_multi(crinoid_part, ls)
-    pool_special(crinoid_part, ls)
-
-
-def pool_special(pool_part, pool_ls):
-    '''
-    create n subprocesses of a special tool
-    '''
-    if int((c.procs - 1)/len(pool_ls)) <= 1:
-    pool = Pool(c.procs)
-    pool.map(pool_part, pool_ls)
-    pool.close()
+    subs = int((c.procs - 1)/len(ls)) - 1
+    if subs < 2:
+        crinoid_part = partial(crinoid_comp, curr, all_qc, 1, c.p64)
+    else:
+        crinoid_part = partial(crinoid_comp, curr, all_qc, subs, c.p64)
+    pool_multi(crinoid_part, ls)
 
 
 def scallop_multi():

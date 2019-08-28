@@ -36,7 +36,7 @@ def crinoid_main():
             'helpers', 'qc_plots.R'))] + [out1, out2], shell=False)
 
 
-def crinoid_comp(curr, all_qc, p64, in1):
+def crinoid_comp(curr, all_qc, procs, p64, in1):
     '''
     composer entry point to crinoid
     '''
@@ -122,7 +122,7 @@ def parallel_crinoid(f, k_seq, k_score, procs):
     for i in range(procs):
         text_slice(f, subset)
         total.append(Test.next_lines)
-
+    #TODO consider making these into functions?
     pool = multiprocessing.Pool(procs)
     party = partial(motif_counter, k_seq, k_score)
     sub_vals = pool.map(party, total)
