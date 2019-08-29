@@ -20,11 +20,14 @@ See <a href="https://github.com/ryandkuster/composer/blob/master/README.md">main
 |-o|O|the full path to output directory (optional)|
 |-a|A|create visualizations on existing qscore and nucleotide raw data (optional, requires -r1 input)|
 |-s|S|type True for phred 64 samples (optional, default phred 33)|
+|-t|T|number of subprocesses (optional, default 1)|
 
 Example:
 ```bash
 $ python3 crinoid.py -r1 1_R1.fastq
 ```
+
+Crinoid creates three visualizations spanning the entire read length. The first shows the per-base nucleotide frequency. There are two qscore images, both display the per-base Phred scores as a boxplot and one (labelled with '_outliers') also displays the locations of outliers (orange dots) as well as the mean and standard error (gray diamonds and lines).
 
 ## Scallop
 
@@ -39,6 +42,8 @@ Example:
 ```bash
 $ python3 scallop.py -r1 1_R1.fastq -f 6
 ```
+
+The output files are automatically named with "trimmed" prefix (e.g. "trimmed.1_R1.fastq")
 
 ## Anemone
 
@@ -72,6 +77,8 @@ Example:
 $ python3 rotifer.py -r1 1_R1.fastq -r2 1_R2.fastq -m1 TCT TCC -m2 TCT TCC
 ```
 
+In the event that input data is paired-end, output files will indicate when pairing has been retained with the "pe" prefix. Reads that have no pair will have the "se" prefix.
+
 ## Krill
 
 |Variable|Alternate Variable|Usage|
@@ -86,6 +93,8 @@ Example:
 ```bash
 $ python3 krill.py -r1 1_R1.fastq -r2 1_R2.fastq -q 30 -p 95
 ```
+
+As with Krill, paired-end output files will indicate when pairing has been retained with the "pe" prefix. Reads that have no pair will have the "se" prefix.
 
 ## Porifera
 

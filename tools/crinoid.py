@@ -20,7 +20,7 @@ def crinoid_main():
         proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
-    procs = args.p if args.p else 1
+    procs = args.t if args.t else 1
     p64 = False if args.s is None else True
     out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1))
     out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1))
@@ -326,7 +326,7 @@ if __name__ == "__main__":
                 raw data (optional, use "True", requires base name for -r1)')
     parser.add_argument('-s', type=str,
             help='type True for phred 64 samples (optional, default phred 33)')
-    parser.add_argument('-p', type=int,
+    parser.add_argument('-t', type=int,
             help='number of subprocesses')
     args = parser.parse_args()
     crinoid_main()
