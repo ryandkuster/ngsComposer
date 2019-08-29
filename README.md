@@ -1,4 +1,4 @@
-# EARLY RELEASE VERSION: please use at your own discretion
+# EARLY RELEASE (VERSION 0.1): please use at your own discretion
 
 <a href="https://imgur.com/yllhM4C"><img src="https://i.imgur.com/yllhM4C.png" title="source: imgur.com" /></a>
 
@@ -28,7 +28,7 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
 
 ## Installation
 
-Clone or download the Git repository to your desired tool folder
+Clone or download the Git repository to your desired folder
 
 ```bash
 $ git clone https://github.com/ryandkuster/ngsComposer.git
@@ -49,18 +49,20 @@ For help troubleshooting installation, see the troubleshooting section
 
 Set up your project directory containing the following files:
 - fastq file(s)
-- conf.py (see "Configuration" below for detailed instructions)
+- conf.py (see "Configuration" below for detailed instructions on creating this file)
 
-<a href="https://imgur.com/SYiOxfR"><img src="https://imgur.com/SYiOxfR.png" title="source: imgur.com" width=400 /></a>
+<a><img src="https://imgur.com/SYiOxfR.png" title="source: imgur.com" width=400 /></a>
 
-Optionally, paired end files and even multiple separate libraries can be included in the project directory.
+Optionally, paired-end files and even multiple separate libraries can be included in the project directory.
 
 From command line, run ngsComposer with the specified directory of your project
 ```bash
-$ python3 composer.py -i <path_to_project_directory>
+$ python3 <path_to_composer_directory>/composer.py -i <path_to_project_directory>
 ```
 
 If this is the first time running the pipeline, you may need to wait for R to install the appropriate packages and dependencies.
+
+Several **example datasets** are included in the "examples" directory. Users are encouraged to examine and run these small projects to assist in understanding pipeline functionality.
 
 ***
 
@@ -156,7 +158,7 @@ Optionally, one or more barcode files may be included in the project directory f
 
 Naming conventions: "index.txt" is required, the barcodes file can be named as desired (see "Index file for directing multiple barcode files")
 
-The barcodes file is a tab or space delimited file including forward barcodes as rows and reverse barcodes as columns. For example, the following would be required for a dual-indexed library:
+The barcodes file is a tab or space delimited file (or, copy directly from your favorite spreadsheet program into a text file). Forward barcodes begin each row and reverse barcodes begin each column with the desired sample names indicated in the interior of the matrix. For example, the following would be required for a dual-indexed library:
 
 **barcodes_1.txt**
 ```
