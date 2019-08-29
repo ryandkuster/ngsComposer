@@ -1,6 +1,6 @@
 # EARLY RELEASE (VERSION 0.1): please use at your own discretion
 
-<a href="https://imgur.com/yllhM4C"><img src="https://i.imgur.com/yllhM4C.png" title="source: imgur.com" /></a>
+<a><img src="https://i.imgur.com/yllhM4C.png" title="source: imgur.com" /></a>
 
 # ngsComposer: empirically different
 
@@ -69,7 +69,7 @@ Several **example datasets** are included in the "examples" directory. Users are
 ### Overview
 The order of steps in the ngsComposer pipeline are outlined in the following figure:
 
-<a href="https://imgur.com/f03nQiv"><img src="https://imgur.com/f03nQiv.png" title="source: imgur.com" /></a>
+<a><img src="https://imgur.com/f03nQiv.png" title="source: imgur.com" /></a>
 
 The steps implemented are first specified in a configuration file.
 
@@ -154,7 +154,7 @@ Optionally, one or more barcode files may be included in the project directory f
 - barcodes_1.txt
 - index.txt
 
-<a href="https://imgur.com/VlLCeY4"><img src="https://imgur.com/VlLCeY4.png" title="source: imgur.com" width=400 /></a>
+<a><img src="https://imgur.com/VlLCeY4.png" title="source: imgur.com" width=400 /></a>
 
 Naming conventions: "index.txt" is required, the barcodes file can be named as desired (see "Index file for directing multiple barcode files")
 
@@ -197,7 +197,7 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 2_R1.fastq  2_bcs.txt
 ```
 
-<a href="https://imgur.com/mnrrviL"><img src="https://imgur.com/mnrrviL.png" title="source: imgur.com" width=600 /></a>
+<a><img src="https://imgur.com/mnrrviL.png" title="source: imgur.com" width=600 /></a>
 
 *In this example, sample "1_R1.fastq" and "1_R2.fastq" correspond with "1_bcs.txt" and "2_R1.fastq" and "2_R2.fastq" correspond with "2_bcs.txt"*
 
@@ -207,7 +207,7 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 #### Adapters file
 Optionally, 'adapters.txt' may be included in the project directory for recognition and removal of adapters.
 
-<a href="https://imgur.com/KITtkHM"><img src="https://imgur.com/KITtkHM.png" title="source: imgur.com" width=300 /></a>
+<a><img src="https://imgur.com/KITtkHM.png" title="source: imgur.com" width=300 /></a>
 
 
 **adapters.txt**
@@ -274,4 +274,4 @@ $ sudo apt install r-base
 
 <a href="https://github.com/ryandkuster/composer/blob/master/LICENSE">Apache License Version 2.0</a>
 
-<a href="https://imgur.com/uQ0kCRk"><img src="https://i.imgur.com/uQ0kCRk.png" title="source: imgur.com" /></a>
+<a><img src="https://i.imgur.com/uQ0kCRk.png" title="source: imgur.com" /></a>
