@@ -1,4 +1,5 @@
-# EARLY RELEASE (VERSION 0.1): please use at your own discretion
+# INITIAL DEVELOPMENT RELEASE
+Please use ngsComposer at your own discretion. Currently, the software is in an early testing release. If you find any issues or have suggestions to improve ngsComposer or its documentation, please contact rkuster@utk.edu.
 
 <a><img src="https://i.imgur.com/yllhM4C.png" title="source: imgur.com" /></a>
 
@@ -23,6 +24,7 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
   - [Demultiplexing](#demultiplexing)
   - [Standalone Tools](#standalone)
 - [Troubleshooting](#troubleshooting)
+- [Versioning](#versioning)
 - [License](#license)
 
 
@@ -269,6 +271,9 @@ For Ubuntu, R can be installed directly using apt:
 $ sudo apt update
 $ sudo apt install r-base
 ```
+
+## Versioning
+Versioning will follow major.minor.patch <a href="https://semver.org">semantic versioning format</a>.
 
 ## License
 

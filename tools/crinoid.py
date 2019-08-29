@@ -179,7 +179,7 @@ def motif_total(i, dt):
     add newly-discovered motif counts to grand total dictionaries
     '''
     for k, v in i.items():
-        if k in dt.keys():
+        if k in dt:
             dt[k] = [a + b for a, b in zip_longest(v, dt[k], fillvalue=0)]
         else:
             dt[k] = v
@@ -195,7 +195,7 @@ def okay_mer(line, k, motif_dt):
         s = i * k
         f = s + k
         motif = line[s:f]
-        if(motif) in motif_dt.keys():
+        if motif in motif_dt:
             try:
                 motif_dt[motif][i] += 1
             except IndexError:
