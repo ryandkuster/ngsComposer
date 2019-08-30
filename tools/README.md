@@ -77,7 +77,7 @@ Example:
 $ python3 rotifer.py -r1 1_R1.fastq -r2 1_R2.fastq -m1 TCT TCC -m2 TCT TCC
 ```
 
-In the event that input data is paired-end, output files will indicate when pairing has been retained with the "pe" prefix. Reads that have no pair will have the "se" prefix.
+In the event that input data is paired-end, output files will indicate when pairing has been retained with the "pe" prefix. Reads that have no pair will have the "se" prefix. In the instance that a pe and se naming scheme are both applied to a file name, the leftmost prefix will indicate if a file is paired or single/unpaired (e.g. "**se**.pe.1_R1.fastq" will be unpaired).
 
 ## Krill
 
@@ -94,7 +94,7 @@ Example:
 $ python3 krill.py -r1 1_R1.fastq -r2 1_R2.fastq -q 30 -p 95
 ```
 
-As with Krill, paired-end output files will indicate when pairing has been retained with the "pe" prefix. Reads that have no pair will have the "se" prefix.
+As with Krill, paired-end output files will indicate when pairing has been retained with the "pe" prefix. Reads that have no pair will have the "se" prefix. In the instance that a pe and se naming scheme are both applied to a file name, the leftmost prefix will indicate if a file is paired or single/unpaired (e.g. "**se**.pe.1_R1.fastq" will be unpaired).
 
 ## Porifera
 
