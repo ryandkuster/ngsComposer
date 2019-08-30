@@ -1,5 +1,6 @@
 # INITIAL DEVELOPMENT RELEASE
-Please use ngsComposer at your own discretion. Currently, the software is in an early testing release. If you find any issues or have suggestions to improve ngsComposer or its documentation, please contact rkuster@utk.edu.
+Please use ngsComposer at your own discretion. Currently, the software is in an early testing release. If you find any issues or have suggestions to improve ngsComposer or its documentation, please contact rkuster@utk.edu or 
+bolukolu@utk.edu.
 
 <a><img src="https://i.imgur.com/yllhM4C.png" title="source: imgur.com" /></a>
 
