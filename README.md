@@ -30,6 +30,8 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
 
 ## Installation
 
+Currently, ngsComposer is only available for unix-based systems (i.e. mac and linux).
+
 Clone or download the Git repository to your desired folder
 
 ```bash

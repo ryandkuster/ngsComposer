@@ -25,7 +25,6 @@ qc$mean <- "NA"
 qc$sd <- "NA"
 
 #function across all positions to calculate mean value for each position
-#source code for weighted_se: https://rdrr.io/cran/diagis/src/R/ses.R
 col_len = ncol(qscores)-1
 for (i in c(1:nrow(qscores))) {
   wt <- (qscores[i,])/sum(qscores[i,])

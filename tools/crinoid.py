@@ -85,7 +85,6 @@ def crinoid(f, out1, out2, procs, p64, k_score):
     '''
     produce raw counts of nucleotide and qscore occurrences
     '''
-    #TODO implement p64 scoring scheme
     k_seq = 6
 
     if procs > 1:
@@ -95,6 +94,10 @@ def crinoid(f, out1, out2, procs, p64, k_score):
 
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
+    if p64:
+        val = dict(zip(scores[31:95], range(0, 43)))
+    else:
+        val = dict(zip(scores[:43], range(0, 43)))
     score_dt = dict(zip(scores[:43], range(0, 43)))
     base_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
     score_mx = [[0 for j in range(43)]]
@@ -118,11 +121,9 @@ def parallel_crinoid(f, k_seq, k_score, procs):
     kmer_score_dt = {}
     total = []
     subset = round(1000000/procs) * 4
-    #TODO list comprehension
     for i in range(procs):
         text_slice(f, subset)
         total.append(Test.next_lines)
-    #TODO consider making these into functions?
     pool = multiprocessing.Pool(procs)
     party = partial(motif_counter, k_seq, k_score)
     sub_vals = pool.map(party, total)
@@ -266,7 +267,6 @@ def combine_matrix(in_ls, out):
     '''
     combine values from previously generated qc matrices
     '''
-    # TODO update for alternate scoring systems
     out_q = os.path.join(os.path.dirname(in_ls[0]), 'qc', 'qscores.' + out)
     out_n = os.path.join(os.path.dirname(in_ls[0]), 'qc', 'nucleotides.' + out)
     q2 = [[0 for j in range(41)] for i in range(1000)]

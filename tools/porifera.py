@@ -84,11 +84,10 @@ def adapt_align(line, adapter, min_start, mismatch):
                     break
                 if hamm > mismatch:
                     break
-#            pos_scores.append(hamm) # TODO consider multimatch scenario
+            pos_scores.append(x)
             if hamm <= mismatch:
                 z = len(line) - min_start - x - 1
                 return z
-#    print(pos_scores)
     return z
 
 
