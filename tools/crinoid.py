@@ -13,7 +13,7 @@ def crinoid_main():
     '''
     standalone, command line entry point to crinoid using stdin
     '''
-    in1 = args.r1
+    in1 = args.r
     if args.o is None:
         proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
@@ -317,13 +317,13 @@ def matrix_mash(in_ls, a1, a2):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='qc summary statistics')
-    parser.add_argument('-r1', type=str,
+    parser.add_argument('-r', type=str,
             help='the full or relative path to R1 or R2 fastq file')
     parser.add_argument('-o', type=str,
             help='the full path to output directory (optional)')
     parser.add_argument('-a', type=str,
             help='create visualizations on existing qscore and nucleotide \
-                raw data (optional, use "True", requires base name for -r1)')
+                raw data (optional, use "True", requires base name for -r)')
     parser.add_argument('-s', type=str,
             help='type True for phred 64 samples (optional, default phred 33)')
     parser.add_argument('-t', type=int,

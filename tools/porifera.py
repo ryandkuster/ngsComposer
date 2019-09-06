@@ -9,7 +9,7 @@ def porifera_main():
     standalone, command line entry point to porifera using stdin
     '''
     revc = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
-    in1 = args.r1
+    in1 = args.r
     dapt_path = args.a
     min_start = args.n
     mismatch = args.m
@@ -93,7 +93,7 @@ def adapt_align(line, adapter, min_start, mismatch):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='trim known adapter sequences')
-    parser.add_argument('-r1', type=str,
+    parser.add_argument('-r', type=str,
             help='the full or relative path to R1 or R2 fastq file')
     parser.add_argument('-a', type=str,
             help='the full or relative path to adapter sequences file')

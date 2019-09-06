@@ -8,7 +8,7 @@ def scallop_main():
     '''
     standalone, command line entry point to scallop using stdin
     '''
-    in1 = args.r1
+    in1 = args.r
     front_trim = args.f
     end_trim = None if args.b == 0 else args.b
     if args.o is None:
@@ -108,7 +108,7 @@ def scallop_stats(target_index, pos):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='trim ends of fastq reads')
-    parser.add_argument('-r1', type=str,
+    parser.add_argument('-r', type=str,
             help='the full or relative path to R1 or R2 fastq file')
     parser.add_argument('-f', type=int,
             help='number of bases to remove from beginning of read (integer)')

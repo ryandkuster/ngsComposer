@@ -16,7 +16,7 @@ See <a href="https://github.com/ryandkuster/composer/blob/master/README.md">main
 
 |Variable|Alternate Variable|Usage|
 |:--|:--|:--|
-|-r1|R1|the full or relative path to R1 or R2 fastq file|
+|-r|R|the full or relative path to R1 or R2 fastq file|
 |-o|O|the full path to output directory (optional)|
 |-a|A|create visualizations on existing qscore and nucleotide raw data (optional, requires -r1 input)|
 |-s|S|type True for phred 64 samples (optional, default phred 33)|
@@ -33,7 +33,7 @@ Crinoid creates three visualizations spanning the entire read length. The first 
 
 |Variable|Alternate Variable|Usage|
 |:--|:--|:--|
-|-r1|R1|the full or relative path to R1 or R2 fastq file|
+|-r|R|the full or relative path to R1 or R2 fastq file|
 |-f|F|number of bases to remove from beginning of read (integer)|
 |-b|B|final position to keep within a read (integer)|
 |-o|O|the full path to output directory (optional)|
@@ -100,7 +100,7 @@ As with Krill, paired-end output files will indicate when pairing has been retai
 
 |Variable|Alternate Variable|Usage|
 |:--|:--|:--|
-|-r1|R1|the full or relative path to R1 or R2 fastq file|
+|-r|R|the full or relative path to R1 or R2 fastq file|
 |-a|A|the full or relative path to adapter sequences file|
 |-n|N|number of bases from end of read to begin adapter alignment|
 |-m|M|mismatch value for adapter hamming distance (integer)|
