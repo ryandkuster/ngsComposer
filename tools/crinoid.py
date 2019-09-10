@@ -221,16 +221,17 @@ def dicto_iter(motif_dt, k, mx, ref_dt):
                 try:
                     mx[pos][ref_dt[char]] += window
                 except IndexError:
-                    mx = bespoke_matrix(mx)
+                    mx = bespoke_matrix(mx, pos)
                     mx[pos][ref_dt[char]] += window
     return mx
 
 
-def bespoke_matrix(mx):
+def bespoke_matrix(mx, pos):
     '''
     add row to matrix to accomodate variance in read lengths
     '''
-    mx.append([0 for j in range(len(mx[0]))])
+    while len(mx) < pos + 1:
+        mx.append([0 for j in range(len(mx[0]))])
     return mx
 
 
