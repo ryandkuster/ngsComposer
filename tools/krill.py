@@ -3,6 +3,8 @@ import gzip
 import os
 import sys
 
+from helpers.gzip_handling import gzip_test
+
 
 def krill_main():
     '''
@@ -49,14 +51,19 @@ def krill_open(q_min, q_percent, p64, in1, in2, pe_1, pe_2, se_1, se_2):
     '''
     quality filter test for single and paired-end reads
     '''
-    try:
+    compressed = gzip_test(in1)
+    if compressed:
+        pe_1, _ = os.path.splitext(pe_1)
+        pe_2, _ = os.path.splitext(pe_2)
+        se_1, _ = os.path.splitext(se_1)
+        se_2, _ = os.path.splitext(se_2)
         with gzip.open(in1, 'rt') as f1, gzip.open(in2, 'rt') as f2,\
                 open(pe_1, "w") as pe_o1,\
                 open(pe_2, "w") as pe_o2,\
                 open(se_1, "w") as se_o1,\
                 open(se_2, "w") as se_o2:
             krill(q_min, q_percent, p64, f1, f2, pe_o1, pe_o2, se_o1, se_o2)
-    except OSError:
+    else:
         with open(in1) as f1, open(in2) as f2,\
                 open(pe_1, "w") as pe_o1,\
                 open(pe_2, "w") as pe_o2,\
@@ -98,12 +105,15 @@ def krill_single_open(q_min, q_percent, p64, in1, se_1):
     '''
     quality filter test for single-end reads
     '''
-    try:
+    compressed = gzip_test(in1)
+    if compressed:
+        se_1, _ = os.path.splitext(se_1)
         with gzip.open(in1, 'rt') as f1, open(se_1, "w") as se_o1:
             krill_single(q_min, q_percent, p64, f1, se_o1)
-    except OSError:
+    else:
         with open(in1) as f1, open(se_1, "w") as se_o1:
             krill_single(q_min, q_percent, p64, f1, se_o1)
+
 
 
 def krill_single(q_min, q_percent, p64, f1, se_o1):
@@ -141,13 +151,13 @@ def krill_test(line, q_min, q_percent, val):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='filter fastq reads for quality')
-    parser.add_argument('-r1', type=str,
+    parser.add_argument('-r1', type=str, required=True,
             help='the full or relative path to R1 fastq file')
     parser.add_argument('-r2', type=str,
             help='the full or relative path to R2 fastq file (optional)')
-    parser.add_argument('-q', type=int,
+    parser.add_argument('-q', type=int, required=True,
             help='the minimum qscore required at a position (integer)')
-    parser.add_argument('-p', type=int,
+    parser.add_argument('-p', type=int, required=True,
             help='the percent frequency minimum qscore must occur per read (integer)')
     parser.add_argument('-o', type=str,
             help='the full path to output directory (optional)')

@@ -4,6 +4,8 @@ import os
 import shutil
 import sys
 
+from helpers.gzip_handling import gzip_test
+
 
 def anemone_main():
     '''
@@ -35,8 +37,11 @@ def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
     '''
     curr = os.path.join(curr, os.path.basename(in1))
     os.mkdir(curr)
+    out1 = os.path.basename(in1)
     for k, v in bcs_dict.items():
-        if k == os.path.basename(in1):
+        if k == out1:
+            bcs_file = v
+        elif os.path.splitext(k)[0] == out1:
             bcs_file = v
     try:
         in2 = in2_ls[in1_ls.index(in1)]
@@ -44,7 +49,6 @@ def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
     except IndexError:
         in2 = False
         out2 = False
-    out1 = os.path.basename(in1)
     anemone_init(in1, in2, out1, out2, mismatch,
                  bcs_file, curr)
 
@@ -222,11 +226,12 @@ def anemone_open(in1, in2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj,
     '''
     create IO file object based on gzipped status for pe data
     '''
-    try:
+    compressed = gzip_test(in1)
+    if compressed:
         with gzip.open(in1, 'rt') as f1, gzip.open(in2, 'rt') as f2:
             of1_ls, of2_ls = anemone(f1, f2, out1, out2, of1_ls, of2_ls,
                                      mismatch, bcs, proj, round_one)
-    except OSError:
+    else:
         with open(in1) as f1, open(in2) as f2:
             of1_ls, of2_ls = anemone(f1, f2, out1, out2, of1_ls, of2_ls,
                                      mismatch, bcs, proj, round_one)
@@ -237,11 +242,12 @@ def anemone_single_open(in1, out1, of1_ls, mismatch, bcs, proj, round_one):
     '''
     create IO file object based on gzipped status for se data
     '''
-    try:
+    compressed = gzip_test(in1)
+    if compressed:
         with gzip.open(in1, 'rt') as f1:
             anemone_single(f1, out1, of1_ls, mismatch, bcs, proj,
                            round_one)
-    except OSError:
+    else:
         with open(in1) as f1:
             anemone_single(f1, out1, of1_ls, mismatch, bcs, proj,
                            round_one)
@@ -380,11 +386,11 @@ def second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='demultiplex reads')
-    parser.add_argument('-r1', type=str,
+    parser.add_argument('-r1', type=str, required=True,
             help='the full or relative path to R1 fastq file')
     parser.add_argument('-r2', type=str,
             help='the full or relative path to R2 fastq file (optional)')
-    parser.add_argument('-c', type=str,
+    parser.add_argument('-c', type=str, required=True,
             help='the full or relative path to barcodes index file')
     parser.add_argument('-m', type=int,
             help='mismatch value for barcode hamming distance (integer)')

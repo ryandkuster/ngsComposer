@@ -3,6 +3,8 @@ import gzip
 import os
 import sys
 
+from helpers.gzip_handling import gzip_test
+
 
 def scallop_main():
     '''
@@ -34,10 +36,12 @@ def scallop_open(in1, front_trim, end_trim, out1):
     '''
     trim defined base numbers from the front or from the end of reads
     '''
-    try:
+    compressed = gzip_test(in1)
+    if compressed:
+        out1, _ = os.path.splitext(out1)
         with gzip.open(in1, 'rt') as f, open(out1, 'w') as o:
             scallop(front_trim, end_trim, f, o)
-    except OSError:
+    else:
         with open(in1) as f, open(out1, 'w') as o:
             scallop(front_trim, end_trim, f, o)
 
@@ -108,7 +112,7 @@ def scallop_stats(target_index, pos):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='trim ends of fastq reads')
-    parser.add_argument('-r', type=str,
+    parser.add_argument('-r', type=str, required=True,
             help='the full or relative path to R1 or R2 fastq file')
     parser.add_argument('-f', type=int,
             help='number of bases to remove from beginning of read (integer)')

@@ -9,13 +9,15 @@ from argparse import RawTextHelpFormatter
 from functools import partial
 from multiprocessing import Pool
 
-import tools.helpers.messages as msg
-from tools.anemone import anemone_comp, bc_reader, bc_test
-from tools.crinoid import combine_matrix, crinoid_comp
-from tools.krill import krill_comp
-from tools.porifera import porifera_comp
-from tools.rotifer import rotifer_comp
-from tools.scallop import scallop_comp, scallop_end
+sys.path.append(os.path.join(os.path.dirname(__file__),'tools'))
+
+import helpers.messages as msg
+from anemone import anemone_comp, bc_reader, bc_test
+from crinoid import combine_matrix, crinoid_comp
+from krill import krill_comp
+from porifera import porifera_comp
+from rotifer import rotifer_comp
+from scallop import scallop_comp, scallop_end
 
 
 class Project:
@@ -695,8 +697,8 @@ if __name__ == '__main__':
         '    porifera.py - adapter removal\n\n' +
         'see https://github.com/ryandkuster/ngs-composer for full usage notes\n\n' +
         ''), formatter_class=RawTextHelpFormatter)
-    parser.add_argument('-i', type=str, help='the full or relative path to ' +
-        'the project directory')
+    parser.add_argument('-i', type=str, required=True,
+                        help='the full or relative path to the project directory')
     args = parser.parse_args()
     c = Project()
     c.initialize(args.i)

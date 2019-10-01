@@ -50,7 +50,7 @@ input_single1 = (font.yellow + '\nunexpected paired libraries found\n' + font.re
                  '\nplease select from the following options:\n\n' +
                  font.lightblue + ' 1' + font.reset + ' - continue treating files as single-end libraries?\n' +
                  font.lightblue + ' 2' + font.reset + ' - continue treating files as paired-end libraries?\n' +
-                 font.lightblue + ' 3' + font.reset + ' - exit ngs-composer\n\n' +
+                 font.lightblue + ' 3' + font.reset + ' - exit ngsComposer\n\n' +
                  font.lightblue + 'number selection > ' + font.reset)
 
 
@@ -83,7 +83,7 @@ walkthrough1 = ('\nplease select from the following options:\n\n' +
                 font.lightblue + ' 2' + font.reset + ' - modify parameters and rerun current step\n' +
                 font.lightblue + ' 3' + font.reset + ' - remove results and bypass current step\n' +
                 font.lightblue + ' 4' + font.reset + ' - toggle walkaway mode\n' +
-                font.lightblue + ' 5' + font.reset + ' - exit ngs-composer\n\n' +
+                font.lightblue + ' 5' + font.reset + ' - exit ngsComposer\n\n' +
                 font.lightblue + 'number selection > ' + font.reset)
 walkthrough2 = 'enabled'
 walkthrough3 = (font.yellow + 'about to be canceled' + font.reset)

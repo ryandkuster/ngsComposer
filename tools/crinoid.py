@@ -1,12 +1,14 @@
-import math
 import argparse
 import gzip
+import math
+import multiprocessing
 import os
 import subprocess
 import sys
-from itertools import islice, zip_longest
-import multiprocessing
 from functools import partial
+from itertools import islice, zip_longest
+
+from helpers.gzip_handling import gzip_test
 
 
 def crinoid_main():
@@ -53,12 +55,13 @@ def crinoid_open(in1, out1, out2, procs, p64):
     '''
     open as gzipped file object if gzipped
     '''
-    try:
+    compressed = gzip_test(in1)
+    if compressed:
         with gzip.open(in1, 'rt') as f:
             k_score = kmer_test(f)
         with gzip.open(in1, 'rt') as f:
             crinoid(f, out1, out2, procs, p64, k_score)
-    except OSError:
+    else:
         with open(in1) as f:
             k_score = kmer_test(f)
         with open(in1) as f:
@@ -318,7 +321,7 @@ def matrix_mash(in_ls, a1, a2):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='qc summary statistics')
-    parser.add_argument('-r', type=str,
+    parser.add_argument('-r', type=str, required=True,
             help='the full or relative path to R1 or R2 fastq file')
     parser.add_argument('-o', type=str,
             help='the full path to output directory (optional)')

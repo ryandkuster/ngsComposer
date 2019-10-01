@@ -3,6 +3,8 @@ import gzip
 import os
 import sys
 
+from helpers.gzip_handling import gzip_test
+
 
 def rotifer_main():
     '''
@@ -54,7 +56,12 @@ def rotifer_open(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2,
     '''
     parse single and paired-end reads for recognized motifs
     '''
-    try:
+    compressed = gzip_test(in1)
+    if compressed:
+        pe_1, _ = os.path.splitext(pe_1)
+        pe_2, _ = os.path.splitext(pe_2)
+        se_1, _ = os.path.splitext(se_1)
+        se_2, _ = os.path.splitext(se_2)
         with gzip.open(in1, 'rt') as f1, gzip.open(in2, 'rt') as f2,\
                 open(pe_1, "w") as pe_o1,\
                 open(pe_2, "w") as pe_o2,\
@@ -66,7 +73,7 @@ def rotifer_open(R1_bases_ls, R2_bases_ls, in1, in2, pe_1, pe_2, se_1, se_2,
             else:
                 rotifer(R1_bases_ls, R2_bases_ls, f1, f2, pe_o1, pe_o2, se_o1,
                         se_o2)
-    except OSError:
+    else:
         with open(in1) as f1, open(in2) as f2,\
                 open(pe_1, "w") as pe_o1,\
                 open(pe_2, "w") as pe_o2,\
@@ -135,13 +142,15 @@ def rotifer_single_open(R1_bases_ls, in1, se_1, trim):
     '''
     parse single-end reads for recognized motifs
     '''
-    try:
+    compressed = gzip_test(in1)
+    if compressed:
+        se_1, _ = os.path.splitext(se_1)
         with gzip.open(in1, 'rt') as f1, open(se_1, "w") as se_o1:
             if trim:
                 rotifer_single_trim(R1_bases_ls, f1, se_o1, trim)
             else:
                 rotifer_single(R1_bases_ls, f1, se_o1)
-    except OSError:
+    else:
         with open(in1) as f1, open(se_1, "w") as se_o1:
             if trim:
                 rotifer_single_trim(R1_bases_ls, f1, se_o1, trim)
@@ -195,7 +204,7 @@ def rotifer_test(line, bases_ls):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='filter fastq reads for motif')
-    parser.add_argument('-r1', type=str,
+    parser.add_argument('-r1', type=str, required=True,
             help='the full or relative path to R1 fastq file')
     parser.add_argument('-r2', type=str,
             help='the full or relative path to R2 fastq file (optional)')
