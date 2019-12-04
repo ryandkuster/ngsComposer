@@ -317,16 +317,17 @@ def input_single(values, in1_ls, in2_ls):
             ans = input(msg.input_single1)
             if ans == '1':
                 c.ignore = True
+                for filename in values:
+                    in1_ls.append(filename)
                 break
             if ans == '2':
                 c.paired = True
+                in1_ls, in2_ls = input_paired(values, in1_ls, in2_ls)
                 break
             elif ans == '3':
                 sys.exit('\nngs-composer is now exiting')
             else:
                 print('\nselect an option from the list\n')
-        for filename in values:
-            in1_ls.append(filename)
     return in1_ls, in2_ls
 
 
@@ -633,6 +634,7 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
         elif choice1 == '4':
             c.walkaway = True if c.walkaway is False else False
         elif choice1 == '5':
+            summary_file()
             sys.exit('\nngs-composer is now exiting')
         elif choice1 == '2':
             break
@@ -666,6 +668,34 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
                 print('\nselect an option from the list\n')
         except Exception:
             print('\nnot a valid entry\n')
+
+
+def summary_file():
+    log = (str(datetime.datetime.now()).split('.')[0] + '\n\n' +
+           'paired = ' + str(c.paired) + '\n' +
+           'procs = ' + str(c.procs) + '\n' +
+           'alt_dir = ' + str(c.alt_dir) + '\n' +
+           'walkaway = ' + str(c.walkaway) + '\n' +
+           'rm_transit = ' + str(c.rm_transit) + '\n' +
+           'initial_qc = ' + str(c.initial_qc) + '\n' +
+           'all_qc = ' + str(c.all_qc) + '\n' +
+           'front_trim = ' + str(c.front_trim) + '\n' +
+           'bcs_index = ' + str(c.bcs_index) + '\n' +
+           'mismatch = ' + str(c.mismatch) + '\n' +
+           'R1_bases_ls = ' + str(c.R1_bases_ls) + '\n' +
+           'R2_bases_ls = ' + str(c.R2_bases_ls) + '\n' +
+           'non_genomic = ' + str(c.non_genomic) + '\n' +
+           'auto_trim = ' + str(c.auto_trim) + '\n' +
+           'trim_mode = ' + str(c.trim_mode) + '\n' +
+           'q_min = ' + str(c.q_min) + '\n' +
+           'q_percent = ' + str(c.q_percent) + '\n' +
+           'adapters = ' + str(c.adapters) + '\n' +
+           'adapter_match = ' + str(c.adapter_match) + '\n' +
+           'phred64 = ' + str(c.p64) + '\n')
+
+    print(log)
+    with open(os.path.join(c.proj, 'summary.txt'), 'w') as out:
+        out.write(log)
 
 
 if __name__ == '__main__':
@@ -730,6 +760,10 @@ if __name__ == '__main__':
         sys.exit('incorrect number of files based on index.txt')
     c.pairs_dict = is_paired(c.fastq_ls)
     c.in1_ls, c.in2_ls = input_sort(c.pairs_dict)
+    print(c.in1_ls) #TODO DELETE
+    print(c.in2_ls) #TODO DELETE
+    print(c.singles_ls) #TODO DELETE
+    print(c.fastq_ls) #TODO DELETE
 
     if c.initial_qc:
         print(msg.crin_title)
@@ -769,28 +803,5 @@ if __name__ == '__main__':
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
-    log = (str(datetime.datetime.now()).split('.')[0] + '\n\n' +
-           'paired = ' + str(c.paired) + '\n' +
-           'procs = ' + str(c.procs) + '\n' +
-           'alt_dir = ' + str(c.alt_dir) + '\n' +
-           'walkaway = ' + str(c.walkaway) + '\n' +
-           'rm_transit = ' + str(c.rm_transit) + '\n' +
-           'initial_qc = ' + str(c.initial_qc) + '\n' +
-           'all_qc = ' + str(c.all_qc) + '\n' +
-           'front_trim = ' + str(c.front_trim) + '\n' +
-           'bcs_index = ' + str(c.bcs_index) + '\n' +
-           'mismatch = ' + str(c.mismatch) + '\n' +
-           'R1_bases_ls = ' + str(c.R1_bases_ls) + '\n' +
-           'R2_bases_ls = ' + str(c.R2_bases_ls) + '\n' +
-           'non_genomic = ' + str(c.non_genomic) + '\n' +
-           'auto_trim = ' + str(c.auto_trim) + '\n' +
-           'trim_mode = ' + str(c.trim_mode) + '\n' +
-           'q_min = ' + str(c.q_min) + '\n' +
-           'q_percent = ' + str(c.q_percent) + '\n' +
-           'adapters = ' + str(c.adapters) + '\n' +
-           'adapter_match = ' + str(c.adapter_match) + '\n' +
-           'phred64 = ' + str(c.p64) + '\n')
+    summary_file()
 
-    print(log)
-    with open(os.path.join(c.proj, 'summary.txt'), 'w') as out:
-        out.write(log)
