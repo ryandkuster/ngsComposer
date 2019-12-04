@@ -273,16 +273,16 @@ def combine_matrix(in_ls, out):
     '''
     out_q = os.path.join(os.path.dirname(in_ls[0]), 'qc', 'qscores.' + out)
     out_n = os.path.join(os.path.dirname(in_ls[0]), 'qc', 'nucleotides.' + out)
-    q2 = [[0 for j in range(41)] for i in range(1000)]
+    q2 = [[0 for j in range(45)] for i in range(1000)]
     n2 = [[0 for j in range(5)] for i in range(1000)]
 
     for i in in_ls:
         q1 = os.path.join(os.path.dirname(i), 'qc', 'qscores.' +
                           os.path.basename(i))
-        q2 = matrix_mash(in_ls, q1, q2)
+        q2 = matrix_mash(q1, q2)
         n1 = os.path.join(os.path.dirname(i), 'qc', 'nucleotides.' +
                           os.path.basename(i))
-        n2 = matrix_mash(in_ls, n1, n2)
+        n2 = matrix_mash(n1, n2)
 
     for i in reversed(q2):
         if sum(i) == 0:
@@ -304,7 +304,7 @@ def combine_matrix(in_ls, out):
     visualizer(out_n, out_q)
 
 
-def matrix_mash(in_ls, a1, a2):
+def matrix_mash(a1, a2):
     '''
     modify existing qscore files into matrices, combine with a2
     '''
