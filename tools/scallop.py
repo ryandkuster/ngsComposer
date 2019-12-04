@@ -112,13 +112,13 @@ def scallop_stats(target_index, pos):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='trim ends of fastq reads')
-    parser.add_argument('-r', type=str, required=True,
+    parser.add_argument('-r1', type=str, required=True, metavar='',
             help='the full or relative path to R1 or R2 fastq file')
-    parser.add_argument('-f', type=int,
+    parser.add_argument('-f', type=int, metavar='',
             help='number of bases to remove from beginning of read (integer)')
-    parser.add_argument('-b', type=int,
+    parser.add_argument('-b', type=int, metavar='',
             help='final position to keep within a read (integer)')
-    parser.add_argument('-o', type=str,
+    parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
     args = parser.parse_args()
     scallop_main()

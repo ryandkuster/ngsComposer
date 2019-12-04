@@ -151,17 +151,17 @@ def krill_test(line, q_min, q_percent, val):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='filter fastq reads for quality')
-    parser.add_argument('-r1', type=str, required=True,
+    parser.add_argument('-r1', type=str, required=True, metavar='',
             help='the full or relative path to R1 fastq file')
-    parser.add_argument('-r2', type=str,
+    parser.add_argument('-r2', type=str, metavar='',
             help='the full or relative path to R2 fastq file (optional)')
-    parser.add_argument('-q', type=int, required=True,
+    parser.add_argument('-q', type=int, required=True, metavar='',
             help='the minimum qscore required at a position (integer)')
-    parser.add_argument('-p', type=int, required=True,
+    parser.add_argument('-p', type=int, required=True, metavar='',
             help='the percent frequency minimum qscore must occur per read (integer)')
-    parser.add_argument('-o', type=str,
+    parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
-    parser.add_argument('-s', type=str,
+    parser.add_argument('-s', type=str, metavar='',
             help='type True for phred 64 samples (optional, default phred 33)')
     args = parser.parse_args()
     krill_main()

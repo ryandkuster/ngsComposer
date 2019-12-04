@@ -386,15 +386,15 @@ def second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='demultiplex reads')
-    parser.add_argument('-r1', type=str, required=True,
+    parser.add_argument('-r1', type=str, required=True, metavar='',
             help='the full or relative path to R1 fastq file')
-    parser.add_argument('-r2', type=str,
+    parser.add_argument('-r2', type=str, metavar='',
             help='the full or relative path to R2 fastq file (optional)')
-    parser.add_argument('-c', type=str, required=True,
+    parser.add_argument('-c', type=str, required=True, metavar='',
             help='the full or relative path to barcodes index file')
-    parser.add_argument('-m', type=int,
+    parser.add_argument('-m', type=int, metavar='',
             help='mismatch value for barcode hamming distance (integer)')
-    parser.add_argument('-o', type=str,
+    parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
     args = parser.parse_args()
     anemone_main()

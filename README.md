@@ -163,7 +163,7 @@ Optionally, one or more barcode files may be included in the project directory f
 
 Naming conventions: "index.txt" is required, the barcodes file can be named as desired (see "Index file for directing multiple barcode files")
 
-The barcodes file is a tab or space delimited file (or, copy directly from your favorite spreadsheet program into a text file). Forward barcodes begin each row and reverse barcodes begin each column with the desired sample names indicated in the interior of the matrix. For example, the following would be required for a dual-indexed library:
+The barcodes file is a tab or space delimited file with no spaces in sample names (or, copy directly from your favorite spreadsheet program into a text file). Forward barcodes begin each row and reverse barcodes begin each column with the desired sample names indicated in the interior of the matrix. For example, the following would be required for a dual-indexed library:
 
 **barcodes_1.txt**
 ```
