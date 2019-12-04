@@ -47,8 +47,7 @@ class Project:
         self.q_min = False
         self.q_percent = False
         self.adapters = ''
-        self.min_start = False
-        self.adapter_mismatch = False
+        self.adapter_match = False
         self.rm_transit = True
         self.p64 = False
 
@@ -124,18 +123,9 @@ class Project:
                 raise Exception(msg.conf_confirm20)
         if not isinstance(self.rm_transit, bool):
             raise Exception(msg.conf_confirm21)
-        if self.min_start:
-            if not isinstance(self.min_start, int):
-                raise Exception(msg.conf_confirm22)
-            if not self.adapter_mismatch:
-                raise Exception(msg.conf_confirm23)
-            if not os.path.exists(os.path.join(self.proj, 'adapters.txt')):
-                raise Exception(msg.conf_confirm23)
-        if self.adapter_mismatch:
-            if not isinstance(self.adapter_mismatch, int):
+        if self.adapter_match:
+            if not isinstance(self.adapter_match, int):
                 raise Exception(msg.conf_confirm24)
-            if not self.min_start:
-                raise Exception(msg.conf_confirm23)
             if not os.path.exists(os.path.join(self.proj, 'adapters.txt')):
                 raise Exception(msg.conf_confirm23)
         if not isinstance(self.p64, bool):
@@ -596,11 +586,8 @@ def porifera_multi():
             os.mkdir(os.path.join(curr, 'single'))
             os.mkdir(os.path.join(curr, 'paired'))
 
-    porifera_part = partial(porifera_comp, curr, c.adapters, c.min_start,
-                            c.adapter_mismatch)
+    porifera_part = partial(porifera_comp, curr, c.adapters, c.adapter_match)
     pool_multi(porifera_part, c.fastq_ls)
-    if c.singles_ls:
-        pool_multi(porifera_part, c.singles_ls)
     temp_ls = pathfinder(curr)
     return temp_ls
 
@@ -801,8 +788,7 @@ if __name__ == '__main__':
            'q_min = ' + str(c.q_min) + '\n' +
            'q_percent = ' + str(c.q_percent) + '\n' +
            'adapters = ' + str(c.adapters) + '\n' +
-           'min_start = ' + str(c.min_start) + '\n' +
-           'adapter_mismatch = ' + str(c.adapter_mismatch) + '\n' +
+           'adapter_match = ' + str(c.adapter_match) + '\n' +
            'phred64 = ' + str(c.p64) + '\n')
 
     print(log)

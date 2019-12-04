@@ -101,8 +101,7 @@ Using a text editor, save a file containing any of the following variables as a 
 |auto_trim|using trim_mode basis, trim read at 3' ends at first position meeting this minimum value|integer between 0 and 40|
 |q_min|quality score minimum (Phred value 0-40) applied to q_percent variable|integer between 0 and 40|
 |q_percent|percentage of reads >= q_min quality scores|number between 0 and 100|
-|min_start|number of positions from end of read to begin adapter alignment (requires 'adapters.txt' and adapter_mismatch)|integer|
-|adapter_mismatch|number of mismatches (hamming distance) allowed in adapters (requires 'adapters.txt' and min_start)|integer|
+|adapter_match|number of base matches to identify adapters (requires 'adapters.txt')|integer|
 |p64|defaults to phred+33, use True if using phred+64 qscores|True or False|
 
 An example configuration file may look like this:
