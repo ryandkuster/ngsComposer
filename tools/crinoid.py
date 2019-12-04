@@ -321,16 +321,16 @@ def matrix_mash(a1, a2):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='qc summary statistics')
-    parser.add_argument('-r', type=str, required=True,
+    parser.add_argument('-r1', type=str, required=True, metavar='',
             help='the full or relative path to R1 or R2 fastq file')
-    parser.add_argument('-o', type=str,
+    parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
-    parser.add_argument('-a', type=str,
+    parser.add_argument('-a', type=str, metavar='',
             help='create visualizations on existing qscore and nucleotide \
                 raw data (optional, use "True", requires base name for -r)')
-    parser.add_argument('-s', type=str,
+    parser.add_argument('-s', type=str, metavar='',
             help='type True for phred 64 samples (optional, default phred 33)')
-    parser.add_argument('-t', type=int,
+    parser.add_argument('-t', type=int, metavar='',
             help='number of subprocesses')
     args = parser.parse_args()
     crinoid_main()

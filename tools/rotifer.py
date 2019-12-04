@@ -204,17 +204,17 @@ def rotifer_test(line, bases_ls):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='filter fastq reads for motif')
-    parser.add_argument('-r1', type=str, required=True,
+    parser.add_argument('-r1', type=str, required=True, metavar='',
             help='the full or relative path to R1 fastq file')
-    parser.add_argument('-r2', type=str,
+    parser.add_argument('-r2', type=str, metavar='',
             help='the full or relative path to R2 fastq file (optional)')
-    parser.add_argument('-m1', type=str, nargs='+',
+    parser.add_argument('-m1', type=str, nargs='+', metavar='',
             help='space separated list of motifs expected in R1 (no brackets)')
-    parser.add_argument('-m2', type=str, nargs='+',
+    parser.add_argument('-m2', type=str, nargs='+', metavar='',
             help='space separated list of motifs expected in R2 (no brackets)')
-    parser.add_argument('-n', type=int,
+    parser.add_argument('-n', type=int, metavar='',
             help='number of non-genomic bases to remove from read start (integer)')
-    parser.add_argument('-o', type=str,
+    parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
     args = parser.parse_args()
     rotifer_main()
