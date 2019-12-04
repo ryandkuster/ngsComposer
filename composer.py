@@ -760,10 +760,6 @@ if __name__ == '__main__':
         sys.exit('incorrect number of files based on index.txt')
     c.pairs_dict = is_paired(c.fastq_ls)
     c.in1_ls, c.in2_ls = input_sort(c.pairs_dict)
-    print(c.in1_ls) #TODO DELETE
-    print(c.in2_ls) #TODO DELETE
-    print(c.singles_ls) #TODO DELETE
-    print(c.fastq_ls) #TODO DELETE
 
     if c.initial_qc:
         print(msg.crin_title)
