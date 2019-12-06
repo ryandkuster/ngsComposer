@@ -11,6 +11,7 @@ from multiprocessing import Pool
 
 sys.path.append(os.path.join(os.path.dirname(__file__),'tools'))
 
+from helpers.gzip_handling import gzip_test
 import helpers.messages as msg
 from anemone import anemone_comp, bc_reader, bc_test
 from crinoid import combine_matrix, crinoid_comp
