@@ -36,7 +36,7 @@ conf_confirm20 = (font.yellow + '\n\nq_percent must be an integer between 0 and 
 conf_confirm21 = (font.yellow + '\n\nrm_dirs must be True or False\n' + font.reset)
 conf_confirm22 = (font.yellow + '\n\nmin_start must be an integer\n' + font.reset)
 conf_confirm23 = (font.yellow + '\n\n\'adapters.txt\' and adapter_match must be present\n' + font.reset)
-conf_confirm24 = (font.yellow + '\n\nadapter_mismatch must be an integer\n' + font.reset)
+conf_confirm24 = (font.yellow + '\n\nadapter_match must be an integer >= 10 for pipeline\n' + font.reset)
 conf_confirm25 = (font.yellow + '\n\nphred64 must be True or False\n' + font.reset)
 
 

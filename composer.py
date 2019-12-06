@@ -22,6 +22,7 @@ from scallop import scallop_comp, scallop_end
 
 class Project:
     def __init__(self):
+        self.start_time =  str(datetime.datetime.now()).split('.')[0]
         self.singles_ls = []
         self.fastq_ls = []
         self.in1_ls = []
@@ -123,8 +124,13 @@ class Project:
                 raise Exception(msg.conf_confirm20)
         if not isinstance(self.rm_transit, bool):
             raise Exception(msg.conf_confirm21)
+        if self.adapters:
+            if not self.adapter_match:
+                raise Exception(msg.conf_confirm23)
         if self.adapter_match:
             if not isinstance(self.adapter_match, int):
+                raise Exception(msg.conf_confirm24)
+            if self.adapter_match < 10:
                 raise Exception(msg.conf_confirm24)
             if not os.path.exists(os.path.join(self.proj, 'adapters.txt')):
                 raise Exception(msg.conf_confirm23)
@@ -134,6 +140,7 @@ class Project:
     def index_reader(self):
         '''
         open bcs_index and create dictionary of associated bc keyfiles
+        open adapters and bcs_index and test for correct format
         '''
         adapters = os.path.join(self.proj, 'adapters.txt')
         self.adapters = adapters if os.path.exists(adapters) else ''
@@ -289,6 +296,7 @@ def input_sort(pairs_dict):
 def input_paired(values, in1_ls, in2_ls):
     '''
     form list if paired is True
+    in1_ls order matches in2_ls
     '''
     for filename in values:
         header = gz_header(filename)
@@ -305,6 +313,7 @@ def input_paired(values, in1_ls, in2_ls):
 def input_single(values, in1_ls, in2_ls):
     '''
     form list if paired is False, with user input if paired detection
+    in1_ls populated with unpaired reads for use in in1/in2 sensitive tools
     '''
     if len(values) == 1:
         for filename in values:
@@ -589,6 +598,8 @@ def porifera_multi():
 
     porifera_part = partial(porifera_comp, curr, c.adapters, c.adapter_match)
     pool_multi(porifera_part, c.fastq_ls)
+    if c.singles_ls:
+        pool_multi(porifera_part, c.singles_ls)
     temp_ls = pathfinder(curr)
     return temp_ls
 
@@ -671,7 +682,10 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
 
 
 def summary_file():
-    log = (str(datetime.datetime.now()).split('.')[0] + '\n\n' +
+    end_time = str(datetime.datetime.now()).split('.')[0]
+    log = ('ngscomposer version ' + version + '\n\n' +
+           'start ' + c.start_time + '\n'+
+           'end   ' + end_time + '\n\n' +
            'paired = ' + str(c.paired) + '\n' +
            'procs = ' + str(c.procs) + '\n' +
            'alt_dir = ' + str(c.alt_dir) + '\n' +
@@ -693,15 +707,17 @@ def summary_file():
            'adapter_match = ' + str(c.adapter_match) + '\n' +
            'phred64 = ' + str(c.p64) + '\n')
 
-    print(log)
+    print('\n' + log + '\nthanks for using ngscomposer!')
     with open(os.path.join(c.proj, 'summary.txt'), 'w') as out:
         out.write(log)
 
 
 if __name__ == '__main__':
+    version = '0.2.0'
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
-        '#' * 50 + '\n' +
+        '#' * 50 + '\n\n' +
+        'version: ' + version + '\n\n' +
         'ngs-composer is an empirical, base-call filtering ' +
         'pipeline for preprocessing fastq libraries\n\n' +
         'basic usage: python3 composer.py -i <path_to_project_directory>\n\n' +
@@ -719,8 +735,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     c = Project()
     c.initialize(args.i)
-    c.conf_confirm()
     c.index_reader()
+    c.conf_confirm()
     c.dir_test()
     r_packages()
 
