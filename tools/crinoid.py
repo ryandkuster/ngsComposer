@@ -15,7 +15,7 @@ def crinoid_main():
     '''
     standalone, command line entry point to crinoid using stdin
     '''
-    in1 = args.r
+    in1 = args.r1
     if args.o is None:
         proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
