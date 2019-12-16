@@ -98,10 +98,9 @@ def crinoid(f, out1, out2, procs, p64, k_score):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
     if p64:
-        val = dict(zip(scores[31:95], range(0, 43)))
+        score_dt = dict(zip(scores[31:95], range(0, 43)))
     else:
-        val = dict(zip(scores[:43], range(0, 43)))
-    score_dt = dict(zip(scores[:43], range(0, 43)))
+        score_dt = dict(zip(scores[:43], range(0, 43)))
     base_dt = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
     score_mx = [[0 for j in range(43)]]
     base_mx = [[0 for j in range(5)]]

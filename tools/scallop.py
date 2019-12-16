@@ -20,6 +20,9 @@ def scallop_main():
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     out1 = os.path.join(proj, 'trimmed.' + os.path.basename(in1))
+    if args.e:
+        #TODO check args and call scallop_end_line
+        #TODO make naughty and nice lists
     scallop_open(in1, front_trim, end_trim, out1)
 
 
@@ -54,6 +57,21 @@ def scallop(front_trim, end_trim, f, o):
             o.write(line.rstrip()[front_trim:end_trim] + "\n")
         else:
             o.write(line)
+
+
+def scallop_end_line(front_trim, window, f, o):
+    i = 0
+    for line in f:
+        i += 1
+        if i % 2 == 0:
+            end_trim = 
+            o.write(line.rstrip()[front_trim:end_trim] + "\n")
+        else:
+            o.write(line)
+
+
+def window(line, )
+    pass
 
 
 def scallop_end(curr, auto_trim, trim_mode, in1):
@@ -118,6 +136,10 @@ if __name__ == '__main__':
             help='number of bases to remove from beginning of read (integer)')
     parser.add_argument('-b', type=int, metavar='',
             help='final position to keep within a read (integer)')
+    parser.add_argument('-e', type=int, metavar='',
+            help='end-trim where entire window >= score (integer)')
+    parser.add_argument('-w', type=int, metavar='',
+            help='use with \'e\', size of window consisting of >= e (integer)')
     parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
     args = parser.parse_args()

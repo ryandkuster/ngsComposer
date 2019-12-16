@@ -9,16 +9,16 @@ from argparse import RawTextHelpFormatter
 from functools import partial
 from multiprocessing import Pool
 
-sys.path.append(os.path.join(os.path.dirname(__file__),'tools'))
-
-from helpers.gzip_handling import gzip_test
 import helpers.messages as msg
 from anemone import anemone_comp, bc_reader, bc_test
 from crinoid import combine_matrix, crinoid_comp
+from helpers.gzip_handling import gzip_test
 from krill import krill_comp
 from porifera import porifera_comp
 from rotifer import rotifer_comp
 from scallop import scallop_comp, scallop_end
+
+sys.path.append(os.path.join(os.path.dirname(__file__),'tools'))
 
 
 class Project:
@@ -685,7 +685,7 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
 def summary_file():
     end_time = str(datetime.datetime.now()).split('.')[0]
     log = ('ngscomposer version ' + version + '\n\n' +
-           'start ' + c.start_time + '\n'+
+           'start ' + c.start_time + '\n' +
            'end   ' + end_time + '\n\n' +
            'paired = ' + str(c.paired) + '\n' +
            'procs = ' + str(c.procs) + '\n' +
@@ -817,4 +817,3 @@ if __name__ == '__main__':
             dir_del(c.rm_dirs[:-1])
 
     summary_file()
-
