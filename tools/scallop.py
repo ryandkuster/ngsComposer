@@ -10,7 +10,7 @@ def scallop_main():
     '''
     standalone, command line entry point to scallop using stdin
     '''
-    in1 = args.r
+    in1 = args.r1
     front_trim = args.f
     end_trim = None if args.b == 0 else args.b
     if args.o is None:
