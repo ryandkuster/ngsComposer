@@ -20,10 +20,14 @@ def scallop_main():
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     out1 = os.path.join(proj, 'trimmed.' + os.path.basename(in1))
-    if args.e:
-        #TODO check args and call scallop_end_line
-        #TODO make naughty and nice lists
-    scallop_open(in1, front_trim, end_trim, out1)
+    if args.e or args.w:
+        if not args.e and args.w:
+            sys.exit('-e and -w must be defined to end trim')
+        end_score = args.e
+        window = args.w
+        scallop_end_open(in1, out1, front_trim, end_score, window) 
+    else:
+        scallop_open(in1, front_trim, end_trim, out1)
 
 
 def scallop_comp(front_trim, end_trim, curr, in1):
@@ -59,20 +63,51 @@ def scallop(front_trim, end_trim, f, o):
             o.write(line)
 
 
-def scallop_end_line(front_trim, window, f, o):
+def scallop_end_open(in1, out1, front_trim, end_score, window):
+    '''
+    trim defined base numbers from the front or from the end of reads
+    '''
+    compressed = gzip_test(in1)
+    if compressed:
+        out1, _ = os.path.splitext(out1)
+        with gzip.open(in1, 'rt') as f, open(out1, 'w') as o:
+            scallop_end_line(in1, front_trim, end_score, window, f, o)
+    else:
+        with open(in1) as f, open(out1, 'w') as o:
+            scallop_end_line(in1, front_trim, end_score, window, f, o)
+
+
+def scallop_end_line(in1, front_trim, end_score, window, f, o):
+    scores = open(os.path.dirname(os.path.abspath(__file__)) +
+                  '/helpers/scores.txt').read().split()
+    val = dict(zip(scores[:43], range(0, 43)))
+    good_ls = [k for k, v in val.items() if int(v) >= int(end_score)]
     i = 0
+    entry = []
     for line in f:
+        entry.append(line.rstrip())
         i += 1
-        if i % 2 == 0:
-            end_trim = 
-            o.write(line.rstrip()[front_trim:end_trim] + "\n")
-        else:
-            o.write(line)
+        if i == 4:
+            #TODO trim line 2 after line 4 is tested
+            #implement paired ends sytem
+            #add minimum length to keep
+            end_trim = viewfinder(line.rstrip(), good_ls, window)
+            entry[1] = entry[1][front_trim:end_trim]
+            entry[3] = entry[3][front_trim:end_trim]
+            for element in entry:
+                o.write('%s\n' % element)
+            entry = []
+            i = 0
 
 
-def window(line, )
-    pass
-
+def viewfinder(line, good_ls, window):
+    for i in range(len(line) - window, -1, -1):
+        for j in line[i:i+window]:
+            if j not in good_ls:
+                break
+            else:
+                return i+window-1
+    return 0
 
 def scallop_end(curr, auto_trim, trim_mode, in1):
     '''
