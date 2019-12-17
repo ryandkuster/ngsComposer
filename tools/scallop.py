@@ -102,12 +102,13 @@ def scallop_end_line(in1, front_trim, end_score, window, f, o):
 
 def viewfinder(line, good_ls, window):
     for i in range(len(line) - window, -1, -1):
-        for j in line[i:i+window]:
+        for pos, j in enumerate(line[i:i+window]):
             if j not in good_ls:
                 break
-            else:
-                return i+window-1
+            elif pos == window - 1:
+                return i+window
     return 0
+
 
 def scallop_end(curr, auto_trim, trim_mode, in1):
     '''
