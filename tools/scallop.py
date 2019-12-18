@@ -11,6 +11,7 @@ def scallop_main():
     standalone, command line entry point to scallop using stdin
     '''
     in1 = args.r1
+    in2 = args.r2 if args.r2 else None
     front_trim = args.f
     end_trim = None if args.b == 0 else args.b
     if args.o is None:
@@ -19,15 +20,22 @@ def scallop_main():
         proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
-    out1 = os.path.join(proj, 'trimmed.' + os.path.basename(in1))
-    if args.e or args.w:
-        if not args.e and args.w:
-            sys.exit('-e and -w must be defined to end trim')
+    pe_1 = os.path.join(proj, 'trimmed_pe.' + os.path.basename(in1))
+    se_1 = os.path.join(proj, 'trimmed_se.' + os.path.basename(in1))
+    if args.e or args.w or args.l:
+        if not args.e and args.w and args.l:
+            sys.exit('-e, -w, and -l must be defined to end trim')
         end_score = args.e
         window = args.w
-        scallop_end_open(in1, out1, front_trim, end_score, window) 
+        min_l = args.l
+        if in2:
+            pe_2 = os.path.join(proj, 'trimmed_pe.' + os.path.basename(in2))
+            se_2 = os.path.join(proj, 'trimmed_se.' + os.path.basename(in2))
+            scallop_end_open(in1, in2, pe_1, pe_2, se_1, se_2, front_trim, end_score, window, min_l)
+        else:
+            scallop_single_end_open(in1, se_1, front_trim, end_score, window, min_l) 
     else:
-        scallop_open(in1, front_trim, end_trim, out1)
+        scallop_open(in1, front_trim, end_trim, se_1)
 
 
 def scallop_comp(front_trim, end_trim, curr, in1):
@@ -38,7 +46,7 @@ def scallop_comp(front_trim, end_trim, curr, in1):
     end_trim = None if end_trim == 0 else end_trim
     scallop_open(in1, front_trim, end_trim, out1)
 
-
+#############################################ORIGINAL
 def scallop_open(in1, front_trim, end_trim, out1):
     '''
     trim defined base numbers from the front or from the end of reads
@@ -61,9 +69,61 @@ def scallop(front_trim, end_trim, f, o):
             o.write(line.rstrip()[front_trim:end_trim] + "\n")
         else:
             o.write(line)
+#############################################
+
+#############################################begin paired end
+def scallop_end_open(in1, in2, pe_1, pe_2, se_1, se_2, front_trim, end_score, window, min_l):
+    '''
+    trim defined base numbers from the front or from the end of reads
+    '''
+    compressed = gzip_test(in1)
+    if compressed:
+        pe_1, _ = os.path.splitext(pe_1)
+        pe_2, _ = os.path.splitext(pe_2)
+        se_1, _ = os.path.splitext(se_1)
+        se_2, _ = os.path.splitext(se_2)
+        with gzip.open(in1, 'rt') as f1, gzip.open(in2, 'rt') as f2,\
+                open(pe_1, "w") as pe_o1,\
+                open(pe_2, "w") as pe_o2,\
+                open(se_1, "w") as se_o1,\
+                open(se_2, "w") as se_o2:
+            scallop_end_line(f1, f2, pe_1, pe_2, se_1, se_2, front_trim, end_score, window, min_l)
+    else:
+        with open(in1) as f1, open(in2) as f2,\
+                open(pe_1, "w") as pe_o1,\
+                open(pe_2, "w") as pe_o2,\
+                open(se_1, "w") as se_o1,\
+                open(se_2, "w") as se_o2:
+            scallop_end_line(f1, f2, pe_1, pe_2, se_1, se_2, front_trim, end_score, window, min_l)
 
 
-def scallop_end_open(in1, out1, front_trim, end_score, window):
+def scallop_end_line(f1, f2, pe_1, pe_2, se_1, se_2, front_trim, end_score, window, min_l):
+    scores = open(os.path.dirname(os.path.abspath(__file__)) +
+                  '/helpers/scores.txt').read().split()
+    val = dict(zip(scores[:43], range(0, 43)))
+    good_ls = [k for k, v in val.items() if int(v) >= int(end_score)]
+    i = 0
+    entry1, entry2 = [], []
+    for line1, line2 in zip(f1, f2):
+        entry1.append(line1.rstrip())
+        entry2.append(line2.rstrip())
+        i += 1
+        if i == 4:
+            #TODO implement paired ends sytem
+            #TODO add minimum length to keep
+            end_trim1 = viewfinder(line1.rstrip(), good_ls, window)
+            end_trim2 = viewfinder(line2.rstrip(), good_ls, window)
+            #TODO LEFT OFF HERE
+            entry[1] = entry[1][front_trim:end_trim]
+            entry[3] = entry[3][front_trim:end_trim]
+            for element in entry:
+                o.write('%s\n' % element)
+            entry = []
+            i = 0
+###########################################end paired end version
+
+###########################################single end version
+def scallop_single_end_open(in1, out1, front_trim, end_score, window, min_l):
     '''
     trim defined base numbers from the front or from the end of reads
     '''
@@ -71,13 +131,13 @@ def scallop_end_open(in1, out1, front_trim, end_score, window):
     if compressed:
         out1, _ = os.path.splitext(out1)
         with gzip.open(in1, 'rt') as f, open(out1, 'w') as o:
-            scallop_end_line(in1, front_trim, end_score, window, f, o)
+            scallop_single_end_line(f, o, front_trim, end_score, window, min_l)
     else:
         with open(in1) as f, open(out1, 'w') as o:
-            scallop_end_line(in1, front_trim, end_score, window, f, o)
+            scallop_single_end_line(f, o, front_trim, end_score, window, min_l)
 
 
-def scallop_end_line(in1, front_trim, end_score, window, f, o):
+def scallop_single_end_line(f, o, front_trim, end_score, window, min_l):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
     val = dict(zip(scores[:43], range(0, 43)))
@@ -99,6 +159,7 @@ def scallop_end_line(in1, front_trim, end_score, window, f, o):
             entry = []
             i = 0
 
+###########################################end single end version
 
 def viewfinder(line, good_ls, window):
     for i in range(len(line) - window, -1, -1):
@@ -168,6 +229,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='trim ends of fastq reads')
     parser.add_argument('-r1', type=str, required=True, metavar='',
             help='the full or relative path to R1 or R2 fastq file')
+    parser.add_argument('-r2', type=str, metavar='', 
+            help='the full or relative path to R2 fastq file (optional)')
     parser.add_argument('-f', type=int, metavar='',
             help='number of bases to remove from beginning of read (integer)')
     parser.add_argument('-b', type=int, metavar='',
@@ -176,6 +239,8 @@ if __name__ == '__main__':
             help='end-trim where entire window >= score (integer)')
     parser.add_argument('-w', type=int, metavar='',
             help='use with \'e\', size of window consisting of >= e (integer)')
+    parser.add_argument('-l', type=int, metavar='',
+            help='use with \'e\' & \'w\', minimum read length to keep (integer)')
     parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
     args = parser.parse_args()
