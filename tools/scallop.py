@@ -23,15 +23,13 @@ def scallop_main():
     pe_1 = os.path.join(proj, 'trimmed_pe.' + os.path.basename(in1))
     se_1 = os.path.join(proj, 'trimmed_se.' + os.path.basename(in1))
     if args.e or args.w or args.l:
-        if not args.e and args.w and args.l:
+        if not args.e or not args.w or not args.l:
             sys.exit('-e, -w, and -l must be defined to end trim')
         end_score = args.e
         window = args.w
         min_l = args.l
         if front_trim:
             min_l = front_trim + min_l
-            print(min_l)
-        sys.exit()
         if in2:
             pe_2 = os.path.join(proj, 'trimmed_pe.' + os.path.basename(in2))
             se_2 = os.path.join(proj, 'trimmed_se.' + os.path.basename(in2))
@@ -42,29 +40,37 @@ def scallop_main():
         scallop_open(in1, front_trim, end_trim, se_1)
 
 
-#def scallop_comp(front_trim, end_trim, curr, in1):
-#    #TODO update for new features
-#    '''
-#    composer entry point to scallop
-#    '''
-#in1_ls, in2_ls, q_min, q_percent, p64, curr, in1):
-#    pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
-#    se_1 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in1)    )
-#    try:
-#        in2 = in2_ls[in1_ls.index(in1)]
-#        pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
-#        se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(    in2))
-#        krill_open(q_min, q_percent, p64, in1, in2, pe_1, pe_2, se_1, s    e_2)
-#    except (IndexError, ValueError) as e:
-#        se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(    in1))
-#        krill_single_open(q_min, q_percent, p64, in1, se_1)
-#
-#
-#
-#
-#    out1 = os.path.join(curr, os.path.basename(in1))
-#    end_trim = None if end_trim == 0 else end_trim
-#    scallop_open(in1, front_trim, end_trim, out1)
+def scallop_comp(in1_ls, in2_ls, front_trim, end_trim, end_score, window,
+                 min_l, curr, in1):
+    '''
+    composer entry point to scallop
+    '''
+    pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
+    se_1 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in1)    )
+    try:
+        in2 = in2_ls[in1_ls.index(in1)]
+        pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
+        se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
+    except (IndexError, ValueError) as e:
+        se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
+    if end_score:
+        if front_trim:
+            min_l = front_trim + min_l
+        sys.exit()
+        if in2:
+            scallop_end_open(in1, in2, pe_1, pe_2, se_1, se_2, front_trim,
+                             end_score, window, min_l)
+        else:
+            scallop_single_end_open(in1, se_1, front_trim, end_score, window, min_l) 
+    else:
+        scallop_open(in1, front_trim, end_trim, se_1)
+
+
+
+
+    out1 = os.path.join(curr, os.path.basename(in1))
+    end_trim = None if end_trim == 0 else end_trim
+    scallop_open(in1, front_trim, end_trim, out1)
 
 
 def scallop_open(in1, front_trim, end_trim, out1):
@@ -117,6 +123,9 @@ def scallop_end_open(in1, in2, pe_1, pe_2, se_1, se_2, front_trim, end_score, wi
 
 
 def scallop_end_line(f1, f2, pe_o1, pe_o2, se_o1, se_o2, front_trim, end_score, window, min_l):
+    '''
+    automated end-trimming for paired-end reads
+    '''
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
     val = dict(zip(scores[:43], range(0, 43)))
@@ -156,6 +165,9 @@ def scallop_single_end_open(in1, out1, front_trim, end_score, window, min_l):
 
 
 def scallop_single_end_line(f, o, front_trim, end_score, window, min_l):
+    '''
+    automated end-trimming for single-end reads
+    '''
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
     val = dict(zip(scores[:43], range(0, 43)))
@@ -174,6 +186,9 @@ def scallop_single_end_line(f, o, front_trim, end_score, window, min_l):
 
 
 def viewfinder(line, good_ls, window):
+    '''
+    search defined window for passing scores
+    '''
     for i in range(len(line) - window, -1, -1):
         for pos, j in enumerate(line[i:i+window]):
             if j not in good_ls:
@@ -184,65 +199,13 @@ def viewfinder(line, good_ls, window):
 
 
 def scallop_writer(entry, front_trim, end_trim, o):
+    '''
+    write passing entries to file
+    '''
     entry[1] = entry[1][front_trim:end_trim]
     entry[3] = entry[3][front_trim:end_trim]
     for element in entry:
         o.write('%s\n' % element)
-
-
-
-#def scallop_end(curr, auto_trim, trim_mode, in1):
-#    '''
-#    composer entry point for trimming based on qc stats
-#    '''
-#    in1_path, in1_file = os.path.split(in1)
-#    _, in1_pe_se = os.path.split(in1_path)
-#    if in1_pe_se == 'paired' or in1_pe_se == 'single':
-#        curr += '/' + in1_pe_se
-#    in1_scores = os.path.join(in1_path, 'qc', 'qscores.' + in1_file)
-#    with open(in1_scores) as f:
-#        in1_mx = [[int(j) for j in i.rstrip().split(',')] for i in f]
-#    max_len = len(in1_mx)
-#    len_ls = [sum(i) for i in in1_mx]
-#    end_trim = None
-#    for base, i in enumerate(reversed(in1_mx)):
-#        total = 0
-#        for score, j in enumerate(i):
-#            total += score * j
-#        mean = total/sum(i)
-#        med = (sum(i) + 1)/2
-#        delta = med/2 if med % 1 == 0 else (med - 0.5)/2
-#        q1 = scallop_stats(med - delta, i)
-#        q3 = scallop_stats(med + delta, i)
-#        med = scallop_stats(med, i)
-#        lw = q1 - (1.5 * (q3 - q1))
-#        trim_dict = {'whisker': lw,
-#                     'quartile': q1,
-#                     'median': med,
-#                     'mean': mean}
-#        if trim_dict[trim_mode] >= auto_trim:
-#            end_trim = max_len - base
-#            break
-#    scallop_comp(0, end_trim, curr, in1)
-#
-#
-#def scallop_stats(target_index, pos):
-#    '''
-#    traverse score matrix per position in read for desired index
-#    '''
-#    index, x_adjust, target = 0, 0, 0
-#    for x, count in enumerate(pos):
-#        index += count
-#        if (x_adjust == 0 and index == target_index - 0.5):
-#            x_adjust = x
-#        if index >= target_index:
-#            if x_adjust == 0:
-#                target = x
-#                break
-#            else:
-#                target = (x + x_adjust)/2
-#                break
-#    return target
 
 
 if __name__ == '__main__':
