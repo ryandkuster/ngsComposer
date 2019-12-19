@@ -28,6 +28,10 @@ def scallop_main():
         end_score = args.e
         window = args.w
         min_l = args.l
+        if front_trim:
+            min_l = front_trim + min_l
+            print(min_l)
+        sys.exit()
         if in2:
             pe_2 = os.path.join(proj, 'trimmed_pe.' + os.path.basename(in2))
             se_2 = os.path.join(proj, 'trimmed_se.' + os.path.basename(in2))
@@ -38,18 +42,34 @@ def scallop_main():
         scallop_open(in1, front_trim, end_trim, se_1)
 
 
-def scallop_comp(front_trim, end_trim, curr, in1):
-    '''
-    composer entry point to scallop
-    '''
-    out1 = os.path.join(curr, os.path.basename(in1))
-    end_trim = None if end_trim == 0 else end_trim
-    scallop_open(in1, front_trim, end_trim, out1)
+#def scallop_comp(front_trim, end_trim, curr, in1):
+#    #TODO update for new features
+#    '''
+#    composer entry point to scallop
+#    '''
+#in1_ls, in2_ls, q_min, q_percent, p64, curr, in1):
+#    pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
+#    se_1 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in1)    )
+#    try:
+#        in2 = in2_ls[in1_ls.index(in1)]
+#        pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
+#        se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(    in2))
+#        krill_open(q_min, q_percent, p64, in1, in2, pe_1, pe_2, se_1, s    e_2)
+#    except (IndexError, ValueError) as e:
+#        se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(    in1))
+#        krill_single_open(q_min, q_percent, p64, in1, se_1)
+#
+#
+#
+#
+#    out1 = os.path.join(curr, os.path.basename(in1))
+#    end_trim = None if end_trim == 0 else end_trim
+#    scallop_open(in1, front_trim, end_trim, out1)
 
-#############################################ORIGINAL
+
 def scallop_open(in1, front_trim, end_trim, out1):
     '''
-    trim defined base numbers from the front or from the end of reads
+    test if gzipped, then open single-end files
     '''
     compressed = gzip_test(in1)
     if compressed:
@@ -69,12 +89,11 @@ def scallop(front_trim, end_trim, f, o):
             o.write(line.rstrip()[front_trim:end_trim] + "\n")
         else:
             o.write(line)
-#############################################
 
-#############################################begin paired end
+
 def scallop_end_open(in1, in2, pe_1, pe_2, se_1, se_2, front_trim, end_score, window, min_l):
     '''
-    trim defined base numbers from the front or from the end of reads
+    test if gzipped, then open paired-end files
     '''
     compressed = gzip_test(in1)
     if compressed:
@@ -87,17 +106,17 @@ def scallop_end_open(in1, in2, pe_1, pe_2, se_1, se_2, front_trim, end_score, wi
                 open(pe_2, "w") as pe_o2,\
                 open(se_1, "w") as se_o1,\
                 open(se_2, "w") as se_o2:
-            scallop_end_line(f1, f2, pe_1, pe_2, se_1, se_2, front_trim, end_score, window, min_l)
+            scallop_end_line(f1, f2, pe_o1, pe_o2, se_o1, se_o2, front_trim, end_score, window, min_l)
     else:
         with open(in1) as f1, open(in2) as f2,\
                 open(pe_1, "w") as pe_o1,\
                 open(pe_2, "w") as pe_o2,\
                 open(se_1, "w") as se_o1,\
                 open(se_2, "w") as se_o2:
-            scallop_end_line(f1, f2, pe_1, pe_2, se_1, se_2, front_trim, end_score, window, min_l)
+            scallop_end_line(f1, f2, pe_o1, pe_o2, se_o1, se_o2, front_trim, end_score, window, min_l)
 
 
-def scallop_end_line(f1, f2, pe_1, pe_2, se_1, se_2, front_trim, end_score, window, min_l):
+def scallop_end_line(f1, f2, pe_o1, pe_o2, se_o1, se_o2, front_trim, end_score, window, min_l):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()
     val = dict(zip(scores[:43], range(0, 43)))
@@ -109,23 +128,22 @@ def scallop_end_line(f1, f2, pe_1, pe_2, se_1, se_2, front_trim, end_score, wind
         entry2.append(line2.rstrip())
         i += 1
         if i == 4:
-            #TODO implement paired ends sytem
-            #TODO add minimum length to keep
             end_trim1 = viewfinder(line1.rstrip(), good_ls, window)
             end_trim2 = viewfinder(line2.rstrip(), good_ls, window)
-            #TODO LEFT OFF HERE
-            entry[1] = entry[1][front_trim:end_trim]
-            entry[3] = entry[3][front_trim:end_trim]
-            for element in entry:
-                o.write('%s\n' % element)
-            entry = []
+            if end_trim1 >= min_l and end_trim2 >= min_l:
+                scallop_writer(entry1, front_trim, end_trim1, pe_o1)
+                scallop_writer(entry2, front_trim, end_trim2, pe_o2)
+            elif end_trim1 >= min_l:
+                scallop_writer(entry1, front_trim, end_trim1, se_o1)
+            elif end_trim2 >= min_l:
+                scallop_writer(entry2, front_trim, end_trim2, se_o2)
+            entry1, entry2 = [], []
             i = 0
-###########################################end paired end version
 
-###########################################single end version
+
 def scallop_single_end_open(in1, out1, front_trim, end_score, window, min_l):
     '''
-    trim defined base numbers from the front or from the end of reads
+    test if gzipped, then open single-end files
     '''
     compressed = gzip_test(in1)
     if compressed:
@@ -148,18 +166,12 @@ def scallop_single_end_line(f, o, front_trim, end_score, window, min_l):
         entry.append(line.rstrip())
         i += 1
         if i == 4:
-            #TODO trim line 2 after line 4 is tested
-            #implement paired ends sytem
-            #add minimum length to keep
             end_trim = viewfinder(line.rstrip(), good_ls, window)
-            entry[1] = entry[1][front_trim:end_trim]
-            entry[3] = entry[3][front_trim:end_trim]
-            for element in entry:
-                o.write('%s\n' % element)
+            if end_trim >= min_l:
+                scallop_writer(entry, front_trim, end_trim, o)
             entry = []
             i = 0
 
-###########################################end single end version
 
 def viewfinder(line, good_ls, window):
     for i in range(len(line) - window, -1, -1):
@@ -171,58 +183,66 @@ def viewfinder(line, good_ls, window):
     return 0
 
 
-def scallop_end(curr, auto_trim, trim_mode, in1):
-    '''
-    composer entry point for trimming based on qc stats
-    '''
-    in1_path, in1_file = os.path.split(in1)
-    _, in1_pe_se = os.path.split(in1_path)
-    if in1_pe_se == 'paired' or in1_pe_se == 'single':
-        curr += '/' + in1_pe_se
-    in1_scores = os.path.join(in1_path, 'qc', 'qscores.' + in1_file)
-    with open(in1_scores) as f:
-        in1_mx = [[int(j) for j in i.rstrip().split(',')] for i in f]
-    max_len = len(in1_mx)
-    len_ls = [sum(i) for i in in1_mx]
-    end_trim = None
-    for base, i in enumerate(reversed(in1_mx)):
-        total = 0
-        for score, j in enumerate(i):
-            total += score * j
-        mean = total/sum(i)
-        med = (sum(i) + 1)/2
-        delta = med/2 if med % 1 == 0 else (med - 0.5)/2
-        q1 = scallop_stats(med - delta, i)
-        q3 = scallop_stats(med + delta, i)
-        med = scallop_stats(med, i)
-        lw = q1 - (1.5 * (q3 - q1))
-        trim_dict = {'whisker': lw,
-                     'quartile': q1,
-                     'median': med,
-                     'mean': mean}
-        if trim_dict[trim_mode] >= auto_trim:
-            end_trim = max_len - base
-            break
-    scallop_comp(0, end_trim, curr, in1)
+def scallop_writer(entry, front_trim, end_trim, o):
+    entry[1] = entry[1][front_trim:end_trim]
+    entry[3] = entry[3][front_trim:end_trim]
+    for element in entry:
+        o.write('%s\n' % element)
 
 
-def scallop_stats(target_index, pos):
-    '''
-    traverse score matrix per position in read for desired index
-    '''
-    index, x_adjust, target = 0, 0, 0
-    for x, count in enumerate(pos):
-        index += count
-        if (x_adjust == 0 and index == target_index - 0.5):
-            x_adjust = x
-        if index >= target_index:
-            if x_adjust == 0:
-                target = x
-                break
-            else:
-                target = (x + x_adjust)/2
-                break
-    return target
+
+#def scallop_end(curr, auto_trim, trim_mode, in1):
+#    '''
+#    composer entry point for trimming based on qc stats
+#    '''
+#    in1_path, in1_file = os.path.split(in1)
+#    _, in1_pe_se = os.path.split(in1_path)
+#    if in1_pe_se == 'paired' or in1_pe_se == 'single':
+#        curr += '/' + in1_pe_se
+#    in1_scores = os.path.join(in1_path, 'qc', 'qscores.' + in1_file)
+#    with open(in1_scores) as f:
+#        in1_mx = [[int(j) for j in i.rstrip().split(',')] for i in f]
+#    max_len = len(in1_mx)
+#    len_ls = [sum(i) for i in in1_mx]
+#    end_trim = None
+#    for base, i in enumerate(reversed(in1_mx)):
+#        total = 0
+#        for score, j in enumerate(i):
+#            total += score * j
+#        mean = total/sum(i)
+#        med = (sum(i) + 1)/2
+#        delta = med/2 if med % 1 == 0 else (med - 0.5)/2
+#        q1 = scallop_stats(med - delta, i)
+#        q3 = scallop_stats(med + delta, i)
+#        med = scallop_stats(med, i)
+#        lw = q1 - (1.5 * (q3 - q1))
+#        trim_dict = {'whisker': lw,
+#                     'quartile': q1,
+#                     'median': med,
+#                     'mean': mean}
+#        if trim_dict[trim_mode] >= auto_trim:
+#            end_trim = max_len - base
+#            break
+#    scallop_comp(0, end_trim, curr, in1)
+#
+#
+#def scallop_stats(target_index, pos):
+#    '''
+#    traverse score matrix per position in read for desired index
+#    '''
+#    index, x_adjust, target = 0, 0, 0
+#    for x, count in enumerate(pos):
+#        index += count
+#        if (x_adjust == 0 and index == target_index - 0.5):
+#            x_adjust = x
+#        if index >= target_index:
+#            if x_adjust == 0:
+#                target = x
+#                break
+#            else:
+#                target = (x + x_adjust)/2
+#                break
+#    return target
 
 
 if __name__ == '__main__':
