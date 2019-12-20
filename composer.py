@@ -9,6 +9,8 @@ from argparse import RawTextHelpFormatter
 from functools import partial
 from multiprocessing import Pool
 
+sys.path.append(os.path.join(os.path.dirname(__file__),'tools'))
+
 import helpers.messages as msg
 from anemone import anemone_comp, bc_reader, bc_test
 from crinoid import combine_matrix, crinoid_comp
@@ -16,9 +18,7 @@ from helpers.gzip_handling import gzip_test
 from krill import krill_comp
 from porifera import porifera_comp
 from rotifer import rotifer_comp
-from scallop import scallop_comp, scallop_end
-
-sys.path.append(os.path.join(os.path.dirname(__file__),'tools'))
+from scallop import scallop_comp
 
 
 class Project:
@@ -26,6 +26,7 @@ class Project:
         self.start_time =  str(datetime.datetime.now()).split('.')[0]
         self.singles_ls = []
         self.fastq_ls = []
+        self.fastq_dt = {}
         self.in1_ls = []
         self.in2_ls = []
         self.rm_dirs = []
@@ -44,14 +45,16 @@ class Project:
         self.R1_bases_ls = False
         self.R2_bases_ls = False
         self.non_genomic = False
-        self.trim_mode = False
-        self.auto_trim = False
-        self.q_min = False
-        self.q_percent = False
+        self.end_score = False
+        self.window = False
+        self.min_l = False
         self.adapters = ''
         self.adapter_match = False
+        self.q_min = False
+        self.q_percent = False
         self.rm_transit = True
         self.p64 = False
+
 
     def initialize(self, proj):
         '''
@@ -64,79 +67,6 @@ class Project:
             c.__dict__.update(config.__dict__)
         else:
             sys.exit(msg.initialize1)
-
-    def conf_confirm(self):
-        '''
-        test user-input from configuration file
-        '''
-        if not isinstance(self.paired, bool):
-            raise Exception(msg.conf_confirm1)
-        if self.procs < 1 or not isinstance(self.procs, int):
-            raise Exception(msg.conf_confirm2)
-        if self.alt_dir and not os.path.exists(self.alt_dir):
-            raise Exception(msg.conf_confirm3)
-        if not isinstance(self.initial_qc, bool):
-            raise Exception(msg.conf_confirm4)
-        if self.all_qc and self.all_qc not in ['full', 'summary']:
-            raise Exception(msg.conf_confirm5)
-        if not isinstance(self.walkaway, bool):
-            raise Exception(msg.conf_confirm6)
-        if self.walkaway is False and not self.all_qc:
-            raise Exception(msg.conf_confirm7)
-        if self.front_trim and not isinstance(self.front_trim, int):
-            raise Exception(msg.conf_confirm8)
-        if self.front_trim and self.front_trim < 1:
-            raise Exception(msg.conf_confirm9)
-        if self.mismatch:
-            if not os.path.exists(os.path.join(self.proj, 'index.txt')):
-                raise Exception(msg.conf_confirm10)
-            if not isinstance(self.mismatch, int) or self.mismatch < 0:
-                raise Exception(msg.conf_confirm11)
-        if self.R1_bases_ls:
-            if not isinstance(self.R1_bases_ls, list):
-                raise Exception(msg.conf_confirm12)
-            nucleotide_test(self.R1_bases_ls)
-        if self.R2_bases_ls:
-            if not isinstance(self.R2_bases_ls, list):
-                raise Exception(msg.conf_confirm13)
-            nucleotide_test(self.R2_bases_ls)
-        if self.non_genomic:
-            if not isinstance(self.non_genomic, int) or self.non_genomic < 1:
-                raise Exception(msg.conf_confirm14)
-        if self.auto_trim or self.trim_mode:
-            if not self.auto_trim or not self.trim_mode:
-                raise Exception(msg.conf_confirm15)
-            if not isinstance(self.auto_trim, int) or self.auto_trim is True:
-                raise Exception(msg.conf_confirm16)
-            if not 0 <= self.auto_trim <= 42:
-                raise Exception(msg.conf_confirm16)
-            if self.trim_mode not in ['whisker', 'quartile', 'median', 'mean']:
-                raise Exception(msg.conf_confirm17)
-        if self.q_min or self.q_percent:
-            if not self.q_min or not self.q_percent:
-                raise Exception(msg.conf_confirm18)
-            if not isinstance(self.q_min, int):
-                raise Exception(msg.conf_confirm19)
-            if not 0 <= self.q_min <= 42:
-                raise Exception(msg.conf_confirm19)
-            if not isinstance(self.q_percent, int):
-                raise Exception(msg.conf_confirm20)
-            if not 0 <= self.q_percent <= 100:
-                raise Exception(msg.conf_confirm20)
-        if not isinstance(self.rm_transit, bool):
-            raise Exception(msg.conf_confirm21)
-        if self.adapters:
-            if not self.adapter_match:
-                raise Exception(msg.conf_confirm23)
-        if self.adapter_match:
-            if not isinstance(self.adapter_match, int):
-                raise Exception(msg.conf_confirm24)
-            if self.adapter_match < 10:
-                raise Exception(msg.conf_confirm24)
-            if not os.path.exists(os.path.join(self.proj, 'adapters.txt')):
-                raise Exception(msg.conf_confirm23)
-        if not isinstance(self.p64, bool):
-            raise Exception(msg.conf_confirm25)
 
     def index_reader(self):
         '''
@@ -162,6 +92,82 @@ class Project:
                     if j == 1:
                         value = item
                 self.bcs_dict[key] = os.path.join(self.proj, value)
+
+    def conf_confirm(self):
+        '''
+        test user-input from configuration file
+        '''
+        if not isinstance(self.paired, bool):
+            raise Exception(msg.conf_confirm1)
+
+        if self.procs < 1 or not isinstance(self.procs, int):
+            raise Exception(msg.conf_confirm2)
+
+        if self.alt_dir and not os.path.exists(self.alt_dir):
+            raise Exception(msg.conf_confirm3)
+
+        if not isinstance(self.initial_qc, bool):
+            raise Exception(msg.conf_confirm4)
+
+        if self.all_qc and self.all_qc not in ['full', 'summary']:
+            raise Exception(msg.conf_confirm5)
+
+        if not isinstance(self.walkaway, bool):
+            raise Exception(msg.conf_confirm6)
+
+        if self.walkaway is False and not self.all_qc:
+            raise Exception(msg.conf_confirm7)
+
+        if self.front_trim and not isinstance(self.front_trim, int):
+            raise Exception(msg.conf_confirm8)
+        if self.front_trim and self.front_trim < 1:
+            raise Exception(msg.conf_confirm9)
+        if self.mismatch:
+            if not os.path.exists(os.path.join(self.proj, 'index.txt')):
+                raise Exception(msg.conf_confirm10)
+            if not isinstance(self.mismatch, int) or self.mismatch < 0:
+                raise Exception(msg.conf_confirm11)
+
+        if self.R1_bases_ls:
+            if not isinstance(self.R1_bases_ls, list):
+                raise Exception(msg.conf_confirm12)
+            nucleotide_test(self.R1_bases_ls)
+        if self.R2_bases_ls:
+            if not isinstance(self.R2_bases_ls, list):
+                raise Exception(msg.conf_confirm13)
+            nucleotide_test(self.R2_bases_ls)
+        if self.non_genomic:
+            if not isinstance(self.non_genomic, int) or self.non_genomic < 1:
+                raise Exception(msg.conf_confirm14)
+
+        if self.adapters:
+            if not self.adapter_match:
+                raise Exception(msg.conf_confirm23)
+        if self.adapter_match:
+            if not isinstance(self.adapter_match, int):
+                raise Exception(msg.conf_confirm24)
+            if self.adapter_match < 10:
+                raise Exception(msg.conf_confirm24)
+            if not os.path.exists(os.path.join(self.proj, 'adapters.txt')):
+                raise Exception(msg.conf_confirm23)
+
+        if self.q_min or self.q_percent:
+            if not self.q_min or not self.q_percent:
+                raise Exception(msg.conf_confirm18)
+            if not isinstance(self.q_min, int):
+                raise Exception(msg.conf_confirm19)
+            if not 0 <= self.q_min <= 42:
+                raise Exception(msg.conf_confirm19)
+            if not isinstance(self.q_percent, int):
+                raise Exception(msg.conf_confirm20)
+            if not 0 <= self.q_percent <= 100:
+                raise Exception(msg.conf_confirm20)
+
+        if not isinstance(self.rm_transit, bool):
+            raise Exception(msg.conf_confirm21)
+
+        if not isinstance(self.p64, bool):
+            raise Exception(msg.conf_confirm25)
 
     def dir_test(self):
         '''
@@ -214,134 +220,79 @@ def nucleotide_test(ls):
             sys.exit()
         raise Exception
 
+####################################### NEW FUNCTIONS
 
-def is_fq(filename):
+def fastq_test(fastq_ls):
     '''
-    test first read structure if fastq
+    test if gzipped fastq file
     '''
-    try:
-        with open(filename) as f:
-            for i, line in enumerate(f):
-                if i == 0 and line[0] != '@':
-                    return
-                if i == 2 and line[0] != '+':
-                    return
-                else:
-                    return 1
-    except IsADirectoryError:
-        raise Exception(msg.is_fq1)
-
-
-def is_gz(filename):
-    '''
-    test first read structure if fastq.gz
-    '''
-    with gzip.open(filename, 'rt') as f:
-        for i, line in enumerate(f):
-            if i == 0 and line[0] != '@':
-                return
-            if i == 2 and line[0] != '+':
-                return
-            else:
-                return 0
-
-
-def gz_header(filename):
-    '''
-    return gz status if gzipped
-    '''
-    try:
-        fastq_test = is_fq(filename)
-        with open(filename) as f:
-            header = f.readline()
-            return header
-    except:
-        with gzip.open(filename, 'rt') as f:
-            header = f.readline()
-            return header
-
-
-def is_paired(fastq_ls):
-    '''
-    use header info to match paired ends, if present
-    '''
-    pairs_dict = {}
+    fastq_dt = {}
     for filename in fastq_ls:
-        header = gz_header(filename)
-        for i, x in enumerate(header.split(' ')):
-            if i == 0:
-                header_id = x
-        if header_id in pairs_dict:
-            pairs_dict[header_id].append(filename)
+        compressed = gzip_test(filename)
+        if compressed is None:
+            sys.exit('\n\n' + filename + msg.fastq_test1)
+        elif compressed is True:
+            with gzip.open(filename, 'rt') as f:
+                fastq_dt = fastq_structure(f, filename, fastq_dt)
         else:
-            pairs_dict[header_id] = [filename]
-    return pairs_dict
+            with open(filename) as f:
+                fastq_dt = fastq_structure(f, filename, fastq_dt)
+    return fastq_dt
 
 
-def input_sort(pairs_dict):
+def fastq_structure(f, filename, fastq_dt):
     '''
-    if headers identical, order in1 and in2 lists to keep pairing
+    test first read for fastq structure, extract headers, find pairs
     '''
-    in1_ls, in2_ls = [], []
-    for values in pairs_dict.values():
-        if c.paired is True and len(values) == 2:
-            in1_ls, in2_ls = input_paired(values, in1_ls, in2_ls)
-        elif c.paired is True and len(values) != 2:
-            sys.exit('R1 and R2 pairs not found, expect paired library\n' +
-                     'check the naming conventions of the bcs_index')
-        if c.paired is False:
-            in1_ls, in2_ls = input_single(values, in1_ls, in2_ls)
-    return in1_ls, in2_ls
-
-
-def input_paired(values, in1_ls, in2_ls):
-    '''
-    form list if paired is True
-    in1_ls order matches in2_ls
-    '''
-    for filename in values:
-        header = gz_header(filename)
-        for i, x in enumerate(header.split(' ')):
-            if i == 1:
-                end = x
-        if end.startswith('1'):
-            in1_ls.append(filename)
-        if end.startswith('2'):
-            in2_ls.append(filename)
-    return in1_ls, in2_ls
-
-
-def input_single(values, in1_ls, in2_ls):
-    '''
-    form list if paired is False, with user input if paired detection
-    in1_ls populated with unpaired reads for use in in1/in2 sensitive tools
-    '''
-    if len(values) == 1:
-        for filename in values:
-            in1_ls.append(filename)
-    elif c.ignore is True:
-        for filename in values:
-            in1_ls.append(filename)
-    else:
-        while True:
-            ans = input(msg.input_single1)
-            if ans == '1':
-                c.ignore = True
-                for filename in values:
-                    in1_ls.append(filename)
-                break
-            if ans == '2':
-                c.paired = True
-                in1_ls, in2_ls = input_paired(values, in1_ls, in2_ls)
-                break
-            elif ans == '3':
-                sys.exit('\nngs-composer is now exiting')
+    for i, line in enumerate(f):
+        if i == 0:
+            try:
+                header = line.rstrip().split(' ')[0]
+                read_no = int(line.rstrip().split(' ')[1][0])
+            except (IndexError, TypeError) as e:
+                sys.exit('expected headers not found in fastq file')
+            if header in fastq_dt:
+                fastq_dt[header][read_no -1] = filename
             else:
-                print('\nselect an option from the list\n')
-    return in1_ls, in2_ls
+                fastq_dt[header] = [None, None]
+                fastq_dt[header][read_no -1] = filename
+            if line[0] != '@':
+                sys.exit('\n\n' + filename + msg.fastq_test1)
+        if i == 2 and line[0] != '+':
+            sys.exit('\n\n' + filename + msg.fastq_test1)
+        else:
+            return fastq_dt
+
+####################################### END
+
+def demultiplex_test():
+    '''
+    test for correct structure of barcodes file(s)
+    '''
+    for k, v in c.bcs_dict.items():
+        try:
+            assert os.path.join(c.proj, k) in c.fastq_ls
+        except AssertionError:
+            sys.exit('check index.txt formatting, ' + k + ' not found')
+        names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
+        test = bc_test(R1_bcs, names_mx, True)
+        if test:
+            print('redundant R1 barcodes detected in ' + v)
+        test = bc_test(R2_bcs, names_mx, False)
+        if test:
+            print('redundant R2 barcodes detected in ' + v)
+        nucleotide_test(R1_bcs.values())
+        if len(R2_bcs) > 1:
+            nucleotide_test(R2_bcs.values())
+            for k2, v2 in c.fastq_dt.items():
+                if v2[0] == os.path.join(c.proj, k):
+                    try:
+                        assert v2[1] is not None
+                    except AssertionError:
+                        sys.exit('R2 for ' + k + ' expect but not found')
 
 
-def dir_size(proj, fastq_ls, fastq_test):
+def dir_size(proj, fastq_ls):
     '''
     test the specified output directory for adequate disk space
     '''
@@ -351,20 +302,18 @@ def dir_size(proj, fastq_ls, fastq_test):
     dir_plan = 0
     dir_plan = dir_plan + 1 if c.front_trim else dir_plan
     dir_plan = dir_plan + 1 if c.bcs_index else dir_plan
-    if c.R1_bases_ls:
-        dir_plan += 1
-    elif c.R2_bases_ls:
-        dir_plan += 1
-    dir_plan = dir_plan + 1 if c.auto_trim else dir_plan
-    dir_plan = dir_plan + 1 if c.q_min else dir_plan
+    dir_plan = dir_plan + 1 if c.R1_bases_ls or c.R2_bases_ls else dir_plan
+    dir_plan = dir_plan + 1 if c.end_score else dir_plan
     dir_plan = dir_plan + 1 if c.adapters else dir_plan
+    dir_plan = dir_plan + 1 if c.q_min else dir_plan
+
     for i in fastq_ls:
-        dir_used += os.path.getsize(i)
-    if c.rm_transit:
-        dir_plan = dir_used * 2 if fastq_test else dir_used * 2 * 5
-    else:
-        dir_plan = dir_used * dir_plan if fastq_test\
-                else dir_used * dir_plan * 5
+        if i[-2:] == 'gz':
+            dir_used += os.path.getsize(i) * 5
+        else:
+            dir_used += os.path.getsize(i)
+
+    dir_plan = dir_used * 2 if c.rm_transit is True else dir_used * dir_plan
     if dir_plan >= drive_free:
         while True:
             choice = input(msg.dir_size1 + str(dir_plan) + msg.dir_size2)
@@ -412,7 +361,7 @@ def pathfinder(curr):
     '''
     walk current directory and pull files as lists
     '''
-    singles_ls, fastq_ls, in1_ls, in2_ls = [], [], [], []
+    fastq_ls = []
     for root, dirs, files in os.walk(os.path.abspath(curr)):
         for i in files:
             fullname = os.path.join(root, i)
@@ -420,13 +369,10 @@ def pathfinder(curr):
                 pass
             elif os.path.getsize(fullname) == 0:
                 os.remove(fullname)
-            elif root == str(os.path.join(curr, 'single')):
-                singles_ls.append(fullname)
             else:
                 fastq_ls.append(fullname)
-    pairs_dict = is_paired(fastq_ls)
-    in1_ls, in2_ls = input_sort(pairs_dict)
-    return [singles_ls, fastq_ls, in1_ls, in2_ls]
+    fastq_dt = fastq_test(fastq_ls)
+    return [fastq_ls, fastq_dt]
 
 
 def concater(curr):
@@ -473,7 +419,7 @@ def scallop_multi():
     create user-defined subprocesses to trim every file in fastq_ls
     '''
     curr = dir_make('trimmed')
-    scallop_part = partial(scallop_comp, c.front_trim, None, curr)
+    scallop_part = partial(scallop_comp, c.in1_ls, c.in2_ls, c.front_trim, None, c.end_score, c.window, c.min_l, curr)
     pool_multi(scallop_part, c.fastq_ls)
     temp_ls = pathfinder(curr)
     return temp_ls
@@ -514,48 +460,24 @@ def rotifer_multi():
     return temp_ls
 
 
-def scallop_end_multi():
+# def scallop_end_multi():
+
+def porifera_multi():
     '''
-    automated 3' end read trimming based on minimum value
+    create user-defined subprocesses to detect and remove adapter sequences
     '''
-    curr = dir_make('auto_trimmed')
+    curr = dir_make('adapted')
 
     if len(c.rm_dirs) >= 2:
-        if os.path.exists(os.path.join(c.rm_dirs[-2], 'qc')):
-            pass
-        elif os.path.exists(os.path.join(c.rm_dirs[-2], 'single', 'qc')):
-            pass
-        else:
-            try:
-                crinoid_multi(os.path.join(c.rm_dirs[-2], 'single'),
-                              c.singles_ls)
-                crinoid_multi(os.path.join(c.rm_dirs[-2], 'paired'),
-                              c.fastq_ls)
-            except FileNotFoundError:
-                crinoid_multi(c.rm_dirs[-2], c.fastq_ls)
-
         if os.path.exists(os.path.join(c.rm_dirs[-2], 'single')):
             os.mkdir(os.path.join(curr, 'single'))
             os.mkdir(os.path.join(curr, 'paired'))
 
-    else:
-        if os.path.exists(os.path.join(c.proj, 'qc')):
-            pass
-        else:
-            crinoid_multi(c.proj, c.fastq_ls)
-
-    scallop_end_part = partial(scallop_end, curr, c.auto_trim, c.trim_mode)
-    pool_multi(scallop_end_part, c.fastq_ls)
-
+    porifera_part = partial(porifera_comp, curr, c.adapters, c.adapter_match)
+    pool_multi(porifera_part, c.fastq_ls)
     if c.singles_ls:
-        scallop_end_part = partial(scallop_end, curr, c.auto_trim, c.trim_mode)
-        pool_multi(scallop_end_part, c.singles_ls)
+        pool_multi(porifera_part, c.singles_ls)
     temp_ls = pathfinder(curr)
-
-    if c.all_qc:
-        temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
-                              auto_trim=c.auto_trim,
-                              trim_mode=c.trim_mode)
     return temp_ls
 
 
@@ -583,25 +505,6 @@ def krill_multi():
         temp_ls = walkthrough(curr, krill_multi, temp_ls,
                               q_min=c.q_min,
                               q_percent=c.q_percent)
-    return temp_ls
-
-
-def porifera_multi():
-    '''
-    create user-defined subprocesses to detect and remove adapter sequences
-    '''
-    curr = dir_make('adapted')
-
-    if len(c.rm_dirs) >= 2:
-        if os.path.exists(os.path.join(c.rm_dirs[-2], 'single')):
-            os.mkdir(os.path.join(curr, 'single'))
-            os.mkdir(os.path.join(curr, 'paired'))
-
-    porifera_part = partial(porifera_comp, curr, c.adapters, c.adapter_match)
-    pool_multi(porifera_part, c.fastq_ls)
-    if c.singles_ls:
-        pool_multi(porifera_part, c.singles_ls)
-    temp_ls = pathfinder(curr)
     return temp_ls
 
 
@@ -700,12 +603,13 @@ def summary_file():
            'R1_bases_ls = ' + str(c.R1_bases_ls) + '\n' +
            'R2_bases_ls = ' + str(c.R2_bases_ls) + '\n' +
            'non_genomic = ' + str(c.non_genomic) + '\n' +
-           'auto_trim = ' + str(c.auto_trim) + '\n' +
-           'trim_mode = ' + str(c.trim_mode) + '\n' +
-           'q_min = ' + str(c.q_min) + '\n' +
-           'q_percent = ' + str(c.q_percent) + '\n' +
+           'end_score = ' + str(c.end_score) + '\n' +
+           'window = ' + str(c.window) + '\n' +
+           'min_l = ' + str(c.min_l) + '\n' +
            'adapters = ' + str(c.adapters) + '\n' +
            'adapter_match = ' + str(c.adapter_match) + '\n' +
+           'q_min = ' + str(c.q_min) + '\n' +
+           'q_percent = ' + str(c.q_percent) + '\n' +
            'phred64 = ' + str(c.p64) + '\n')
 
     print('\n' + log + '\nthanks for using ngscomposer!')
@@ -740,43 +644,17 @@ if __name__ == '__main__':
     c.conf_confirm()
     c.dir_test()
     r_packages()
-
-    for k, v in c.bcs_dict.items():
-        try:
-            assert os.path.join(c.proj, k) in c.fastq_ls
-        except AssertionError:
-            sys.exit('check index.txt formatting')
-        names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
-        test = bc_test(R1_bcs, names_mx, True)
-        if test:
-            print('redundant R1 barcodes detected in ' + v)
-        test = bc_test(R2_bcs, names_mx, False)
-        if test:
-            print('redundant R2 barcodes detected in ' + v)
-        nucleotide_test(R1_bcs.values())
-        if len(R2_bcs) > 1:
-            nucleotide_test(R2_bcs.values())
-
-    for filename in c.fastq_ls:
-        try:
-            fastq_test = is_fq(filename)
-        except UnicodeDecodeError:
-            fastq_test = is_gz(filename)
-        if fastq_test is None:
-            sys.exit(filename + ' was not expected in project directory')
+    c.fastq_dt = fastq_test(c.fastq_ls)
+    demultiplex_test()
 
     if c.alt_dir:
         c.initialize(c.alt_dir)
         if len(os.listdir(c.proj)) != 0:
             sys.exit('alt_dir must be an empty directory')
 
-    dir_size(c.proj, c.fastq_ls, fastq_test)
+    dir_size(c.proj, c.fastq_ls)
 
-    if c.bcs_index and c.paired is True and \
-            len(c.fastq_ls)/2 != len(c.bcs_dict):
-        sys.exit('incorrect number of files based on index.txt')
-    c.pairs_dict = is_paired(c.fastq_ls)
-    c.in1_ls, c.in2_ls = input_sort(c.pairs_dict)
+    sys.exit() #TODO DELETE ##############################################################
 
     if c.initial_qc:
         print(msg.crin_title)
@@ -798,21 +676,21 @@ if __name__ == '__main__':
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
-    if c.auto_trim:
+    if c.end_score:
         print(msg.scal_title2)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_end_multi()
-        if c.rm_transit is True:
-            dir_del(c.rm_dirs[:-1])
-
-    if c.q_min and c.q_percent:
-        print(msg.kril_title)
-        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = krill_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
     if c.adapters:
         print(msg.porf_title)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = porifera_multi()
+        if c.rm_transit is True:
+            dir_del(c.rm_dirs[:-1])
+
+    if c.q_min and c.q_percent:
+        print(msg.kril_title)
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = krill_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 

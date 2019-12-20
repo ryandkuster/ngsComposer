@@ -43,6 +43,9 @@ def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
             bcs_file = v
         elif os.path.splitext(k)[0] == out1:
             bcs_file = v
+        else:
+            #TODO copy files not in index.txt to the bare demultiplexed dir
+            pass
     try:
         in2 = in2_ls[in1_ls.index(in1)]
         out2 = os.path.basename(in2)
@@ -117,6 +120,9 @@ def bc_reader(bcs_file):
 
 
 def bc_test(bcs, names_mx, r1):
+    '''
+    test for redundant barcodes
+    '''
     dupe_ls = []
     for k1, v1 in bcs.items():
         for k2, v2 in bcs.items():

@@ -8,6 +8,8 @@ def gzip_test(in1):
         compressed = False
     except UnicodeDecodeError:
         compressed = True
+    except IsADirectoryError:
+        return None
     return compressed
 
 

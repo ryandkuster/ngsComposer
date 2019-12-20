@@ -43,7 +43,7 @@ conf_confirm25 = (font.yellow + '\n\nphred64 must be True or False\n' + font.res
 r_packages1 = (font.yellow + '\n\nplease install latest version of R\n' + font.reset)
 
 
-is_fq1 = (font.yellow + '\n\nproject directory should not contain subdirectories\n' + font.reset)
+fastq_test1 = (font.yellow + ' was not expected in project directory\n' + font.reset)
 
 
 input_single1 = (font.yellow + '\nunexpected paired libraries found\n' + font.reset +
