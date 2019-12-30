@@ -201,6 +201,7 @@ def r_packages():
 def nucleotide_test(ls):
     '''
     test list of sequences for proper formatting
+    bypass is used for manual input during walkthrough mode
     '''
     test = msg.nucleotide_test1
     nuc_ls = (j for i in ls for j in i)
@@ -249,8 +250,9 @@ def fastq_structure(f, filename, fastq_dt):
             try:
                 header = line.rstrip().split(' ')[0]
                 read_no = int(line.rstrip().split(' ')[1][0])
-            except (IndexError, TypeError) as e:
-                sys.exit('expected headers not found in fastq file')
+            except (IndexError, TypeError, ValueError) as e:
+                sys.exit('expected fastq headers not found in ' +
+                         os.path.basename(filename))
             if header in fastq_dt:
                 fastq_dt[header][read_no -1] = filename
             else:
@@ -392,6 +394,7 @@ def concater(curr):
                     concat_dict[i].append(fullname)
                 else:
                     concat_dict[i] = [fullname]
+
     for filename, filepaths in concat_dict.items():
         if len(filepaths) == 1:
             shutil.move(filepaths[0], os.path.join(curr, filename))
@@ -430,9 +433,8 @@ def anemone_multi():
     create user-defined subprocesses to demultiplex
     '''
     curr = dir_make('demultiplexed')
-    anemone_part = partial(anemone_comp, c.in1_ls, c.in2_ls, c.mismatch,
-                           c.bcs_dict, curr)
-    pool_multi(anemone_part, c.in1_ls)
+    anemone_part = partial(anemone_comp, c.mismatch, c.bcs_dict, curr)
+    pool_multi(anemone_part, c.fastq_dt.values())
     concater(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
@@ -513,18 +515,21 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
     query user for modifying or accepting current step in pipeline
     '''
     c.bypass = True
-    try:
-        crinoid_multi(os.path.join(curr, 'single'), temp_ls[0])
-        crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
-    except FileNotFoundError:
-        crinoid_multi(curr, temp_ls[1])
 
-    if len(temp_ls[2]) >= 1:
-        combine_matrix(temp_ls[2], 'R1_summary.txt')
-    if len(temp_ls[3]) >= 1:
-        combine_matrix(temp_ls[3], 'R2_summary.txt')
-    if len(temp_ls[0]) >= 1:
-        combine_matrix(temp_ls[0], 'singles_summary.txt')
+    #TODO just move QC function into the individual tools steps
+
+    # try:
+    #     crinoid_multi(os.path.join(curr, 'single'), temp_ls[0])
+    #     crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
+    # except FileNotFoundError:
+    #     crinoid_multi(curr, temp_ls[1])
+
+    # if len(temp_ls[2]) >= 1:
+    #     combine_matrix(temp_ls[2], 'R1_summary.txt')
+    # if len(temp_ls[3]) >= 1:
+    #     combine_matrix(temp_ls[3], 'R2_summary.txt')
+    # if len(temp_ls[0]) >= 1:
+    #     combine_matrix(temp_ls[0], 'singles_summary.txt')
 
     if c.walkaway:
         return temp_ls
@@ -654,21 +659,34 @@ if __name__ == '__main__':
 
     dir_size(c.proj, c.fastq_ls)
 
-    sys.exit() #TODO DELETE ##############################################################
+# for i in c.fastq_dt.values():
+#     in1, in2 = '', ''
+#     if i[0] is None:
+#         in1 = i[1]
+#     elif i[1] is None:
+#         in1 = i[0]
+#     elif None not in i:
+#         in1, in2 = i[0], i[1]
 
-    if c.initial_qc:
-        print(msg.crin_title)
-        crinoid_multi(c.proj, c.fastq_ls)
 
-    if c.front_trim > 0:
-        print(msg.scal_title1)
-        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_multi()
+
+    # if c.initial_qc:
+    #     print(msg.crin_title)
+    #     crinoid_multi(c.proj, c.fastq_ls)
+
+    # if c.front_trim > 0:
+    #     print(msg.scal_title1)
+    #     c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_multi()
 
     if c.bcs_index:
         print(msg.nem_title)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = anemone_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
+        c.front_trim = False
+
+    sys.exit() #TODO DELETE ##############################################################
+
 
     if c.R1_bases_ls or c.R2_bases_ls or c.non_genomic:
         print(msg.rot_title)
