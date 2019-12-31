@@ -659,24 +659,13 @@ if __name__ == '__main__':
 
     dir_size(c.proj, c.fastq_ls)
 
-# for i in c.fastq_dt.values():
-#     in1, in2 = '', ''
-#     if i[0] is None:
-#         in1 = i[1]
-#     elif i[1] is None:
-#         in1 = i[0]
-#     elif None not in i:
-#         in1, in2 = i[0], i[1]
+    if c.initial_qc:
+        print(msg.crin_title)
+        crinoid_multi(c.proj, c.fastq_ls)
 
-
-
-    # if c.initial_qc:
-    #     print(msg.crin_title)
-    #     crinoid_multi(c.proj, c.fastq_ls)
-
-    # if c.front_trim > 0:
-    #     print(msg.scal_title1)
-    #     c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_multi()
+    if c.front_trim > 0:
+        print(msg.scal_title1)
+        c.fastq_ls, c.fastq_dt = scallop_multi()
 
     if c.bcs_index:
         print(msg.nem_title)
