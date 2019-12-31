@@ -680,7 +680,7 @@ if __name__ == '__main__':
 
     if c.bcs_index:
         print(msg.nem_title)
-        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = anemone_multi()
+        c.fastq_ls, c.fastq_dt = anemone_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
         c.front_trim = False
@@ -690,25 +690,25 @@ if __name__ == '__main__':
 
     if c.R1_bases_ls or c.R2_bases_ls or c.non_genomic:
         print(msg.rot_title)
-        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = rotifer_multi()
+        c.fastq_ls, c.fastq_dt = rotifer_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
     if c.end_score:
         print(msg.scal_title2)
-        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_end_multi()
+        c.fastq_ls, c.fastq_dt = scallop_end_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
     if c.adapters:
         print(msg.porf_title)
-        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = porifera_multi()
+        c.fastq_ls, c.fastq_dt = porifera_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
     if c.q_min and c.q_percent:
         print(msg.kril_title)
-        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = krill_multi()
+        c.fastq_ls, c.fastq_dt = krill_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
