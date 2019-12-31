@@ -31,18 +31,20 @@ def anemone_main():
                  bcs_file, proj)
 
 
-def anemone_comp(mismatch, bcs_dict, curr, values):
+def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
     '''
     composer entry point to anemone
     '''
-    if values[0] is None:
-        in1, in2, out2 = values[1], False, False
-    elif values[1] is None:
-        in1, in2, out2 = values[0], False, False
-    elif None not in values:
-        in1, in2 = values[0], values[1]
-        out2 = os.path.basename(in2)
+    curr = os.path.join(curr, os.path.basename(in1))
+    os.mkdir(curr)
     out1 = os.path.basename(in1)
+
+    try:
+        in2 = in2_ls[in1_ls.index(in1)]
+        out2 = os.path.basename(in2)
+    except IndexError:
+        in2 = False
+        out2 = False
 
     try:
         bcs_file = bcs_dict[out1]
@@ -53,9 +55,6 @@ def anemone_comp(mismatch, bcs_dict, curr, values):
         except TypeError:
             pass
         return
-
-    curr = os.path.join(curr, os.path.basename(in1))
-    os.mkdir(curr)
 
     anemone_init(in1, in2, out1, out2, mismatch,
                  bcs_file, curr)

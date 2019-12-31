@@ -221,13 +221,12 @@ def nucleotide_test(ls):
             sys.exit()
         raise Exception
 
-####################################### NEW FUNCTIONS
 
 def fastq_test(fastq_ls):
     '''
     test if gzipped fastq file
     '''
-    fastq_dt = {}
+    fastq_dt, in1_ls, in2_ls = {}, [], []
     for filename in fastq_ls:
         compressed = gzip_test(filename)
         if compressed is None:
@@ -238,7 +237,12 @@ def fastq_test(fastq_ls):
         else:
             with open(filename) as f:
                 fastq_dt = fastq_structure(f, filename, fastq_dt)
-    return fastq_dt
+
+    for i in fastq_dt.values():
+        if None not in i:
+            in1_ls.append(i[0])
+            in2_ls.append(i[1])
+    return in1_ls, in2_ls
 
 
 def fastq_structure(f, filename, fastq_dt):
@@ -265,7 +269,6 @@ def fastq_structure(f, filename, fastq_dt):
         else:
             return fastq_dt
 
-####################################### END
 
 def demultiplex_test():
     '''
@@ -361,9 +364,14 @@ def pool_multi(pool_part, pool_ls):
 
 def pathfinder(curr):
     '''
-    walk current directory and pull files as lists
+    walk current directory and pull files as 4 distinct lists:
+    - singles_ls = files stored in 'singles' directory
+    - fastq_ls = files not in 'singles' directory
+    - in1_ls = ordered R1 files with same index as in2_ls
+    - in2_ls = ordered R2 files with same index as in1_ls
+    singles_ls is a necessary evil to avoid identity issues
     '''
-    fastq_ls = []
+    fastq_ls, singles_ls = [], []
     for root, dirs, files in os.walk(os.path.abspath(curr)):
         for i in files:
             fullname = os.path.join(root, i)
@@ -371,10 +379,12 @@ def pathfinder(curr):
                 pass
             elif os.path.getsize(fullname) == 0:
                 os.remove(fullname)
+            elif root == str(os.path.join(curr, 'single')):
+                singles_ls.append(fullname)
             else:
                 fastq_ls.append(fullname)
-    fastq_dt = fastq_test(fastq_ls)
-    return [fastq_ls, fastq_dt]
+    in1_ls, in2_ls = fastq_test(fastq_ls)
+    return [singles_ls, fastq_ls, in1_ls, in2_ls]
 
 
 def concater(curr):
@@ -452,7 +462,7 @@ def rotifer_multi():
     os.mkdir(os.path.join(curr, 'paired'))
     rotifer_part = partial(rotifer_comp, c.in1_ls, c.in2_ls, c.R1_bases_ls,
                            c.R2_bases_ls, c.non_genomic, curr)
-    pool_multi(rotifer_part, c.in1_ls)
+    pool_multi(rotifer_part, c.fastq_ls)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, rotifer_multi, temp_ls,
@@ -514,22 +524,20 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
     '''
     query user for modifying or accepting current step in pipeline
     '''
-    c.bypass = True
+    c.bypass = True # erroneous input won't halt pipeline (raises exception)
 
-    #TODO just move QC function into the individual tools steps
+    try:
+        crinoid_multi(os.path.join(curr, 'single'), temp_ls[0])
+        crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
+    except FileNotFoundError:
+        crinoid_multi(curr, temp_ls[1])
 
-    # try:
-    #     crinoid_multi(os.path.join(curr, 'single'), temp_ls[0])
-    #     crinoid_multi(os.path.join(curr, 'paired'), temp_ls[1])
-    # except FileNotFoundError:
-    #     crinoid_multi(curr, temp_ls[1])
-
-    # if len(temp_ls[2]) >= 1:
-    #     combine_matrix(temp_ls[2], 'R1_summary.txt')
-    # if len(temp_ls[3]) >= 1:
-    #     combine_matrix(temp_ls[3], 'R2_summary.txt')
-    # if len(temp_ls[0]) >= 1:
-    #     combine_matrix(temp_ls[0], 'singles_summary.txt')
+    if len(temp_ls[2]) >= 1:
+        combine_matrix(temp_ls[2], 'R1_summary.txt')
+    if len(temp_ls[3]) >= 1:
+        combine_matrix(temp_ls[3], 'R2_summary.txt')
+    if len(temp_ls[0]) >= 1:
+        combine_matrix(temp_ls[0], 'singles_summary.txt')
 
     if c.walkaway:
         return temp_ls
@@ -649,7 +657,7 @@ if __name__ == '__main__':
     c.conf_confirm()
     c.dir_test()
     r_packages()
-    c.fastq_dt = fastq_test(c.fastq_ls)
+    c.in1_ls, c.in2_ls = fastq_test(c.fastq_ls)
     demultiplex_test()
 
     if c.alt_dir:
@@ -665,39 +673,39 @@ if __name__ == '__main__':
 
     if c.front_trim > 0:
         print(msg.scal_title1)
-        c.fastq_ls, c.fastq_dt = scallop_multi()
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_multi()
 
     if c.bcs_index:
         print(msg.nem_title)
-        c.fastq_ls, c.fastq_dt = anemone_multi()
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = anemone_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
         c.front_trim = False
 
-    sys.exit() #TODO DELETE ##############################################################
-
-
     if c.R1_bases_ls or c.R2_bases_ls or c.non_genomic:
         print(msg.rot_title)
-        c.fastq_ls, c.fastq_dt = rotifer_multi()
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = rotifer_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
+    sys.exit() #TODO DELETE ##############################################################
+
+
     if c.end_score:
         print(msg.scal_title2)
-        c.fastq_ls, c.fastq_dt = scallop_end_multi()
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_end_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
     if c.adapters:
         print(msg.porf_title)
-        c.fastq_ls, c.fastq_dt = porifera_multi()
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = porifera_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
     if c.q_min and c.q_percent:
         print(msg.kril_title)
-        c.fastq_ls, c.fastq_dt = krill_multi()
+        c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = krill_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
