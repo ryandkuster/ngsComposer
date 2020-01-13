@@ -40,6 +40,7 @@ class Project:
         self.all_qc = False
         self.walkaway = True
         self.front_trim = False
+        self.end_trim = False
         self.bcs_index = ''
         self.mismatch = False
         self.R1_bases_ls = False
@@ -443,8 +444,9 @@ def anemone_multi():
     create user-defined subprocesses to demultiplex
     '''
     curr = dir_make('demultiplexed')
-    anemone_part = partial(anemone_comp, c.mismatch, c.bcs_dict, curr)
-    pool_multi(anemone_part, c.fastq_dt.values())
+    anemone_part = partial(anemone_comp, c.in1_ls, c.in2_ls, c.mismatch,
+                           c.bcs_dict, curr)
+    pool_multi(anemone_part, c.in1_ls)
     concater(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
@@ -472,22 +474,37 @@ def rotifer_multi():
     return temp_ls
 
 
-# def scallop_end_multi():
+def scallop_end_multi():
+    '''
+    create user-defined subprocesses to remove low-scoring 3' ends
+    '''
+    curr = dir_make('end_trimmed')
+    os.mkdir(os.path.join(curr, 'single'))
+    os.mkdir(os.path.join(curr, 'paired'))
+    scallop_part = partial(scallop_comp, c.in1_ls, c.in2_ls, c.front_trim,
+                           c.end_trim, c.end_score, c.window, c.min_l, curr)
+    pool_multi(scallop_part, c.fastq_ls)
+    if c.singles_ls:
+        scallop_part = partial(scallop_comp, [], [], c.front_trim, c.end_trim,
+                               c.end_score, c.window, c.min_l, curr)
+        pool_multi(scallop_part, c.singles_ls)
+    temp_ls = pathfinder(curr)
+    return temp_ls
+
 
 def porifera_multi():
     '''
     create user-defined subprocesses to detect and remove adapter sequences
     '''
     curr = dir_make('adapted')
-
-    if len(c.rm_dirs) >= 2:
-        if os.path.exists(os.path.join(c.rm_dirs[-2], 'single')):
-            os.mkdir(os.path.join(curr, 'single'))
-            os.mkdir(os.path.join(curr, 'paired'))
-
+    os.mkdir(os.path.join(curr, 'single'))
+    os.mkdir(os.path.join(curr, 'single', 'pe_lib'))
+    os.mkdir(os.path.join(curr, 'single', 'se_lib'))
+    os.mkdir(os.path.join(curr, 'paired'))
     porifera_part = partial(porifera_comp, curr, c.adapters, c.adapter_match)
     pool_multi(porifera_part, c.fastq_ls)
     if c.singles_ls:
+        #TODO UPDATE HERE WITH EMPTY INLS1/2 and CONCATER ETC.
         pool_multi(porifera_part, c.singles_ls)
     temp_ls = pathfinder(curr)
     return temp_ls
@@ -506,13 +523,12 @@ def krill_multi():
                          c.p64, curr)
     pool_multi(krill_part, c.in1_ls)
     if c.singles_ls:
-        krill_part = partial(krill_comp, c.in1_ls, c.in2_ls, c.q_min,
-                             c.q_percent, c.p64, curr)
+        krill_part = partial(krill_comp, [], [], c.q_min, c.q_percent, c.p64, curr)
         pool_multi(krill_part, c.singles_ls)
-    concater(os.path.join(curr, 'single'))
+        concater(os.path.join(curr, 'single'))
+        shutil.rmtree(os.path.join(curr, 'single', 'pe_lib'))
+        shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
     temp_ls = pathfinder(curr)
-    shutil.rmtree(os.path.join(curr, 'single', 'pe_lib'))
-    shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
     if c.all_qc:
         temp_ls = walkthrough(curr, krill_multi, temp_ls,
                               q_min=c.q_min,
