@@ -1,6 +1,5 @@
 import argparse
 import gzip
-import math
 import os
 import sys
 from re import finditer
@@ -18,6 +17,7 @@ def porifera_main():
     adapter1 = reverse_comp(a1)
     k = args.k if args.k else 8
     r = args.r if args.r else 1
+    min_l = args.l if args.l else 0
     rounds = r * (len(max(adapter1, key=len))//k)
     match = args.m if args.m else 12
     subseqs1 = simple_seeker_non_contig(adapter1, k)
@@ -27,34 +27,42 @@ def porifera_main():
         proj = os.path.abspath(args.o)
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
-    out1 = os.path.join(proj, 'adapted.' + os.path.basename(in1))
     if in2:
-        out2 = os.path.join(proj, 'adapted.' + os.path.basename(in2))
+        se_1 = os.path.join(proj, 'se.adapted.' + os.path.basename(in1))
+        pe_1 = os.path.join(proj, 'pe.adapted.' + os.path.basename(in1))
+        se_2 = os.path.join(proj, 'se.adapted.' + os.path.basename(in2))
+        pe_2 = os.path.join(proj, 'pe.adapted.' + os.path.basename(in2))
         if a2:
             adapter2 = reverse_comp(a2)
             subseqs2 = simple_seeker_non_contig(adapter2, k)
         else:
             subseqs2 = subseqs1
-        porifera_open(in1, in2, subseqs1, subseqs2, out1, out2, k, rounds, match)
+        porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
+                      rounds, match, min_l)
     else:
-        porifera_single_open(in1, subseqs1, out1, k, rounds, match)
+        se_1 = os.path.join(proj, 'adapted.' + os.path.basename(in1))
+        porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l)
 
 
-def porifera_comp(curr, dapt_path, match, in1):
+def porifera_comp(curr, in1_ls, in2_ls, dapt_path, match, min_l, in1):
     '''
     composer entry point to porifera
     '''
-    if os.path.basename(os.path.dirname(in1)) == 'paired':
-        curr = os.path.join(curr, 'paired')
-    elif os.path.basename(os.path.dirname(in1)) == 'single':
-        curr = os.path.join(curr, 'single')
-    #TODO add se vs. pe open
     k = 8
     rounds = 1
     adapter = reverse_comp(dapt_path)
     subseqs = simple_seeker_non_contig(adapter, k)
-    out1 = os.path.join(curr, os.path.basename(in1))
-    porifera_single_open(in1, subseqs, out1, k, rounds, match)
+    try:
+        in2 = in2_ls[in1_ls.index(in1)]
+        pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
+        se_1 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in1))
+        pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
+        se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
+        porifera_open(in1, in2, subseqs, subseqs, se_1, pe_1, se_2, pe_2, k,
+                      rounds, match, min_l)
+    except (IndexError, ValueError) as e:
+        se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
+        porifera_single_open(in1, subseqs, se_1, k, rounds, match, min_l)
 
 
 def reverse_comp(dapt_path):
@@ -104,29 +112,42 @@ def no_empty_lists(subseqs):
     return subseqs
 
 
-def porifera_open(in1, in2, subseqs1, subseqs2, out1, out2, k, rounds, match):
+def porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
+                  rounds, match, min_l):
     '''
     open paired end files for adapter detection
     '''
     compressed = gzip_test(in1)
     if compressed:
+        pe_1, _ = os.path.splitext(pe_1)
+        pe_2, _ = os.path.splitext(pe_2)
+        se_1, _ = os.path.splitext(se_1)
+        se_2, _ = os.path.splitext(se_2)
         with gzip.open(in1, 'rt') as f1, gzip.open(in2, 'rt') as f2,\
-                open(out1, 'w') as o1, open(out2, 'w') as o2:
-            porifera(f1, f2, subseqs1, subseqs2, o1, o2, k, rounds, match)
+                open(pe_1, 'w') as pe_o1,\
+                open(pe_2, 'w') as pe_o2,\
+                open(se_1, 'w') as se_o1,\
+                open(se_2, 'w') as se_o2:
+            porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
+                     rounds, match, min_l)
     else:
         with open(in1, 'rt') as f1, open(in2, 'rt') as f2,\
-                open(out1, 'w') as o1, open(out2, 'w') as o2:
-            porifera(f1, f2, subseqs1, subseqs2, o1, o2, k, rounds, match)
+                open(pe_1, 'w') as pe_o1,\
+                open(pe_2, 'w') as pe_o2,\
+                open(se_1, 'w') as se_o1,\
+                open(se_2, 'w') as se_o2:
+            porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
+                     rounds, match, min_l)
 
 
-def porifera(f1, f2, subseqs1, subseqs2, o1, o2, k, rounds, match):
+def porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
+             rounds, match, min_l):
     y, entry1, entry2 = 0, "", ""
     for line1, line2 in zip(f1, f2):
         y += 1
         line1 = line1.rstrip()
         line2 = line2.rstrip()
         if y == 2:
-            pass
             z1 = compromiser(line1, subseqs1, k, rounds, match)
             z2 = compromiser(line2, subseqs2, k, rounds, match)
         if y == 2 or y == 4:
@@ -135,25 +156,33 @@ def porifera(f1, f2, subseqs1, subseqs2, o1, o2, k, rounds, match):
         entry1 = entry1 + line1 + "\n"
         entry2 = entry2 + line2 + "\n"
         if y == 4:
-            o1.write(entry1)
-            o2.write(entry2)
+            if z1 >= min_l and z2 >= min_l:
+                pe_o1.write(entry1)
+                pe_o2.write(entry2)
+            elif z1 >= min_l:
+                se_o1.write(entry1)
+            elif z2 >= min_l:
+                se_o2.write(entry2)
+            else:
+                pass
             y, entry1, entry2 = 0, "", ""
 
 
-def porifera_single_open(in1, subseqs, out1, k, rounds, match):
+def porifera_single_open(in1, subseqs, se_1, k, rounds, match, min_l):
     '''
     open files for adapter detection
     '''
     compressed = gzip_test(in1)
     if compressed:
-        with gzip.open(in1, 'rt') as f, open(out1, 'w') as o:
-            porifera_single(f, subseqs, o, k, rounds, match)
+        se_1, _ = os.path.splitext(se_1)
+        with gzip.open(in1, 'rt') as f, open(se_1, 'w') as o:
+            porifera_single(f, subseqs, o, k, rounds, match, min_l)
     else:
-        with open(in1) as f, open(out1, 'w') as o:
-            porifera_single(f, subseqs, o, k, rounds, match)
+        with open(in1) as f, open(se_1, 'w') as o:
+            porifera_single(f, subseqs, o, k, rounds, match, min_l)
 
 
-def porifera_single(f, subseqs, o, k, rounds, match):
+def porifera_single(f, subseqs, o, k, rounds, match, min_l):
     y, entry = 0, ""
     for line in f:
         y += 1
@@ -164,7 +193,8 @@ def porifera_single(f, subseqs, o, k, rounds, match):
             line = line[:z]
         entry = entry + line + "\n"
         if y == 4:
-            o.write(entry)
+            if z >= min_l:
+                o.write(entry)
             y, entry = 0, ""
 
 
@@ -223,6 +253,8 @@ if __name__ == "__main__":
             help='k-mer detection (for testing)')
     parser.add_argument('-m', type=int, metavar='',
             help='number of matching bases to detect adapter')
+    parser.add_argument('-l', type=int, metavar='',
+            help='minimum read length to keep (integer)')
     parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
     args = parser.parse_args()

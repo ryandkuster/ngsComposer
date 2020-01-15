@@ -45,32 +45,27 @@ def scallop_comp(in1_ls, in2_ls, front_trim, end_trim, end_score, window,
     '''
     composer entry point to scallop
     '''
-#    pe_1 = os.path.join(curr, os.path.basename(in1))
-    se_1 = os.path.join(curr, os.path.basename(in1)    )
-#    try:
-#        in2 = in2_ls[in1_ls.index(in1)]
-#        pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
-#        se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
-#    except (IndexError, ValueError) as e:
-#        se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
     if end_score:
-#        if front_trim:
-#            min_l = front_trim + min_l
-        sys.exit()
-#        if in2:
-#            scallop_end_open(in1, in2, pe_1, pe_2, se_1, se_2, front_trim,
-#                             end_score, window, min_l)
-#        else:
-#            scallop_single_end_open(in1, se_1, front_trim, end_score, window, min_l) 
+        try:
+            in2 = in2_ls[in1_ls.index(in1)]
+            pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
+            se_1 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in1))
+            pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
+            se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
+        except (IndexError, ValueError) as e:
+            se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
+            in2 = None
+        if front_trim:
+            min_l = front_trim + min_l
+        if in2:
+            scallop_end_open(in1, in2, pe_1, pe_2, se_1, se_2, front_trim,
+                            end_score, window, min_l)
+        else:
+            scallop_single_end_open(in1, se_1, front_trim, end_score, window, min_l) 
     else:
+        se_1 = os.path.join(curr, os.path.basename(in1))
+        end_trim = None if end_trim == 0 else end_trim
         scallop_open(in1, front_trim, end_trim, se_1)
-
-
-
-
-    out1 = os.path.join(curr, os.path.basename(in1))
-    end_trim = None if end_trim == 0 else end_trim
-    scallop_open(in1, front_trim, end_trim, out1)
 
 
 def scallop_open(in1, front_trim, end_trim, out1):

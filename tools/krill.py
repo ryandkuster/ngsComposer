@@ -115,7 +115,6 @@ def krill_single_open(q_min, q_percent, p64, in1, se_1):
             krill_single(q_min, q_percent, p64, f1, se_o1)
 
 
-
 def krill_single(q_min, q_percent, p64, f1, se_o1):
     scores = open(os.path.dirname(os.path.abspath(__file__)) +
                   '/helpers/scores.txt').read().split()

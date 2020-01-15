@@ -48,7 +48,7 @@ class Project:
         self.non_genomic = False
         self.end_score = False
         self.window = False
-        self.min_l = False
+        self.min_l = 0
         self.adapters = ''
         self.adapter_match = False
         self.q_min = False
@@ -385,6 +385,9 @@ def pathfinder(curr):
             else:
                 fastq_ls.append(fullname)
     in1_ls, in2_ls = fastq_test(fastq_ls)
+    for i in fastq_ls:
+        if i not in in1_ls and i not in in2_ls:
+            singles_ls.append(i)
     return [singles_ls, fastq_ls, in1_ls, in2_ls]
 
 
@@ -433,7 +436,7 @@ def scallop_multi():
     create user-defined subprocesses to trim every file in fastq_ls
     '''
     curr = dir_make('trimmed')
-    scallop_part = partial(scallop_comp, c.in1_ls, c.in2_ls, c.front_trim, None, c.end_score, c.window, c.min_l, curr)
+    scallop_part = partial(scallop_comp, c.in1_ls, c.in2_ls, c.front_trim, None, None, None, None, curr)
     pool_multi(scallop_part, c.fastq_ls)
     temp_ls = pathfinder(curr)
     return temp_ls
@@ -446,7 +449,7 @@ def anemone_multi():
     curr = dir_make('demultiplexed')
     anemone_part = partial(anemone_comp, c.in1_ls, c.in2_ls, c.mismatch,
                            c.bcs_dict, curr)
-    pool_multi(anemone_part, c.in1_ls)
+    pool_multi(anemone_part, c.fastq_ls)
     concater(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
@@ -455,16 +458,29 @@ def anemone_multi():
     return temp_ls
 
 
+def paired_setup(curr):
+    os.mkdir(os.path.join(curr, 'single'))
+    os.mkdir(os.path.join(curr, 'single', 'pe_lib'))
+    os.mkdir(os.path.join(curr, 'single', 'se_lib'))
+    os.mkdir(os.path.join(curr, 'paired'))
+
+
+def paired_takedown(curr):
+    concater(os.path.join(curr, 'single'))
+    shutil.rmtree(os.path.join(curr, 'single', 'pe_lib'))
+    shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
+
+
 def rotifer_multi():
     '''
     create user-defined subprocesses to parse based on expected sequences
     '''
     curr = dir_make('parsed')
-    os.mkdir(os.path.join(curr, 'single'))
-    os.mkdir(os.path.join(curr, 'paired'))
+    paired_setup(curr)
     rotifer_part = partial(rotifer_comp, c.in1_ls, c.in2_ls, c.R1_bases_ls,
                            c.R2_bases_ls, c.non_genomic, curr)
     pool_multi(rotifer_part, c.fastq_ls)
+    paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, rotifer_multi, temp_ls,
@@ -479,16 +495,21 @@ def scallop_end_multi():
     create user-defined subprocesses to remove low-scoring 3' ends
     '''
     curr = dir_make('end_trimmed')
-    os.mkdir(os.path.join(curr, 'single'))
-    os.mkdir(os.path.join(curr, 'paired'))
-    scallop_part = partial(scallop_comp, c.in1_ls, c.in2_ls, c.front_trim,
-                           c.end_trim, c.end_score, c.window, c.min_l, curr)
-    pool_multi(scallop_part, c.fastq_ls)
+    paired_setup(curr)
+    scallop_part = partial(scallop_comp, c.in1_ls, c.in2_ls, None, None,
+                           c.end_score, c.window, c.min_l, curr)
+    pool_multi(scallop_part, c.in1_ls)
     if c.singles_ls:
-        scallop_part = partial(scallop_comp, [], [], c.front_trim, c.end_trim,
-                               c.end_score, c.window, c.min_l, curr)
+        scallop_part = partial(scallop_comp, [], [], None, None, c.end_score,
+                               c.window, c.min_l, curr)
         pool_multi(scallop_part, c.singles_ls)
+        paired_takedown(curr)
     temp_ls = pathfinder(curr)
+    if c.all_qc:
+        temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
+                              end_score=c.end_score,
+                              window=c.window,
+                              min_l=c.min_l)
     return temp_ls
 
 
@@ -497,37 +518,33 @@ def porifera_multi():
     create user-defined subprocesses to detect and remove adapter sequences
     '''
     curr = dir_make('adapted')
-    os.mkdir(os.path.join(curr, 'single'))
-    os.mkdir(os.path.join(curr, 'single', 'pe_lib'))
-    os.mkdir(os.path.join(curr, 'single', 'se_lib'))
-    os.mkdir(os.path.join(curr, 'paired'))
-    porifera_part = partial(porifera_comp, curr, c.adapters, c.adapter_match)
-    pool_multi(porifera_part, c.fastq_ls)
+    paired_setup(curr)
+    porifera_part = partial(porifera_comp, curr, c.in1_ls, c.in2_ls,
+                            c.adapters, c.adapter_match, c.min_l)
+    pool_multi(porifera_part, c.in1_ls)
     if c.singles_ls:
-        #TODO UPDATE HERE WITH EMPTY INLS1/2 and CONCATER ETC.
         pool_multi(porifera_part, c.singles_ls)
+        paired_takedown(curr)
     temp_ls = pathfinder(curr)
+    if c.all_qc:
+        temp_ls = walkthrough(curr, porifera_comp, temp_ls,
+                              adapter_match=c.adapter_match)
     return temp_ls
 
 
 def krill_multi():
     '''
-    create user-defined subprocesses to parse based on expected sequences
+    create user-defined subprocesses to parse based on quality scores
     '''
     curr = dir_make('filtered')
-    os.mkdir(os.path.join(curr, 'single'))
-    os.mkdir(os.path.join(curr, 'single', 'pe_lib'))
-    os.mkdir(os.path.join(curr, 'single', 'se_lib'))
-    os.mkdir(os.path.join(curr, 'paired'))
+    paired_setup(curr)
     krill_part = partial(krill_comp, c.in1_ls, c.in2_ls, c.q_min, c.q_percent,
                          c.p64, curr)
     pool_multi(krill_part, c.in1_ls)
     if c.singles_ls:
         krill_part = partial(krill_comp, [], [], c.q_min, c.q_percent, c.p64, curr)
         pool_multi(krill_part, c.singles_ls)
-        concater(os.path.join(curr, 'single'))
-        shutil.rmtree(os.path.join(curr, 'single', 'pe_lib'))
-        shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
+        paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, krill_multi, temp_ls,
@@ -660,8 +677,8 @@ if __name__ == '__main__':
         '    scallop.py  - trimming\n' +
         '    anemone.py  - demultiplexing\n' +
         '    rotifer.py  - motif detection\n' +
-        '    krill.py    - quality filtering\n' +
         '    porifera.py - adapter removal\n\n' +
+        '    krill.py    - quality filtering\n' +
         'see https://github.com/ryandkuster/ngs-composer for full usage notes\n\n' +
         ''), formatter_class=RawTextHelpFormatter)
     parser.add_argument('-i', type=str, required=True,
@@ -696,16 +713,12 @@ if __name__ == '__main__':
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = anemone_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
-        c.front_trim = False
 
     if c.R1_bases_ls or c.R2_bases_ls or c.non_genomic:
         print(msg.rot_title)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = rotifer_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
-
-    sys.exit() #TODO DELETE ##############################################################
-
 
     if c.end_score:
         print(msg.scal_title2)
