@@ -479,7 +479,11 @@ def rotifer_multi():
     paired_setup(curr)
     rotifer_part = partial(rotifer_comp, c.in1_ls, c.in2_ls, c.R1_bases_ls,
                            c.R2_bases_ls, c.non_genomic, curr)
-    pool_multi(rotifer_part, c.fastq_ls)
+    pool_multi(rotifer_part, c.in1_ls)
+    if c.singles_ls:
+        rotifer_part = partial(rotifer_comp, [], [], c.R1_bases_ls,
+                               c.R2_bases_ls, c.non_genomic, curr)
+        pool_multi(rotifer_part, c.singles_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
@@ -503,7 +507,7 @@ def scallop_end_multi():
         scallop_part = partial(scallop_comp, [], [], None, None, c.end_score,
                                c.window, c.min_l, curr)
         pool_multi(scallop_part, c.singles_ls)
-        paired_takedown(curr)
+    paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
@@ -523,8 +527,10 @@ def porifera_multi():
                             c.adapters, c.adapter_match, c.min_l)
     pool_multi(porifera_part, c.in1_ls)
     if c.singles_ls:
+        porifera_part = partial(porifera_comp, curr, [], [], c.adapters,
+                                c.adapter_match, c.min_l)
         pool_multi(porifera_part, c.singles_ls)
-        paired_takedown(curr)
+    paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, porifera_comp, temp_ls,
@@ -544,7 +550,7 @@ def krill_multi():
     if c.singles_ls:
         krill_part = partial(krill_comp, [], [], c.q_min, c.q_percent, c.p64, curr)
         pool_multi(krill_part, c.singles_ls)
-        paired_takedown(curr)
+    paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, krill_multi, temp_ls,
@@ -631,6 +637,28 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
             print('\nnot a valid entry\n')
 
 
+def tidy_up():
+    '''
+    walk the complete directory and remove empty subdirectories
+    '''
+    rm_list, empty_dir = [], False
+    try:
+        shutil.rmtree(os.path.join(c.proj, '__pycache__'))
+    except FileNotFoundError:
+        pass
+    for root, dirs, files in os.walk(os.path.abspath(c.proj)):
+        for i in dirs:
+            if len(os.listdir(os.path.join(root, i))) == 0:
+                empty_dir = True
+                rm_list.append(os.path.join(root, i))
+    for i in rm_list:
+        shutil.rmtree(i)
+    if empty_dir is True:
+        tidy_up()
+    else:
+        return
+
+
 def summary_file():
     end_time = str(datetime.datetime.now()).split('.')[0]
     log = ('ngscomposer version ' + version + '\n\n' +
@@ -714,7 +742,7 @@ if __name__ == '__main__':
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
-    if c.R1_bases_ls or c.R2_bases_ls or c.non_genomic:
+    if c.R1_bases_ls or c.R2_bases_ls:
         print(msg.rot_title)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = rotifer_multi()
         if c.rm_transit is True:
@@ -737,5 +765,7 @@ if __name__ == '__main__':
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = krill_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
-
+    
+    tidy_up()
+    
     summary_file()
