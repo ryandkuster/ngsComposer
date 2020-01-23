@@ -39,6 +39,14 @@ def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
         return
 
     out1 = os.path.basename(in1)
+    compressed = gzip_test(in1)
+    if compressed:
+        base, _ = os.path.splitext(out1)
+        if base in bcs_dict.keys():
+            out1 = base
+    else:
+        if out1 + '.gz' in bcs_dict.keys():
+            bcs_dict[out1] = bcs_dict.pop(out1 + '.gz')
 
     try:
         in2 = in2_ls[in1_ls.index(in1)]
