@@ -94,15 +94,17 @@ Using a text editor, save a file containing any of the following variables as a 
 |all_qc|perform qc step at each filtering stage (use 'full' to produce visualizations for every file, use 'summary' for a summarized version of the R1, R2, and single reads)|'full' or 'summary' (quotes required)|
 |front_trim|positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence|integer|
 |mismatch|number of mismatches (hamming distance) allowed in barcodes (must include 'index.txt' and barcodes file(s) in project directory; see "Demultiplexing" below)|integer|
-|R1_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
-|R2_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes and brackets required)|
+|R1_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes, commas, and brackets required)|
+|R2_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes, commas, and brackets required)|
 |non_genomic|number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)|integer|
-|trim_mode|basis to automatically trim 3' ends |'whisker', 'quartile', 'median', or 'mean' (quotes required)|
-|auto_trim|using trim_mode basis, trim read at 3' ends at first position meeting this minimum value|integer between 0 and 40|
-|q_min|quality score minimum (Phred value 0-40) applied to q_percent variable|integer between 0 and 40|
-|q_percent|percentage of reads >= q_min quality scores|number between 0 and 100|
-|adapter_match|number of base matches to identify adapters (requires 'adapters.txt')|integer|
+|end_score|end-trim once entire window >= this Q score|integer between 0 and 40|
+|window|size of window to test for >= end_trim|integer within read length|
+|min_l|minimum read length to retain for end-trimming and adapter removal|integer > 0|
+|q_min|Q score minimum (Phred value 0-40) applied to q_percent variable|integer between 0 and 40|
+|q_percent|percentage of reads >= q_min Q scores|number between 0 and 100|
+|adapter_match|number of base matches to identify adapters (requires 'adapters.txt')|integer (recommend 12)|
 |p64|defaults to phred+33, use True if using phred+64 qscores|True or False|
+
 
 An example configuration file may look like this:
 
@@ -121,8 +123,8 @@ mismatch = 1
 R1_bases_ls = ['TCC', 'TCT']
 R2_bases_ls = ['TCC', 'TCT']
 non_genomic = 1
-trim_mode = 'median'
-auto_trim = 30
+end_score = 30
+window = 10
 q_min = 30
 q_percent = 95
 ```
@@ -132,9 +134,9 @@ q_percent = 95
 
 *In this case, samples were double-digested with AluI and HaeIII and A-tailed before adapter ligation (**R1_bases_ls = ['TCC', 'TCT']** and **R2_bases_ls = ['TCC', 'TCT']**). Only reads containing these motifs will pass to subsequent steps. As the T complement from A-tailing introduces an artificial residue not present in the specimen sequenced, it can simultaneously be removed alongside motif detection (**non_genomic = 1**).*
 
-*Automatic end-trimming will be performed on a per-file basis based on qc metrics. Here, bases are removed from the end position until a desired metric (**trim_mode = 'median'**) is at or above a desired Phred score (**auto_trim = 30**).*
+*Automatic end-trimming will be performed based on Q score. Here, groups of bases are considered within a moving window of 10 bases at a time (**window = 10**) until that window consists only of the desired Q score at or above 30 (**end_score = 30**). It is at this point that the read is trimmed.*
 
-*Only reads that have a Phred score of 30 (**q_min = 30**) acrosss at least 95 percent of the read (**q_percent = 95**) will pass to subsequent steps.*
+*Only reads that have a Q score of 30 (**q_min = 30**) acrosss at least 95 percent of the read (**q_percent = 95**) will pass to subsequent steps. If a R1 read or an R2 read passes while its partner fails, it will be placed into a single-end read subfolder and the failing read will be discarded.*
 
 
 Alternatively, a configuration file may only need to include necessary components for a run:
@@ -148,7 +150,7 @@ mismatch = 1
 q_min = 30
 q_percent = 95
 ```
-*This example will demultiplex paired-end data using a mismatch value of one followed by a threshold filter for reads comprised of base-calls at or above 30 across at least 95 percent of the read.*
+*This example will demultiplex paired-end data using a mismatch value of one followed by a threshold filter for reads comprised of base-calls at or above 30 across at least 95 percent of the read. A maximum of 8 subprocesses will be called.*
 
 ***
 
