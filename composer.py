@@ -524,16 +524,16 @@ def porifera_multi():
     curr = dir_make('adapted')
     paired_setup(curr)
     porifera_part = partial(porifera_comp, curr, c.in1_ls, c.in2_ls,
-                            c.adapters, c.adapter_match, c.min_l)
+                            c.adapters, c.bcs_dict, c.adapter_match, c.min_l)
     pool_multi(porifera_part, c.in1_ls)
     if c.singles_ls:
         porifera_part = partial(porifera_comp, curr, [], [], c.adapters,
-                                c.adapter_match, c.min_l)
+                                c.bcs_dict, c.adapter_match, c.min_l)
         pool_multi(porifera_part, c.singles_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
-        temp_ls = walkthrough(curr, porifera_comp, temp_ls,
+        temp_ls = walkthrough(curr, porifera_multi, temp_ls,
                               adapter_match=c.adapter_match)
     return temp_ls
 

@@ -4,6 +4,7 @@ import os
 import sys
 from re import finditer
 from helpers.gzip_handling import gzip_test
+from anemone import anemone_comp, bc_reader
 
 
 def porifera_main():
@@ -44,30 +45,53 @@ def porifera_main():
         porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l)
 
 
-def porifera_comp(curr, in1_ls, in2_ls, dapt_path, match, min_l, in1):
+def porifera_comp(curr, in1_ls, in2_ls, adapters, bcs_dict, match, min_l, in1):
     '''
     composer entry point to porifera
     '''
+    if bcs_dict:
+        r1_barcodes, r2_barcodes = custom_adapters(bcs_dict, in1)
     k = 8
-    rounds = 1
-    adapter = reverse_comp(dapt_path)
-    subseqs = simple_seeker_non_contig(adapter, k)
+    r = 1
+    adapter1 = reverse_comp(adapters)
+    subseqs1 = simple_seeker_non_contig(adapter1, k)
+    rounds = r * (len(max(adapter1, key=len))//k)
     try:
         in2 = in2_ls[in1_ls.index(in1)]
         pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
         se_1 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in1))
         pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
         se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
-        porifera_open(in1, in2, subseqs, subseqs, se_1, pe_1, se_2, pe_2, k,
+        subseqs2 = subseqs1
+ 
+        porifera_open(in1, in2, subseqs1, subseqs1, se_1, pe_1, se_2, pe_2, k,
                       rounds, match, min_l)
     except (IndexError, ValueError) as e:
         se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
-        porifera_single_open(in1, subseqs, se_1, k, rounds, match, min_l)
+        porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l)
 
 
-def reverse_comp(dapt_path):
+def custom_adapters(bcs_dict, in1):
+    '''
+    reconstruct adapters by combining universal adapter with barcodes
+    and RE sites if included in pipeline
+    '''
+    name = os.path.basename(in1)[:-9]
+    for i in bcs_dict.values():
+        r1_barcodes = []
+        r2_barcodes = []
+        names_mx, r1_bcs, r2_bcs, dual_index = bc_reader(i)
+        for bc1, j in enumerate(names_mx):
+            for bc2, k in enumerate(j):
+                if k == name:
+                    r1_barcodes.append(r1_bcs[bc1])
+                    r2_barcodes.append(r2_bcs[bc2])
+    return r1_barcodes, r2_barcodes
+
+
+def reverse_comp(adapters):
     revc = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
-    with open(dapt_path) as f:
+    with open(adapters) as f:
         adapter = [line.rstrip() for line in f]
     for i, seq in enumerate(adapter):
         new = ''
