@@ -46,6 +46,12 @@ Example:
 $ python3 scallop.py -r1 1_R1.fastq -f 6
 ```
 
+or
+
+```bash
+$ python3 scallop.py -r1 1_R1.fastq -w 10 -e 30 -l 50
+```
+
 The output files are automatically named with "trimmed" prefix (e.g. "trimmed.1_R1.fastq")
 
 ## Anemone - demultiplexing of single-end or paired-end barcoded libraries
@@ -143,7 +149,7 @@ As with Krill, paired-end output files will indicate when pairing has been retai
 
 Example:
 ```bash
-$ python3 porifera.py -r1 1_R1.fastq -a1 adapters.txt -n 18 -m 3
+$ python3 porifera.py -r1 1_R1.fastq -a1 adapters.txt -m 12 -k 8 -r 1 
 ```
 
 Example adapter file:

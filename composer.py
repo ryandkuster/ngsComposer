@@ -48,7 +48,7 @@ class Project:
         self.non_genomic = False
         self.end_score = False
         self.window = False
-        self.min_l = 0
+        self.min_len = 1
         self.adapters = ''
         self.adapter_match = False
         self.q_min = False
@@ -501,11 +501,11 @@ def scallop_end_multi():
     curr = dir_make('end_trimmed')
     paired_setup(curr)
     scallop_part = partial(scallop_comp, c.in1_ls, c.in2_ls, None, None,
-                           c.end_score, c.window, c.min_l, curr)
+                           c.end_score, c.window, c.min_len, curr)
     pool_multi(scallop_part, c.in1_ls)
     if c.singles_ls:
         scallop_part = partial(scallop_comp, [], [], None, None, c.end_score,
-                               c.window, c.min_l, curr)
+                               c.window, c.min_len, curr)
         pool_multi(scallop_part, c.singles_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
@@ -513,7 +513,7 @@ def scallop_end_multi():
         temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
                               end_score=c.end_score,
                               window=c.window,
-                              min_l=c.min_l)
+                              min_len=c.min_len)
     return temp_ls
 
 
@@ -524,11 +524,11 @@ def porifera_multi():
     curr = dir_make('adapted')
     paired_setup(curr)
     porifera_part = partial(porifera_comp, curr, c.in1_ls, c.in2_ls,
-                            c.adapters, c.bcs_dict, c.adapter_match, c.min_l)
+                            c.adapters, c.bcs_dict, c.adapter_match, c.min_len)
     pool_multi(porifera_part, c.in1_ls)
     if c.singles_ls:
         porifera_part = partial(porifera_comp, curr, [], [], c.adapters,
-                                c.bcs_dict, c.adapter_match, c.min_l)
+                                c.bcs_dict, c.adapter_match, c.min_len)
         pool_multi(porifera_part, c.singles_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
@@ -661,7 +661,9 @@ def tidy_up():
 
 def summary_file():
     end_time = str(datetime.datetime.now()).split('.')[0]
-    log = ('ngscomposer version ' + version + '\n\n' +
+    log = ('ngscomposer version ' + version + '\n' +
+           'see https://github.com/ryandkuster/ngscomposer/releases '\
+           'for newest release info\n\n' +
            'start ' + c.start_time + '\n' +
            'end   ' + end_time + '\n\n' +
            'paired = ' + str(c.paired) + '\n' +
@@ -679,7 +681,7 @@ def summary_file():
            'non_genomic = ' + str(c.non_genomic) + '\n' +
            'end_score = ' + str(c.end_score) + '\n' +
            'window = ' + str(c.window) + '\n' +
-           'min_l = ' + str(c.min_l) + '\n' +
+           'min_len = ' + str(c.min_len) + '\n' +
            'adapters = ' + str(c.adapters) + '\n' +
            'adapter_match = ' + str(c.adapter_match) + '\n' +
            'q_min = ' + str(c.q_min) + '\n' +
@@ -707,7 +709,7 @@ if __name__ == '__main__':
         '    rotifer.py  - motif detection\n' +
         '    porifera.py - adapter removal\n\n' +
         '    krill.py    - quality filtering\n' +
-        'see https://github.com/ryandkuster/ngs-composer for full usage notes\n\n' +
+        'see https://github.com/ryandkuster/ngscomposer for full usage notes\n\n' +
         ''), formatter_class=RawTextHelpFormatter)
     parser.add_argument('-i', type=str, required=True,
                         help='the full or relative path to the project directory')

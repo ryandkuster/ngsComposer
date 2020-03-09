@@ -99,7 +99,7 @@ Using a text editor, save a file containing any of the following variables as a 
 |non_genomic|number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)|integer|
 |end_score|end-trim once entire window >= this Q score|integer between 0 and 40|
 |window|size of window to test for >= end_trim|integer within read length|
-|min_l|minimum read length to retain for end-trimming and adapter removal|integer > 0|
+|min_len|minimum read length to retain for end-trimming and adapter removal|integer > 0|
 |q_min|Q score minimum (Phred value 0-40) applied to q_percent variable|integer between 0 and 40|
 |q_percent|percentage of reads >= q_min Q scores|number between 0 and 100|
 |adapter_match|number of base matches to identify adapters (requires 'adapters.txt')|integer (recommend 12)|
@@ -125,6 +125,7 @@ R2_bases_ls = ['TCC', 'TCT']
 non_genomic = 1
 end_score = 30
 window = 10
+min_len = 50
 q_min = 30
 q_percent = 95
 ```
@@ -134,7 +135,7 @@ q_percent = 95
 
 *In this case, samples were double-digested with AluI and HaeIII and A-tailed before adapter ligation (**R1_bases_ls = ['TCC', 'TCT']** and **R2_bases_ls = ['TCC', 'TCT']**). Only reads containing these motifs will pass to subsequent steps. As the T complement from A-tailing introduces an artificial residue not present in the specimen sequenced, it can simultaneously be removed alongside motif detection (**non_genomic = 1**).*
 
-*Automatic end-trimming will be performed based on Q score. Here, groups of bases are considered within a moving window of 10 bases at a time (**window = 10**) until that window consists only of the desired Q score at or above 30 (**end_score = 30**). It is at this point that the read is trimmed.*
+*Automatic end-trimming will be performed based on Q score. Here, groups of bases are considered within a moving window of 10 bases at a time (**window = 10**) until that window consists only of the desired Q score at or above 30 (**end_score = 30**). It is at this point that the read is trimmed. Reads that are less than 50 bp will be discarded (**min_len = 50**)*
 
 *Only reads that have a Q score of 30 (**q_min = 30**) acrosss at least 95 percent of the read (**q_percent = 95**) will pass to subsequent steps. If a R1 read or an R2 read passes while its partner fails, it will be placed into a single-end read subfolder and the failing read will be discarded.*
 
