@@ -74,7 +74,7 @@ Several **example datasets** are included in the "examples" directory. Users are
 ### Overview
 The order of steps in the ngsComposer pipeline are outlined in the following figure:
 
-<a><img src="https://imgur.com/f03nQiv.png" title="source: imgur.com" /></a>
+<a><img src="https://i.imgur.com/99BsbsJ.png" title="source: imgur.com" /></a>
 
 The steps implemented are first specified in a configuration file.
 
