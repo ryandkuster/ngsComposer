@@ -49,7 +49,8 @@ class Project:
         self.end_score = False
         self.window = False
         self.min_len = 1
-        self.adapters = ''
+        self.adapters1 = ''
+        self.adapters2 = ''
         self.adapter_match = False
         self.q_min = False
         self.q_percent = False
@@ -74,12 +75,19 @@ class Project:
         open bcs_index and create dictionary of associated bc keyfiles
         open adapters and bcs_index and test for correct format
         '''
-        adapters = os.path.join(self.proj, 'adapters.txt')
-        self.adapters = adapters if os.path.exists(adapters) else ''
-        if self.adapters:
-            with open(self.adapters) as f:
+        adapters1 = os.path.join(self.proj, 'adapters.R1.txt')
+        adapters2 = os.path.join(self.proj, 'adapters.R2.txt')
+        self.adapters1 = adapters1 if os.path.exists(adapters1) else ''
+        self.adapters2 = adapters2 if os.path.exists(adapters2) else ''
+        if self.adapters1:
+            with open(self.adapters1) as f:
                 adapters_ls = [line.rstrip() for line in f]
                 nucleotide_test(adapters_ls)
+        if self.adapters2:
+            with open(self.adapters2) as f:
+                adapters_ls = [line.rstrip() for line in f]
+                nucleotide_test(adapters_ls)
+
         bc_path = os.path.join(self.proj, 'index.txt')
         self.bcs_index = bc_path if os.path.exists(bc_path) else ''
         self.bcs_dict = {}
@@ -141,7 +149,7 @@ class Project:
             if not isinstance(self.non_genomic, int) or self.non_genomic < 1:
                 raise Exception(msg.conf_confirm14)
 
-        if self.adapters:
+        if self.adapters1:
             if not self.adapter_match:
                 raise Exception(msg.conf_confirm23)
         if self.adapter_match:
@@ -149,7 +157,7 @@ class Project:
                 raise Exception(msg.conf_confirm24)
             if self.adapter_match < 10:
                 raise Exception(msg.conf_confirm24)
-            if not os.path.exists(os.path.join(self.proj, 'adapters.txt')):
+            if not os.path.exists(os.path.join(self.proj, 'adapters.R1.txt')):
                 raise Exception(msg.conf_confirm23)
 
         if self.q_min or self.q_percent:
@@ -178,7 +186,9 @@ class Project:
         for filename in os.listdir(self.proj):
             if filename == os.path.basename(self.bcs_index):
                 pass
-            elif filename == os.path.basename(self.adapters):
+            elif filename == os.path.basename(self.adapters1):
+                pass
+            elif filename == os.path.basename(self.adapters2):
                 pass
             elif os.path.join(self.proj, filename) in self.bcs_dict.values():
                 pass
@@ -310,7 +320,7 @@ def dir_size(proj, fastq_ls):
     dir_plan = dir_plan + 1 if c.bcs_index else dir_plan
     dir_plan = dir_plan + 1 if c.R1_bases_ls or c.R2_bases_ls else dir_plan
     dir_plan = dir_plan + 1 if c.end_score else dir_plan
-    dir_plan = dir_plan + 1 if c.adapters else dir_plan
+    dir_plan = dir_plan + 1 if c.adapters1 else dir_plan
     dir_plan = dir_plan + 1 if c.q_min else dir_plan
 
     for i in fastq_ls:
@@ -524,11 +534,13 @@ def porifera_multi():
     curr = dir_make('adapted')
     paired_setup(curr)
     porifera_part = partial(porifera_comp, curr, c.in1_ls, c.in2_ls,
-                            c.adapters, c.bcs_dict, c.adapter_match, c.min_len)
+                            c.adapters1, c.adapters2, c.bcs_dict,
+                            c.adapter_match, c.min_len)
     pool_multi(porifera_part, c.in1_ls)
     if c.singles_ls:
-        porifera_part = partial(porifera_comp, curr, [], [], c.adapters,
-                                c.bcs_dict, c.adapter_match, c.min_len)
+        porifera_part = partial(porifera_comp, curr, [], [], c.adapters1,
+                                c.adapters2, c.bcs_dict, c.adapter_match,
+                                c.min_len)
         pool_multi(porifera_part, c.singles_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
@@ -682,7 +694,8 @@ def summary_file():
            'end_score = ' + str(c.end_score) + '\n' +
            'window = ' + str(c.window) + '\n' +
            'min_len = ' + str(c.min_len) + '\n' +
-           'adapters = ' + str(c.adapters) + '\n' +
+           'adapters1 = ' + str(c.adapters1) + '\n' +
+           'adapters2 = ' + str(c.adapters2) + '\n' +
            'adapter_match = ' + str(c.adapter_match) + '\n' +
            'q_min = ' + str(c.q_min) + '\n' +
            'q_percent = ' + str(c.q_percent) + '\n' +
@@ -756,7 +769,7 @@ if __name__ == '__main__':
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
 
-    if c.adapters:
+    if c.adapters1:
         print(msg.porf_title)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = porifera_multi()
         if c.rm_transit is True:

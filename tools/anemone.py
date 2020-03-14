@@ -55,6 +55,9 @@ def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
         in2 = False
         out2 = False
 
+    '''
+    the following copies files not found in index.txt
+    '''
     try:
         bcs_file = bcs_dict[out1]
     except KeyError:
@@ -65,9 +68,10 @@ def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
             pass
         return
 
-    os.mkdir(os.path.join(curr, os.path.basename(in1)))
+    subdir = os.path.join(curr, os.path.basename(in1))
+    os.mkdir(subdir)
     anemone_init(in1, in2, out1, out2, mismatch,
-                 bcs_file, curr)
+                 bcs_file, subdir)
 
 
 def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj):

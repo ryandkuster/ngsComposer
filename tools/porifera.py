@@ -13,15 +13,17 @@ def porifera_main():
     '''
     in1 = args.r1
     in2 = args.r2 if args.r2 else None
-    a1 = args.a1
-    a2 = args.a2 if args.a2 else None
-    adapter1 = reverse_comp(a1)
+    adapters1 = args.a1
+    adapters2 = args.a2 if args.a2 else None
+    with open(adapters1) as f:
+        adapters_ls1 = [line.rstrip() for line in f]
+    adapters_ls1 = reverse_comp(adapters_ls1)
     k = args.k if args.k else 8
     r = args.r if args.r else 1
     min_l = args.l if args.l else 0
-    rounds = r * (len(max(adapter1, key=len))//k)
+    rounds = r * (len(max(adapters_ls1, key=len))//k)
     match = args.m if args.m else 12
-    subseqs1 = simple_seeker_non_contig(adapter1, k)
+    subseqs1 = simple_seeker_non_contig(adapters_ls1, k)
     if args.o is None:
         proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
@@ -33,9 +35,11 @@ def porifera_main():
         pe_1 = os.path.join(proj, 'pe.adapted.' + os.path.basename(in1))
         se_2 = os.path.join(proj, 'se.adapted.' + os.path.basename(in2))
         pe_2 = os.path.join(proj, 'pe.adapted.' + os.path.basename(in2))
-        if a2:
-            adapter2 = reverse_comp(a2)
-            subseqs2 = simple_seeker_non_contig(adapter2, k)
+        if adapters2:
+            with open(adapters2) as f:
+                adapters_ls2 = [line.rstrip() for line in f]
+            adapters_ls2 = reverse_comp(adapters_ls2)
+            subseqs2 = simple_seeker_non_contig(adapters_ls2, k)
         else:
             subseqs2 = subseqs1
         porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
@@ -45,26 +49,45 @@ def porifera_main():
         porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l)
 
 
-def porifera_comp(curr, in1_ls, in2_ls, adapters, bcs_dict, match, min_l, in1):
+def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict, match,
+                  min_l, in1):
     '''
     composer entry point to porifera
     '''
-    if bcs_dict:
-        r1_barcodes, r2_barcodes = custom_adapters(bcs_dict, in1)
     k = 8
     r = 1
-    adapter1 = reverse_comp(adapters)
-    subseqs1 = simple_seeker_non_contig(adapter1, k)
-    rounds = r * (len(max(adapter1, key=len))//k)
+    with open(adapters1) as f:
+        adapters_ls1 = [line.rstrip() for line in f]
+    if bcs_dict:
+        r1_barcodes, r2_barcodes = custom_adapters(bcs_dict, in1)
+        subset_ls1 = [i for i in adapters_ls1 for j in r2_barcodes if j in i]
+        adapters_ls1 = subset_ls1 if len(subset_ls1) > 0 else adapters_ls1
+    adapters_ls1 = reverse_comp(adapters_ls1)
+
+    if adapters2:
+        with open(adapters2) as f:
+            adapters_ls2 = [line.rstrip() for line in f]
+        if bcs_dict:
+            subset_ls2 = [i for i in adapters_ls2 for j in r1_barcodes if j in i]
+            adapters_ls2 = subset_ls1 if len(subset_ls2) > 0 else adapters_ls2
+        adapters_ls2 = reverse_comp(adapters_ls2)
+        subseqs2 = simple_seeker_non_contig(adapters_ls2, k)
+        if in2_ls == []:
+            adapters_ls1.extend(adapters_ls2)
+    print(r2_barcodes)
+    print(adapters_ls1)
+    print(r1_barcodes)
+    print(adapters_ls2)
+    subseqs1 = simple_seeker_non_contig(adapters_ls1, k)
+    rounds = r * (len(max(adapters_ls1, key=len))//k)
+
     try:
         in2 = in2_ls[in1_ls.index(in1)]
         pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
         se_1 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in1))
         pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
         se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
-        subseqs2 = subseqs1
- 
-        porifera_open(in1, in2, subseqs1, subseqs1, se_1, pe_1, se_2, pe_2, k,
+        porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
                       rounds, match, min_l)
     except (IndexError, ValueError) as e:
         se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
@@ -86,19 +109,17 @@ def custom_adapters(bcs_dict, in1):
                 if k == name:
                     r1_barcodes.append(r1_bcs[bc1])
                     r2_barcodes.append(r2_bcs[bc2])
-    return r1_barcodes, r2_barcodes
+    return set(r1_barcodes), set(r2_barcodes)
 
 
-def reverse_comp(adapters):
+def reverse_comp(adapters_ls):
     revc = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
-    with open(adapters) as f:
-        adapter = [line.rstrip() for line in f]
-    for i, seq in enumerate(adapter):
+    for i, seq in enumerate(adapters_ls):
         new = ''
         for j, base in enumerate(reversed(seq)):
             new += revc[base]
-        adapter[i] = new
-    return adapter
+        adapters_ls[i] = new
+    return adapters_ls
 
 
 def simple_seeker_non_contig(adapter, k):
