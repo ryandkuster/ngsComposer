@@ -23,6 +23,10 @@ def porifera_main():
     min_l = args.l if args.l else 0
     rounds = r * (len(max(adapters_ls1, key=len))//k)
     match = args.m if args.m else 12
+    ###################
+    tiny_ls = set([i[:match] for i in adapters_ls1]) if args.t else None
+    tiny = args.t if args.t else None
+    ###################
     subseqs1 = simple_seeker_non_contig(adapters_ls1, k)
     if args.o is None:
         proj = os.path.dirname(os.path.abspath(in1))
@@ -46,7 +50,7 @@ def porifera_main():
                       rounds, match, min_l)
     else:
         se_1 = os.path.join(proj, 'adapted.' + os.path.basename(in1))
-        porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l)
+        porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l, tiny_ls, tiny)
 
 
 def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict, match,
@@ -213,7 +217,7 @@ def porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
             y, entry1, entry2 = 0, "", ""
 
 
-def porifera_single_open(in1, subseqs, se_1, k, rounds, match, min_l):
+def porifera_single_open(in1, subseqs, se_1, k, rounds, match, min_l, tiny_ls, tiny):
     '''
     open files for adapter detection
     '''
@@ -221,19 +225,21 @@ def porifera_single_open(in1, subseqs, se_1, k, rounds, match, min_l):
     if compressed:
         se_1, _ = os.path.splitext(se_1)
         with gzip.open(in1, 'rt') as f, open(se_1, 'w') as o:
-            porifera_single(f, subseqs, o, k, rounds, match, min_l)
+            porifera_single(f, subseqs, o, k, rounds, match, min_l, tiny_ls, tiny)
     else:
         with open(in1) as f, open(se_1, 'w') as o:
-            porifera_single(f, subseqs, o, k, rounds, match, min_l)
+            porifera_single(f, subseqs, o, k, rounds, match, min_l, tiny_ls, tiny)
 
 
-def porifera_single(f, subseqs, o, k, rounds, match, min_l):
+def porifera_single(f, subseqs, o, k, rounds, match, min_l, tiny_ls, tiny):
     y, entry = 0, ""
     for line in f:
         y += 1
         line = line.rstrip()
         if y == 2:
             z = compromiser(line, subseqs, k, rounds, match)
+            if tiny_ls and z == len(line):
+                z = tiny_handler(line, match, tiny_ls, tiny)
         if y == 2 or y == 4:
             line = line[:z]
         entry = entry + line + "\n"
@@ -282,6 +288,57 @@ def match_analyzer(focus, k):
     return len(pos_list), z
 
 
+def tiny_handler(line, match, tiny_ls, tiny):
+    '''
+    hold me closer, tiny_handler
+    '''
+    for tiny_motif in tiny_ls:
+        z = smith_waterman(tiny_motif, line[-match:], tiny)
+        if z is not None:
+            return len(line) - z
+    return len(line)
+
+
+def smith_waterman(query, ref, tiny):
+    ref_len = len(ref)
+    matrix = [[0 for j in range(len(query) + 1)] for i in range(len(ref) + 1)]
+
+    for i, ref_base in enumerate(ref):
+        for j, query_base in enumerate(query):
+            # use max value
+            match, mismatch, gap_ref, gap_query = 0, 0, 0, 0
+            if ref_base == query_base:
+                match = 3 + matrix[i][j]
+            else:
+                mismatch = -3 + matrix[i][j]
+                gap_ref = -2 + matrix[i + 1][j]
+                gap_query = -2 + matrix[i][j + 1]
+            matrix[i + 1][j + 1] = max(match, mismatch, gap_ref, gap_query)
+
+    exp_scores = [(i/idx)+idx/ref_len if idx >= tiny else 0 for idx, i in enumerate(matrix[-1])]
+
+    if max(exp_scores) > 2.5:
+        x_tr = exp_scores.index(max(exp_scores))
+        y_tr = ref_len-2 if x_tr == 1 else traceback(matrix, x_tr, ref_len)
+        return ref_len - y_tr - 1
+    return None
+
+def traceback(matrix, x, y):
+    while True:
+        now = matrix[y][x]
+        prev = [matrix[y - 1][x - 1], matrix[y][x - 1], matrix[y - 1][x]]
+        if now + 3 == prev[0]:
+            x, y = x - 1, y - 1
+        elif now + 2 == prev[1]:
+            x, y = x - 1, y
+        elif now + 2 == prev[2]:
+            x, y = x, y - 1
+        else:
+            x, y = x - 1, y - 1
+        if now == 0:
+            return y
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='trim known adapter sequences')
     parser.add_argument('-r1', type=str, required=True, metavar='',
@@ -302,5 +359,8 @@ if __name__ == "__main__":
             help='minimum read length to keep (integer)')
     parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
+    parser.add_argument('-t', type=int, metavar='',
+            help='\"tiny" mode, determine smallest length to call an adapter\
+                 (optional; takes considerably longer)')
     args = parser.parse_args()
     porifera_main()
