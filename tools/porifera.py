@@ -65,24 +65,27 @@ def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict, match,
     if bcs_dict:
         r1_barcodes, r2_barcodes = custom_adapters(bcs_dict, in1)
         subset_ls1 = [i for i in adapters_ls1 for j in r2_barcodes if j in i]
-        adapters_ls1 = subset_ls1 if len(subset_ls1) > 0 else adapters_ls1
-    adapters_ls1 = reverse_comp(adapters_ls1)
+        adapters_ls1 = subset_ls1[:] if len(subset_ls1) > 0 else adapters_ls1
+    adapt1 = reverse_comp(adapters_ls1)
 
     if adapters2:
         with open(adapters2) as f:
             adapters_ls2 = [line.rstrip() for line in f]
         if bcs_dict:
             subset_ls2 = [i for i in adapters_ls2 for j in r1_barcodes if j in i]
-            adapters_ls2 = subset_ls1 if len(subset_ls2) > 0 else adapters_ls2
-        adapters_ls2 = reverse_comp(adapters_ls2)
-        subseqs2 = simple_seeker_non_contig(adapters_ls2, k)
+            adapters_ls2 = subset_ls2[:] if len(subset_ls2) > 0 else adapters_ls2
+        adapt2 = reverse_comp(adapters_ls2)
+        subseqs2 = simple_seeker_non_contig(adapt2, k)
         if in2_ls == []:
             adapters_ls1.extend(adapters_ls2)
-    print(r2_barcodes)
-    print(adapters_ls1)
-    print(r1_barcodes)
-    print(adapters_ls2)
-    subseqs1 = simple_seeker_non_contig(adapters_ls1, k)
+
+    subseqs1 = simple_seeker_non_contig(adapt1, k)
+
+    if in2_ls != []: #TODO
+        print("subseqs1:")
+        print(subseqs1)
+        print("subseqs2:")
+        print(subseqs2)
     rounds = r * (len(max(adapters_ls1, key=len))//k)
 
     try:
