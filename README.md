@@ -211,33 +211,33 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 ***
 
 ### Adapters
-#### Adapters file
-Optionally, 'adapters.txt' may be included in the project directory for recognition and removal of adapters.
+#### Adapters file(s)
+Optionally, 'adapters.R1.txt' and 'adapters.R2.txt' may be included in the project directory for recognition and removal of adapters expected to appear in the R1/R2 reads. Adapter sequences should be newline-separated and be in 5' to 3' orientation. If libraries are barcoded, users are encouraged to provide adapter sequences that contain the corresponding barcodes expected in the opposing end of the read's adapter.
 
 <a><img src="https://imgur.com/KITtkHM.png" title="source: imgur.com" width=300 /></a>
 
 
-**adapters.txt**
+**adapters.R1.txt**
 ```
-CGCTCAGTTC
-TATCTGACCT
-ATATGAGACG
-CTTATGGAAT
-TAATCTCGTC
-GCGCGATGTT
-AGAGCACTAG
-TGCCTTGATC
-CTACTCAGTC
-TCGTCTGACT
-GAACATACGG
-CCTATGACTC
-TAATGGCAAG
-GTGCCGCTTC
-CGGCAATGGA
-GCCGTAACCG
-AACCATTCTC 
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTCGCTCAGTTC
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTTATCTGACCT
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTATATGAGACG
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTCTTATGGAAT
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTTAATCTCGTC
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTGCGCGATGTT
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTAGAGCACTAG
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTTGCCTTGATC
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTCTACTCAGTC
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTTCGTCTGACT
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTGAACATACGG
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTCCTATGACTC
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTTAATGGCAAG
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTGTGCCGCTTC
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTCGGCAATGGA
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTGCCGTAACCG
+GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTAACCATTCTC 
 ```
-*Each of the above sample adapters is presented in 5' to 3' orientation and may have restriction motifs added if desired. Porifera.py creates all reverse-complements before alignment*
+*Each of the above sample adapters is presented in 5' to 3' orientation and shares a common 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT' adapter sequence followed by expected barcodes. Adapter sequences may also include restriction motifs for greater detection, but these sequences will also be removed. Porifera.py creates all reverse-complements before detection.*
 
 
 ### Standalone

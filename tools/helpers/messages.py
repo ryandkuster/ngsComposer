@@ -35,7 +35,7 @@ conf_confirm19 = (font.yellow + '\n\nq_min must be an integer between 0 and 42\n
 conf_confirm20 = (font.yellow + '\n\nq_percent must be an integer between 0 and 100\n' + font.reset)
 conf_confirm21 = (font.yellow + '\n\nrm_dirs must be True or False\n' + font.reset)
 conf_confirm22 = (font.yellow + '\n\nmin_start must be an integer\n' + font.reset)
-conf_confirm23 = (font.yellow + '\n\n\'a minimum of adapters.R1.txt (R2 adapters expected in the R1 read)\' and adapter_match must be present\n' + font.reset)
+conf_confirm23 = (font.yellow + '\n\n\'adapters.R1.txt\' (adapters and barcodes in corresponding reverse end of read), \'adapters.R2.txt\' and adapter_match must be present\n' + font.reset)
 conf_confirm24 = (font.yellow + '\n\nadapter_match must be an integer >= 10 for pipeline\n' + font.reset)
 conf_confirm25 = (font.yellow + '\n\nphred64 must be True or False\n' + font.reset)
 
@@ -46,11 +46,10 @@ r_packages1 = (font.yellow + '\n\nplease install latest version of R\n' + font.r
 fastq_test1 = (font.yellow + ' was not expected in project directory\n' + font.reset)
 
 
-input_single1 = (font.yellow + '\nunexpected paired libraries found\n' + font.reset +
+adapters_test1 = (font.yellow + '\nunexpected paired libraries found\n' + font.reset +
                  '\nplease select from the following options:\n\n' +
-                 font.lightblue + ' 1' + font.reset + ' - continue treating files as single-end libraries?\n' +
-                 font.lightblue + ' 2' + font.reset + ' - continue treating files as paired-end libraries?\n' +
-                 font.lightblue + ' 3' + font.reset + ' - exit ngsComposer\n\n' +
+                 font.lightblue + ' 1' + font.reset + ' - continue without including barcodes in adapters\n' +
+                 font.lightblue + ' 2' + font.reset + ' - exit\n' +
                  font.lightblue + 'number selection > ' + font.reset)
 
 

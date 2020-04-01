@@ -16,7 +16,7 @@ from anemone import anemone_comp, bc_reader, bc_test
 from crinoid import combine_matrix, crinoid_comp
 from helpers.gzip_handling import gzip_test
 from krill import krill_comp
-from porifera import porifera_comp
+from porifera import porifera_comp, reverse_comp
 from rotifer import rotifer_comp
 from scallop import scallop_comp
 
@@ -308,6 +308,55 @@ def demultiplex_test():
                         sys.exit('R2 for ' + k + ' expect but not found')
 
 
+def adapters_test():
+    '''
+    assess adapters for presence of barcodes
+    '''
+    if c.adapters1 and c.bcs_dict:
+        with open(c.adapters1) as f1:
+            adapters_ls1 = [line.rstrip() for line in f1]
+    else:
+        return
+
+    if c.paired is True:
+        try:
+            with open(c.adapters2) as f2:
+                adapters_ls2 = [line.rstrip() for line in f2]
+        except FileNotFoundError:
+            sys.exit('please provide \'adapters.R2.txt\' containing adapter ' +
+                     'sequences expected in R2 sequences.')
+    else:
+        adapters_ls2 = []
+ 
+    for k, v in c.bcs_dict.items():
+        names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
+        for i in R2_bcs.values():
+            R2_test = [j for j in adapters_ls1 if i in j]
+            if len(R2_test) == 0:
+                print('barcode ' + i + ' not found in adapters.R1.txt')
+                while True:
+                    choice = input(msg.adapters_test1)
+                    if choice == '1':
+                        return
+                    elif choice == '2':
+                        sys.exit()
+                    else:
+                        print('\nselect an option from the list\n')
+
+        for i in R1_bcs.values():
+            R1_test = [j for j in adapters_ls2 if i in j]
+            if len(R1_test) == 0:
+                print('barcode ' + i + ' not found in adapters.R2.txt')
+                while True:
+                    choice = input(msg.adapters_test1)
+                    if choice == '1':
+                        return
+                    elif choice == '2':
+                        sys.exit()
+                    else:
+                        print('\nselect an option from the list\n')
+
+
 def dir_size(proj, fastq_ls):
     '''
     test the specified output directory for adequate disk space
@@ -535,18 +584,19 @@ def porifera_multi():
     paired_setup(curr)
     porifera_part = partial(porifera_comp, curr, c.in1_ls, c.in2_ls,
                             c.adapters1, c.adapters2, c.bcs_dict,
-                            c.adapter_match, c.min_len)
+                            c.adapter_match, c.min_len, None, None)
     pool_multi(porifera_part, c.in1_ls)
     if c.singles_ls:
         porifera_part = partial(porifera_comp, curr, [], [], c.adapters1,
                                 c.adapters2, c.bcs_dict, c.adapter_match,
-                                c.min_len)
+                                c.min_len, None, None)
         pool_multi(porifera_part, c.singles_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, porifera_multi, temp_ls,
-                              adapter_match=c.adapter_match)
+                              adapter_match=c.adapter_match,
+                              min_len=c.min_len)
     return temp_ls
 
 
@@ -707,7 +757,7 @@ def summary_file():
 
 
 if __name__ == '__main__':
-    version = '0.3.0'
+    version = '0.4.0'
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
         '#' * 50 + '\n\n' +
@@ -735,6 +785,7 @@ if __name__ == '__main__':
     r_packages()
     c.in1_ls, c.in2_ls = fastq_test(c.fastq_ls)
     demultiplex_test()
+    adapters_test()
 
     if c.alt_dir:
         c.initialize(c.alt_dir)

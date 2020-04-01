@@ -47,14 +47,14 @@ def porifera_main():
         else:
             subseqs2 = subseqs1
         porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
-                      rounds, match, min_l)
+                      rounds, match, min_l, tiny_ls, tiny)
     else:
         se_1 = os.path.join(proj, 'adapted.' + os.path.basename(in1))
         porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l, tiny_ls, tiny)
 
 
 def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict, match,
-                  min_l, in1):
+                  min_l, tiny_ls, tiny, in1):
     '''
     composer entry point to porifera
     '''
@@ -81,11 +81,6 @@ def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict, match,
 
     subseqs1 = simple_seeker_non_contig(adapt1, k)
 
-    if in2_ls != []: #TODO
-        print("subseqs1:")
-        print(subseqs1)
-        print("subseqs2:")
-        print(subseqs2)
     rounds = r * (len(max(adapters_ls1, key=len))//k)
 
     try:
@@ -95,10 +90,11 @@ def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict, match,
         pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
         se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
         porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
-                      rounds, match, min_l)
+                      rounds, match, min_l, tiny_ls, tiny)
     except (IndexError, ValueError) as e:
         se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
-        porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l)
+        porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l,
+                             tiny_ls, tiny)
 
 
 def custom_adapters(bcs_dict, in1):
@@ -165,7 +161,7 @@ def no_empty_lists(subseqs):
 
 
 def porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
-                  rounds, match, min_l):
+                  rounds, match, min_l, tiny_ls, tiny):
     '''
     open paired end files for adapter detection
     '''
@@ -181,7 +177,7 @@ def porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
                 open(se_1, 'w') as se_o1,\
                 open(se_2, 'w') as se_o2:
             porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
-                     rounds, match, min_l)
+                     rounds, match, min_l, tiny_ls, tiny)
     else:
         with open(in1, 'rt') as f1, open(in2, 'rt') as f2,\
                 open(pe_1, 'w') as pe_o1,\
@@ -189,11 +185,11 @@ def porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
                 open(se_1, 'w') as se_o1,\
                 open(se_2, 'w') as se_o2:
             porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
-                     rounds, match, min_l)
+                     rounds, match, min_l, tiny_ls, tiny)
 
 
 def porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
-             rounds, match, min_l):
+             rounds, match, min_l, tiny_ls, tiny):
     y, entry1, entry2 = 0, "", ""
     for line1, line2 in zip(f1, f2):
         y += 1
