@@ -214,7 +214,7 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 #### Adapters file(s)
 Optionally, 'adapters.R1.txt' and 'adapters.R2.txt' may be included in the project directory for recognition and removal of adapters expected to appear in the R1/R2 reads. Adapter sequences should be newline-separated and be in 5' to 3' orientation. If libraries are barcoded, users are encouraged to provide adapter sequences that contain the corresponding barcodes expected in the opposing end of the read's adapter.
 
-<a><img src="https://imgur.com/KITtkHM.png" title="source: imgur.com" width=300 /></a>
+<a><img src="https://i.imgur.com/fd7j6W6.png" title="source: imgur.com" width=300 /></a>
 
 
 **adapters.R1.txt**
@@ -239,6 +239,9 @@ GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTAACCATTCTC
 ```
 *Each of the above sample adapters is presented in 5' to 3' orientation and shares a common 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT' adapter sequence followed by expected barcodes. Adapter sequences may also include restriction motifs for greater detection, but these sequences will also be removed. Porifera.py creates all reverse-complements before detection.*
 
+<a><img src="https://i.imgur.com/mYBQWIv.png" title="source: imgur.com" width=600 /></a>
+
+*When paired end data is used, as above, 'adapters.R1.txt' and 'adapters.R2.txt' must be provided. Adapters are tested for the inclusion of barcodes and only those combinations of R1/R2 barcodes leading to a given sample will be used to search for adapters quickly and with a lower false positive rate.*
 
 ### Standalone
 All tools available in the ngsComposer pipeline can be called individually from the command line. Please see the <a href="https://github.com/ryandkuster/composer/tree/master/tools">ngsComposer Standalone Tools page</a> for usage.
