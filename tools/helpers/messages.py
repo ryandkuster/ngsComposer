@@ -46,7 +46,7 @@ r_packages1 = (font.yellow + '\n\nplease install latest version of R\n' + font.r
 fastq_test1 = (font.yellow + ' was not expected in project directory\n' + font.reset)
 
 
-adapters_test1 = (font.yellow + '\nunexpected paired libraries found\n' + font.reset +
+adapters_test1 = (font.yellow + '\nbarcodes not found in adapters file(s)\n' + font.reset +
                  '\nplease select from the following options:\n\n' +
                  font.lightblue + ' 1' + font.reset + ' - continue without including barcodes in adapters\n' +
                  font.lightblue + ' 2' + font.reset + ' - exit\n' +
