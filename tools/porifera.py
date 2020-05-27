@@ -23,10 +23,8 @@ def porifera_main():
     min_l = args.l if args.l else 0
     rounds = r * (len(max(adapters_ls1, key=len))//k)
     match = args.m if args.m else 12
-    ###################
-    tiny_ls = set([i[:match] for i in adapters_ls1]) if args.t else None
+    tiny_ls1 = set([i[:match] for i in adapters_ls1]) if args.t else None
     tiny = args.t if args.t else None
-    ###################
     subseqs1 = simple_seeker_non_contig(adapters_ls1, k)
     if args.o is None:
         proj = os.path.dirname(os.path.abspath(in1))
@@ -43,18 +41,19 @@ def porifera_main():
             with open(adapters2) as f:
                 adapters_ls2 = [line.rstrip() for line in f]
             adapters_ls2 = reverse_comp(adapters_ls2)
+            tiny_ls2 = set([i[:match] for i in adapters_ls2]) if args.t else None
             subseqs2 = simple_seeker_non_contig(adapters_ls2, k)
         else:
             subseqs2 = subseqs1
         porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
-                      rounds, match, min_l, tiny_ls, tiny)
+                      rounds, match, min_l, tiny_ls1, tiny_ls2, tiny)
     else:
         se_1 = os.path.join(proj, 'adapted.' + os.path.basename(in1))
-        porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l, tiny_ls, tiny)
+        porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l, tiny_ls1, tiny)
 
 
-def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict, match,
-                  min_l, tiny_ls, tiny, in1):
+def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict,
+                  search, match, min_l, tiny, in1):
     '''
     composer entry point to porifera
     '''
@@ -64,25 +63,26 @@ def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict, match,
         adapters_ls1 = [line.rstrip() for line in f]
     if bcs_dict:
         r1_barcodes, r2_barcodes = custom_adapters(bcs_dict, in1)
-        subset_ls1 = [i for i in adapters_ls1 for j in r2_barcodes if j in i]
+        subset_ls1 = [i for i in adapters_ls1 for j in r2_barcodes if j in i[-(search + len(j)):]]
         adapters_ls1 = subset_ls1[:] if len(subset_ls1) > 0 else adapters_ls1
     adapt1 = reverse_comp(adapters_ls1)
-
+    tiny_ls1 = [i[:match + k] for i in adapt1] if tiny else None
     if adapters2:
         with open(adapters2) as f:
             adapters_ls2 = [line.rstrip() for line in f]
         if bcs_dict:
-            subset_ls2 = [i for i in adapters_ls2 for j in r1_barcodes if j in i]
+            subset_ls2 = [i for i in adapters_ls2 for j in r1_barcodes if j in i[-(search + len(j)):]]
             adapters_ls2 = subset_ls2[:] if len(subset_ls2) > 0 else adapters_ls2
         adapt2 = reverse_comp(adapters_ls2)
         subseqs2 = simple_seeker_non_contig(adapt2, k)
+        tiny_ls2 = [i[:match + k] for i in adapt2] if tiny else None
         if in2_ls == []:
             adapters_ls1.extend(adapters_ls2)
+            tiny_ls1.extend(tiny_ls2)
 
     subseqs1 = simple_seeker_non_contig(adapt1, k)
 
     rounds = r * (len(max(adapters_ls1, key=len))//k)
-
     try:
         in2 = in2_ls[in1_ls.index(in1)]
         pe_1 = os.path.join(curr, 'paired', os.path.basename(in1))
@@ -90,11 +90,11 @@ def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict, match,
         pe_2 = os.path.join(curr, 'paired', os.path.basename(in2))
         se_2 = os.path.join(curr, 'single', 'pe_lib', os.path.basename(in2))
         porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
-                      rounds, match, min_l, tiny_ls, tiny)
+                      rounds, match, min_l, tiny_ls1, tiny_ls2, tiny)
     except (IndexError, ValueError) as e:
         se_1 = os.path.join(curr, 'single', 'se_lib', os.path.basename(in1))
         porifera_single_open(in1, subseqs1, se_1, k, rounds, match, min_l,
-                             tiny_ls, tiny)
+                             tiny_ls1, tiny)
 
 
 def custom_adapters(bcs_dict, in1):
@@ -161,7 +161,7 @@ def no_empty_lists(subseqs):
 
 
 def porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
-                  rounds, match, min_l, tiny_ls, tiny):
+                  rounds, match, min_l, tiny_ls1, tiny_ls2, tiny):
     '''
     open paired end files for adapter detection
     '''
@@ -177,7 +177,7 @@ def porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
                 open(se_1, 'w') as se_o1,\
                 open(se_2, 'w') as se_o2:
             porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
-                     rounds, match, min_l, tiny_ls, tiny)
+                     rounds, match, min_l, tiny_ls1, tiny_ls2, tiny)
     else:
         with open(in1, 'rt') as f1, open(in2, 'rt') as f2,\
                 open(pe_1, 'w') as pe_o1,\
@@ -185,19 +185,24 @@ def porifera_open(in1, in2, subseqs1, subseqs2, se_1, pe_1, se_2, pe_2, k,
                 open(se_1, 'w') as se_o1,\
                 open(se_2, 'w') as se_o2:
             porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
-                     rounds, match, min_l, tiny_ls, tiny)
+                     rounds, match, min_l, tiny_ls1, tiny_ls2, tiny)
 
 
 def porifera(f1, f2, subseqs1, subseqs2, pe_o1, pe_o2, se_o1, se_o2, k,
-             rounds, match, min_l, tiny_ls, tiny):
+             rounds, match, min_l, tiny_ls1, tiny_ls2, tiny):
     y, entry1, entry2 = 0, "", ""
+
     for line1, line2 in zip(f1, f2):
         y += 1
         line1 = line1.rstrip()
         line2 = line2.rstrip()
         if y == 2:
             z1 = compromiser(line1, subseqs1, k, rounds, match)
+            if tiny_ls1 and z1 == len(line1):
+                z1 = tiny_handler(line1, match, tiny_ls1, tiny)
             z2 = compromiser(line2, subseqs2, k, rounds, match)
+            if tiny_ls2 and z2 == len(line2):
+                z2 = tiny_handler(line2, match, tiny_ls2, tiny)
         if y == 2 or y == 4:
             line1 = line1[:z1]
             line2 = line2[:z2]
@@ -289,7 +294,7 @@ def match_analyzer(focus, k):
 
 def tiny_handler(line, match, tiny_ls, tiny):
     '''
-    hold me closer, tiny_handler
+    perform smith-waterman alignment on reduced substring of adapters
     '''
     for tiny_motif in tiny_ls:
         z = smith_waterman(tiny_motif, line[-match:], tiny)
@@ -299,6 +304,12 @@ def tiny_handler(line, match, tiny_ls, tiny):
 
 
 def smith_waterman(query, ref, tiny):
+    '''
+    use smith-waterman dynamic programming matrix to search for substring of
+    adapter with minimal overlap in the 3' end of read
+    (evaluates scores in the final row of matrix, assuming substring will be
+    exhausted)
+    '''
     ref_len = len(ref)
     matrix = [[0 for j in range(len(query) + 1)] for i in range(len(ref) + 1)]
 

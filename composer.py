@@ -39,7 +39,7 @@ class Project:
         self.initial_qc = False
         self.all_qc = False
         self.walkaway = True
-        self.front_trim = False
+        self.front_trim = 0
         self.end_trim = False
         self.bcs_index = ''
         self.mismatch = False
@@ -52,6 +52,7 @@ class Project:
         self.adapters1 = ''
         self.adapters2 = ''
         self.adapter_match = False
+        self.tiny = False
         self.q_min = False
         self.q_percent = False
         self.rm_transit = True
@@ -582,14 +583,18 @@ def porifera_multi():
     '''
     curr = dir_make('adapted')
     paired_setup(curr)
+    if c.R1_bases_ls or c.R2_bases_ls:
+        search = len(max(c.R1_bases_ls + c.R2_bases_ls, key = len)) + c.front_trim
+    else:
+        search = c.front_trim
     porifera_part = partial(porifera_comp, curr, c.in1_ls, c.in2_ls,
                             c.adapters1, c.adapters2, c.bcs_dict,
-                            c.adapter_match, c.min_len, None, None)
+                            search, c.adapter_match, c.min_len, c.tiny)
     pool_multi(porifera_part, c.in1_ls)
     if c.singles_ls:
         porifera_part = partial(porifera_comp, curr, [], [], c.adapters1,
-                                c.adapters2, c.bcs_dict, c.adapter_match,
-                                c.min_len, None, None)
+                                c.adapters2, c.bcs_dict, search,
+                                c.adapter_match, c.min_len, c.tiny)
         pool_multi(porifera_part, c.singles_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
