@@ -76,8 +76,8 @@ class Project:
         open bcs_index and create dictionary of associated bc keyfiles
         open adapters and bcs_index and test for correct format
         '''
-        adapters1 = os.path.join(self.proj, 'adapters.R1.txt')
-        adapters2 = os.path.join(self.proj, 'adapters.R2.txt')
+        adapters1 = os.path.join(self.proj, 'adapters.R2.txt')
+        adapters2 = os.path.join(self.proj, 'adapters.R1.txt')
         self.adapters1 = adapters1 if os.path.exists(adapters1) else ''
         self.adapters2 = adapters2 if os.path.exists(adapters2) else ''
         if self.adapters1:
@@ -158,7 +158,7 @@ class Project:
                 raise Exception(msg.conf_confirm24)
             if self.adapter_match < 10:
                 raise Exception(msg.conf_confirm24)
-            if not os.path.exists(os.path.join(self.proj, 'adapters.R1.txt')):
+            if not os.path.exists(os.path.join(self.proj, 'adapters.R2.txt')):
                 raise Exception(msg.conf_confirm23)
 
         if self.q_min or self.q_percent:
@@ -327,7 +327,7 @@ def adapters_test():
             sys.exit('please provide \'adapters.R2.txt\' containing adapter ' +
                      'sequences expected in R2 sequences.')
     else:
-        adapters_ls2 = []
+        return
  
     for k, v in c.bcs_dict.items():
         names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
@@ -508,7 +508,7 @@ def anemone_multi():
     '''
     curr = dir_make('demultiplexed')
     anemone_part = partial(anemone_comp, c.in1_ls, c.in2_ls, c.mismatch,
-                           c.bcs_dict, curr)
+                           c.bcs_dict, curr, c.front_trim)
     pool_multi(anemone_part, c.fastq_ls)
     concater(curr)
     temp_ls = pathfinder(curr)
@@ -762,7 +762,7 @@ def summary_file():
 
 
 if __name__ == '__main__':
-    version = '0.4.2'
+    version = '0.4.3'
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
         '#' * 50 + '\n\n' +
@@ -803,7 +803,7 @@ if __name__ == '__main__':
         print(msg.crin_title)
         crinoid_multi(c.proj, c.fastq_ls)
 
-    if c.front_trim > 0:
+    if c.front_trim > 0 and not c.bcs_index:
         print(msg.scal_title1)
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = scallop_multi()
 

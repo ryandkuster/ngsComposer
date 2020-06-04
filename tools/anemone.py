@@ -21,6 +21,7 @@ def anemone_main():
         out2 = False
     bcs_file = args.c
     mismatch = args.m if args.m else 0
+    front_trim = args.f if args.f else 0
     if args.o is None:
         proj = os.path.dirname(os.path.abspath(in1))
     elif os.path.exists(args.o) is True:
@@ -28,10 +29,10 @@ def anemone_main():
     else:
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     anemone_init(in1, in2, out1, out2, mismatch,
-                 bcs_file, proj)
+                 bcs_file, proj, front_trim)
 
 
-def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
+def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, front_trim, in1):
     '''
     composer entry point to anemone
     '''
@@ -68,13 +69,20 @@ def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, in1):
             pass
         return
 
-    subdir = os.path.join(curr, os.path.basename(in1))
+    if in1.endswith('.fastq'):
+        tmp_dir = os.path.basename(in1)[:-6]
+    elif in1.endswith('.fastq.gz'):
+        tmp_dir = os.path.basename(in1)[:-9]
+    else:
+        tmp_dir = os.path.basename(in1)
+
+    subdir = os.path.join(curr, tmp_dir)
     os.mkdir(subdir)
     anemone_init(in1, in2, out1, out2, mismatch,
-                 bcs_file, subdir)
+                 bcs_file, subdir, front_trim)
 
 
-def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj):
+def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj, front_trim):
     '''
     extract bcs from bcs_file and detect dual-indexing
     call paired-end or single-end anemone
@@ -97,10 +105,10 @@ def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj):
     of1_dict, of2_dict = {}, {}
     if in2:
         of1_ls, of2_ls = anemone_open(in1, in2, out1, out2, of1_ls, of2_ls,
-                                      mismatch, R1_bcs, proj, True)
+                                      mismatch, R1_bcs, proj, True, front_trim)
         if dual_index is True:
             of1_master, of2_master = dual_indexer(in1, in2, R2_bcs, proj,
-                                                  of1_ls, of2_ls, mismatch)
+                                                  of1_ls, of2_ls, mismatch, front_trim)
             for file1, file2 in zip(of2_master, of1_master):
                 of1_dict, of2_dict = rename_files(file1, file2, dual_index,
                                                   names_mx, proj, of1_dict,
@@ -112,7 +120,7 @@ def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj):
                                                   proj, of1_dict, of2_dict)
     else:
         anemone_single_open(in1, out1, of1_ls, mismatch, R1_bcs, proj,
-                            True)
+                            True, front_trim)
         for file1 in of1_ls[1:]:
             of1_dict, of2_dict = rename_files(file1.name, None, dual_index,
                                               names_mx, proj, of1_dict,
@@ -157,7 +165,7 @@ def bc_test(bcs, names_mx, r1):
     return dupe_ls
 
 
-def dual_indexer(in1, in2, R2_bcs, proj, of1_ls, of2_ls, mismatch):
+def dual_indexer(in1, in2, R2_bcs, proj, of1_ls, of2_ls, mismatch, front_trim):
     '''
     create of1/2_di_ls to direct output for final iteration
     create of1/2_masters to keep track of ALL output files in directory
@@ -179,7 +187,7 @@ def dual_indexer(in1, in2, R2_bcs, proj, of1_ls, of2_ls, mismatch):
             of1_master.append(proj + '/' + str(i) + '.' + out1)
             of2_master.append(proj + '/' + str(i) + '.' + out2)
         anemone_open(in1, in2, out1, out2, of1_di_ls, of2_di_ls, mismatch,
-                     R2_bcs, proj, True)
+                     R2_bcs, proj, True, front_trim)
         os.remove(in1)
         os.remove(in2)
     return of1_master, of2_master
@@ -246,7 +254,7 @@ def concatenate_files(proj, of1_dict, of2_dict):
 
 
 def anemone_open(in1, in2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj,
-                 round_one):
+                 round_one, front_trim):
     '''
     create IO file object based on gzipped status for pe data
     '''
@@ -254,15 +262,15 @@ def anemone_open(in1, in2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj,
     if compressed:
         with gzip.open(in1, 'rt') as f1, gzip.open(in2, 'rt') as f2:
             of1_ls, of2_ls = anemone(f1, f2, out1, out2, of1_ls, of2_ls,
-                                     mismatch, bcs, proj, round_one)
+                                     mismatch, bcs, proj, round_one, front_trim)
     else:
         with open(in1) as f1, open(in2) as f2:
             of1_ls, of2_ls = anemone(f1, f2, out1, out2, of1_ls, of2_ls,
-                                     mismatch, bcs, proj, round_one)
+                                     mismatch, bcs, proj, round_one, front_trim)
     return of1_ls, of2_ls
 
 
-def anemone_single_open(in1, out1, of1_ls, mismatch, bcs, proj, round_one):
+def anemone_single_open(in1, out1, of1_ls, mismatch, bcs, proj, round_one, front_trim):
     '''
     create IO file object based on gzipped status for se data
     '''
@@ -270,15 +278,15 @@ def anemone_single_open(in1, out1, of1_ls, mismatch, bcs, proj, round_one):
     if compressed:
         with gzip.open(in1, 'rt') as f1:
             anemone_single(f1, out1, of1_ls, mismatch, bcs, proj,
-                           round_one)
+                           round_one, front_trim)
     else:
         with open(in1) as f1:
             anemone_single(f1, out1, of1_ls, mismatch, bcs, proj,
-                           round_one)
+                           round_one, front_trim)
 
 
 def anemone(f1, f2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj,
-            round_one):
+            round_one, front_trim):
     '''
     use active 'in1' file to demultiplex in a number of ways
     '''
@@ -286,8 +294,8 @@ def anemone(f1, f2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj,
     for line1, line2 in zip(f1, f2):
         y += 1
         if y == 2:
-            z, output_prefix = exact_matches(line1, bcs) if round_one is\
-                    True else mismatches(line1, bcs, mismatch)
+            z, output_prefix = exact_matches(line1, bcs, front_trim) if round_one is\
+                    True else mismatches(line1, bcs, mismatch, front_trim)
         if y == 2 or y == 4:
             line1 = line1[z:]
         entry1 = entry1 + line1
@@ -298,7 +306,7 @@ def anemone(f1, f2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj,
             y, entry1, entry2 = 0, "", ""
     if round_one is True:
         if mismatch > 0:
-            second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj)
+            second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj, front_trim)
         else:
             for x in of1_ls:
                 x.close()
@@ -320,7 +328,7 @@ def anemone(f1, f2, out1, out2, of1_ls, of2_ls, mismatch, bcs, proj,
     return of1_ls, of2_ls
 
 
-def anemone_single(f1, out1, of1_ls, mismatch, bcs, proj, round_one):
+def anemone_single(f1, out1, of1_ls, mismatch, bcs, proj, round_one, front_trim):
     '''
     use active 'in1' file to demultiplex in a number of ways
     '''
@@ -328,8 +336,8 @@ def anemone_single(f1, out1, of1_ls, mismatch, bcs, proj, round_one):
     for line1 in f1:
         y += 1
         if y == 2:
-            z, output_prefix = exact_matches(line1, bcs) if round_one is\
-                    True else mismatches(line1, bcs, mismatch)
+            z, output_prefix = exact_matches(line1, bcs, front_trim) if round_one is\
+                    True else mismatches(line1, bcs, mismatch, front_trim)
         if y == 2 or y == 4:
             line1 = line1[z:]
         entry1 = entry1 + line1
@@ -338,7 +346,7 @@ def anemone_single(f1, out1, of1_ls, mismatch, bcs, proj, round_one):
             y, entry1 = 0, ""
     if round_one is True:
         if mismatch > 0:
-            second_pass(out1, False, of1_ls, False, mismatch, bcs, proj)
+            second_pass(out1, False, of1_ls, False, mismatch, bcs, proj, front_trim)
         else:
             for x in of1_ls:
                 x.close()
@@ -350,14 +358,14 @@ def anemone_single(f1, out1, of1_ls, mismatch, bcs, proj, round_one):
             x.close()
 
 
-def exact_matches(line1, bcs):
+def exact_matches(line1, bcs, front_trim):
     '''
     write to file only bcs with 100 percent match in first pass
     '''
     for file_prefix, x in bcs.items():
-        if line1.startswith(x):
+        if line1[front_trim:].startswith(x):
             output_prefix = file_prefix + 1
-            z = len(x)
+            z = len(x) + front_trim
             break
         else:
             z = 0
@@ -365,7 +373,7 @@ def exact_matches(line1, bcs):
     return z, output_prefix
 
 
-def mismatches(line1, bcs, mismatch):
+def mismatches(line1, bcs, mismatch, front_trim):
     '''
     if mismatch > 0 write to file bcs with leniency
     '''
@@ -373,13 +381,13 @@ def mismatches(line1, bcs, mismatch):
     for file_prefix, x in bcs.items():
         hamm = 0
         for j in range(len(x)):
-            if x[j] != line1[j]:
+            if x[j] != line1[j + front_trim]:
                 hamm = hamm + 1
                 if hamm > mismatch:
                     break
         if hamm <= mismatch:
             output_prefix = file_prefix + 1
-            z = len(x)
+            z = len(x) + front_trim
             multi += 1
         if multi > 1:
             z = 0
@@ -388,7 +396,7 @@ def mismatches(line1, bcs, mismatch):
     return z, output_prefix
 
 
-def second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj):
+def second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj, front_trim):
     '''
     after the first round of precision demultiplexing, attempt matches
     of unknown reads
@@ -402,10 +410,10 @@ def second_pass(out1, out2, of1_ls, of2_ls, mismatch, bcs, proj):
     if out2:
         in2 = proj + '/temp_unknown.' + out2
         anemone_open(in1, in2, out1, out2, of1_ls,
-                     of2_ls, mismatch, bcs, proj, False)
+                     of2_ls, mismatch, bcs, proj, False, front_trim)
     else:
         anemone_single_open(in1, out1, of1_ls, mismatch,
-                            bcs, proj, False)
+                            bcs, proj, False, front_trim)
 
 
 if __name__ == '__main__':
@@ -418,6 +426,8 @@ if __name__ == '__main__':
             help='the full or relative path to barcodes index file')
     parser.add_argument('-m', type=int, metavar='',
             help='mismatch value for barcode hamming distance (integer)')
+    parser.add_argument('-f', type=int, metavar='',
+            help='bases to skip before searching for barcode sequence')
     parser.add_argument('-o', type=str, metavar='',
             help='the full path to output directory (optional)')
     args = parser.parse_args()
