@@ -454,6 +454,8 @@ def pathfinder(curr):
 def concater(curr):
     '''
     walk current directory and concatenate files with identical names
+    files from subdirectories are concatenated in the containing folder
+    and removed one by one
     '''
     concat_dict = {}
     for root, dirs, files in os.walk(os.path.abspath(curr)):
@@ -494,6 +496,7 @@ def crinoid_multi(proj, ls):
 def scallop_multi():
     '''
     create user-defined subprocesses to trim every file in fastq_ls
+    takes fastq_ls as input, as no pair order is necessary
     '''
     curr = dir_make('trimmed')
     scallop_part = partial(scallop_comp, c.in1_ls, c.in2_ls, c.front_trim, None, None, None, None, curr)
@@ -505,6 +508,8 @@ def scallop_multi():
 def anemone_multi():
     '''
     create user-defined subprocesses to demultiplex
+    takes fastq_ls as primary input and checks each file for the
+    possibility of a pair
     '''
     curr = dir_make('demultiplexed')
     anemone_part = partial(anemone_comp, c.in1_ls, c.in2_ls, c.mismatch,
@@ -519,6 +524,11 @@ def anemone_multi():
 
 
 def paired_setup(curr):
+    '''
+    avoids conflict of writing identically named files to the
+    single directory by keeping previously single files (se_lib)
+    and newly-written single files (pe_lib) separate
+    '''
     os.mkdir(os.path.join(curr, 'single'))
     os.mkdir(os.path.join(curr, 'single', 'pe_lib'))
     os.mkdir(os.path.join(curr, 'single', 'se_lib'))
@@ -526,6 +536,10 @@ def paired_setup(curr):
 
 
 def paired_takedown(curr):
+    '''
+    combine identically named files in pe_lib and se_lib and remove
+    these directories
+    '''
     concater(os.path.join(curr, 'single'))
     shutil.rmtree(os.path.join(curr, 'single', 'pe_lib'))
     shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
@@ -544,6 +558,8 @@ def rotifer_multi():
         rotifer_part = partial(rotifer_comp, [], [], c.R1_bases_ls,
                                c.R2_bases_ls, c.non_genomic, curr)
         pool_multi(rotifer_part, c.singles_ls)
+    elif not c.in1_ls:
+        pool_multi(rotifer_part, c.fastq_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
@@ -567,6 +583,8 @@ def scallop_end_multi():
         scallop_part = partial(scallop_comp, [], [], None, None, c.end_score,
                                c.window, c.min_len, curr)
         pool_multi(scallop_part, c.singles_ls)
+    elif not c.in1_ls:
+        pool_multi(scallop_part, c.fastq_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
@@ -596,6 +614,8 @@ def porifera_multi():
                                 c.adapters2, c.bcs_dict, search,
                                 c.adapter_match, c.min_len, c.tiny)
         pool_multi(porifera_part, c.singles_ls)
+    elif not c.in1_ls:
+        pool_multi(porifera_part, c.fastq_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
@@ -617,6 +637,8 @@ def krill_multi():
     if c.singles_ls:
         krill_part = partial(krill_comp, [], [], c.q_min, c.q_percent, c.p64, curr)
         pool_multi(krill_part, c.singles_ls)
+    elif not c.in1_ls:
+        pool_multi(krill_part, c.fastq_ls)
     paired_takedown(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
@@ -762,7 +784,7 @@ def summary_file():
 
 
 if __name__ == '__main__':
-    version = '0.4.3'
+    version = '0.4.4'
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
         '#' * 50 + '\n\n' +
