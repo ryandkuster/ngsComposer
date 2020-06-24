@@ -43,8 +43,8 @@ class Project:
         self.end_trim = False
         self.bcs_index = ''
         self.mismatch = False
-        self.R1_bases_ls = False
-        self.R2_bases_ls = False
+        self.R1_bases_ls = []
+        self.R2_bases_ls = []
         self.non_genomic = False
         self.end_score = False
         self.window = False
@@ -784,7 +784,7 @@ def summary_file():
 
 
 if __name__ == '__main__':
-    version = '0.4.4'
+    version = '0.4.5'
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
         '#' * 50 + '\n\n' +
