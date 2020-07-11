@@ -104,6 +104,7 @@ Using a text editor, save a file containing any of the following variables as a 
 |q_percent|percentage of reads >= q_min Q scores|number between 0 and 100|
 |adapter_match|number of base matches to identify adapters (requires 'adapters.txt')|integer (recommend 12)|
 |p64|defaults to phred+33, use True if using phred+64 qscores|True or False|
+|compress|gzip compress files after each step in the pipeline to save space (defaults to True)|True or False|
 
 
 An example configuration file may look like this:

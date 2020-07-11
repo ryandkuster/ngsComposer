@@ -135,7 +135,7 @@ def bc_reader(bcs_file):
     bcs
     '''
     with open(bcs_file) as f:
-        bcs_mx = [line.rstrip().split() for line in f]
+        bcs_mx = [row for row in (line.rstrip().split() for line in f) if row]
     R2_bcs = {i: item for i, item in enumerate(bcs_mx[0])}
     R1_bcs = {i: item[0] for i, item in enumerate(bcs_mx[1:])}
     dual_index = False if len(R2_bcs) == 1 else True

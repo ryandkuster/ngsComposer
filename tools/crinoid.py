@@ -24,8 +24,8 @@ def crinoid_main():
         sys.exit('directory not found at ' + os.path.abspath(args.o))
     procs = args.t if args.t else 1
     p64 = False if args.s is None else True
-    out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1))
-    out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1))
+    out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1)) + '.csv'
+    out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1)) + '.csv'
     if args.a:
         visualizer(out1, out2)
         sys.exit()
@@ -42,8 +42,8 @@ def crinoid_comp(curr, all_qc, procs, p64, in1):
     '''
     composer entry point to crinoid
     '''
-    out1 = os.path.join(curr, 'nucleotides.' + os.path.basename(in1))
-    out2 = os.path.join(curr, 'qscores.' + os.path.basename(in1))
+    out1 = os.path.join(curr, 'nucleotides.' + os.path.basename(in1)) + '.csv'
+    out2 = os.path.join(curr, 'qscores.' + os.path.basename(in1)) + '.csv'
     crinoid_open(in1, out1, out2, procs, p64)
     if all_qc == 'full':
         subprocess.check_call(['Rscript',
@@ -277,10 +277,10 @@ def combine_matrix(in_ls, out):
 
     for i in in_ls:
         q1 = os.path.join(os.path.dirname(i), 'qc', 'qscores.' +
-                          os.path.basename(i))
+                          os.path.basename(i) + '.csv')
         q2 = matrix_mash(q1, q2)
         n1 = os.path.join(os.path.dirname(i), 'qc', 'nucleotides.' +
-                          os.path.basename(i))
+                          os.path.basename(i) + '.csv')
         n2 = matrix_mash(n1, n2)
 
     for i in reversed(q2):

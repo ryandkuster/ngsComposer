@@ -19,6 +19,7 @@ from krill import krill_comp
 from porifera import porifera_comp, reverse_comp
 from rotifer import rotifer_comp
 from scallop import scallop_comp
+from subprocess import check_call
 
 
 class Project:
@@ -57,6 +58,7 @@ class Project:
         self.q_percent = False
         self.rm_transit = True
         self.p64 = False
+        self.compress = True
 
 
     def initialize(self, proj):
@@ -67,6 +69,10 @@ class Project:
             self.proj = os.path.abspath(proj)
             sys.path.append(self.proj)
             import conf as config
+            for i in config.__dict__.keys():
+                if i not in c.__dict__.keys() and not i.startswith('__'):
+                    print('didn\'t expect ' + i)
+                    sys.exit()
             c.__dict__.update(config.__dict__)
         else:
             sys.exit(msg.initialize1)
@@ -451,6 +457,16 @@ def pathfinder(curr):
     return [singles_ls, fastq_ls, in1_ls, in2_ls]
 
 
+def compress_files(curr):
+    for root, dirs, files in os.walk(os.path.abspath(curr)):
+        for i in files:
+            fullname = os.path.join(root, i)
+            if os.path.getsize(fullname) == 0:
+                pass
+            else:
+                check_call(['gzip', fullname])
+
+
 def concater(curr):
     '''
     walk current directory and concatenate files with identical names
@@ -501,6 +517,8 @@ def scallop_multi():
     curr = dir_make('trimmed')
     scallop_part = partial(scallop_comp, c.in1_ls, c.in2_ls, c.front_trim, None, None, None, None, curr)
     pool_multi(scallop_part, c.fastq_ls)
+    if c.compress:
+        compress_files(curr)
     temp_ls = pathfinder(curr)
     return temp_ls
 
@@ -516,6 +534,8 @@ def anemone_multi():
                            c.bcs_dict, curr, c.front_trim)
     pool_multi(anemone_part, c.fastq_ls)
     concater(curr)
+    if c.compress:
+        compress_files(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, anemone_multi, temp_ls,
@@ -561,6 +581,8 @@ def rotifer_multi():
     elif not c.in1_ls:
         pool_multi(rotifer_part, c.fastq_ls)
     paired_takedown(curr)
+    if c.compress:
+        compress_files(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, rotifer_multi, temp_ls,
@@ -586,6 +608,8 @@ def scallop_end_multi():
     elif not c.in1_ls:
         pool_multi(scallop_part, c.fastq_ls)
     paired_takedown(curr)
+    if c.compress:
+        compress_files(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, scallop_end_multi, temp_ls,
@@ -617,6 +641,8 @@ def porifera_multi():
     elif not c.in1_ls:
         pool_multi(porifera_part, c.fastq_ls)
     paired_takedown(curr)
+    if c.compress:
+        compress_files(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, porifera_multi, temp_ls,
@@ -640,6 +666,8 @@ def krill_multi():
     elif not c.in1_ls:
         pool_multi(krill_part, c.fastq_ls)
     paired_takedown(curr)
+    if c.compress:
+        compress_files(curr)
     temp_ls = pathfinder(curr)
     if c.all_qc:
         temp_ls = walkthrough(curr, krill_multi, temp_ls,
@@ -661,11 +689,11 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
         crinoid_multi(curr, temp_ls[1])
 
     if len(temp_ls[2]) >= 1:
-        combine_matrix(temp_ls[2], 'R1_summary.txt')
+        combine_matrix(temp_ls[2], 'R1_summary.csv')
     if len(temp_ls[3]) >= 1:
-        combine_matrix(temp_ls[3], 'R2_summary.txt')
+        combine_matrix(temp_ls[3], 'R2_summary.csv')
     if len(temp_ls[0]) >= 1:
-        combine_matrix(temp_ls[0], 'singles_summary.txt')
+        combine_matrix(temp_ls[0], 'singles_summary.csv')
 
     if c.walkaway:
         return temp_ls
@@ -776,7 +804,8 @@ def summary_file():
            'adapter_match = ' + str(c.adapter_match) + '\n' +
            'q_min = ' + str(c.q_min) + '\n' +
            'q_percent = ' + str(c.q_percent) + '\n' +
-           'phred64 = ' + str(c.p64) + '\n')
+           'phred64 = ' + str(c.p64) + '\n' +
+           'compress = ' + str(c.compress) + '\n')
 
     print('\n' + log + '\nthanks for using ngscomposer!')
     with open(os.path.join(c.proj, 'summary.txt'), 'w') as out:
@@ -784,7 +813,7 @@ def summary_file():
 
 
 if __name__ == '__main__':
-    version = '0.4.5'
+    version = '0.4.6'
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
         '#' * 50 + '\n\n' +
