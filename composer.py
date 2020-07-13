@@ -458,13 +458,20 @@ def pathfinder(curr):
 
 
 def compress_files(curr):
+    files_ls = []
     for root, dirs, files in os.walk(os.path.abspath(curr)):
         for i in files:
             fullname = os.path.join(root, i)
             if os.path.getsize(fullname) == 0:
                 pass
             else:
-                check_call(['gzip', fullname])
+                files_ls.append(fullname) 
+    compress_part = partial(compress_multi)
+    pool_multi(compress_part, files_ls)
+
+
+def compress_multi(filename):
+    check_call(['gzip', filename])
 
 
 def concater(curr):
