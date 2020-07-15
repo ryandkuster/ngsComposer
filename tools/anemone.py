@@ -39,22 +39,26 @@ def anemone_comp(in1_ls, in2_ls, mismatch, bcs_dict, curr, front_trim, in1):
     if in1 in in2_ls:
         return
 
-    out1 = os.path.basename(in1)
-    compressed = gzip_test(in1)
-    if compressed:
-        base, _ = os.path.splitext(out1)
-        if base in bcs_dict.keys():
-            out1 = base
-    else:
-        if out1 + '.gz' in bcs_dict.keys():
-            bcs_dict[out1] = bcs_dict.pop(out1 + '.gz')
-
     try:
         in2 = in2_ls[in1_ls.index(in1)]
         out2 = os.path.basename(in2)
     except (IndexError, ValueError) as e:
         in2 = False
         out2 = False
+
+    out1 = os.path.basename(in1)
+    compressed = gzip_test(in1)
+    if compressed:
+        out1 = out1[:-3] if out1.endswith('.gz') else out1
+        if out2:
+            out2 = out2[:-3] if out2.endswith('.gz') else out2
+
+    if out1 in bcs_dict.keys():
+        pass
+    elif out1 + '.gz' in bcs_dict.keys():
+            bcs_dict[out1] = bcs_dict.pop(out1 + '.gz')
+
+
 
     '''
     the following copies files not found in index.txt

@@ -59,14 +59,19 @@ def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict,
     '''
     k = 8
     r = 1
+
     with open(adapters1) as f:
         adapters_ls1 = [line.rstrip() for line in f]
+
     if bcs_dict:
         r1_barcodes, r2_barcodes = custom_adapters(bcs_dict, in1)
         subset_ls1 = [i for i in adapters_ls1 for j in r2_barcodes if j in i[-(search + len(j)):]]
         adapters_ls1 = subset_ls1[:] if len(subset_ls1) > 0 else adapters_ls1
+
     adapt1 = reverse_comp(adapters_ls1)
     tiny_ls1 = [i[:match + k] for i in adapt1] if tiny else []
+    subseqs1 = simple_seeker_non_contig(adapt1, k)
+
     if adapters2:
         with open(adapters2) as f:
             adapters_ls2 = [line.rstrip() for line in f]
@@ -79,8 +84,10 @@ def porifera_comp(curr, in1_ls, in2_ls, adapters1, adapters2, bcs_dict,
         if in2_ls == []:
             adapters_ls1.extend(adapters_ls2)
             tiny_ls1.extend(tiny_ls2)
+    else:
+        subseqs2 = subseqs1
+        tiny_ls2 = tiny_ls1
 
-    subseqs1 = simple_seeker_non_contig(adapt1, k)
 
     rounds = r * (len(max(adapters_ls1, key=len))//k)
     try:
