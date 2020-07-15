@@ -43,8 +43,6 @@ Dependencies:
 - Python3 version 3.5 or above
 - R version compatible with the following required packackes:
 	ggplot2
-	reshape
-	Hmisc
 
 For help troubleshooting installation, see the troubleshooting section
 
