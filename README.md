@@ -215,7 +215,7 @@ Alternatively, multiple barcoding schemes may be included to accomodate multiple
 #### Adapters file(s)
 Optionally, 'adapters.R2.txt' and 'adapters.R1.txt' may be included in the project directory for recognition and removal of adapters. The 'adapters.R2.txt' file contains the adapters expected to appear in the R1 reads. Adapter sequences should be newline-separated and be in 5' to 3' orientation. If libraries are barcoded, users are encouraged to provide adapter sequences that contain the corresponding barcodes expected in the opposing end of the read's adapter.
 
-<a><img src="https://i.imgur.com/fd7j6W6.png" title="source: imgur.com" width=300 /></a>
+<a><img src="https://i.imgur.com/3In8TX0.png" title="source: imgur.com" width=300 /></a>
 
 
 **adapters.R2.txt**
