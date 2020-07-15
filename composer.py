@@ -806,8 +806,8 @@ def summary_file():
            'end_score = ' + str(c.end_score) + '\n' +
            'window = ' + str(c.window) + '\n' +
            'min_len = ' + str(c.min_len) + '\n' +
-           'adapters1 = ' + str(c.adapters1) + '\n' +
-           'adapters2 = ' + str(c.adapters2) + '\n' +
+           'R1 searched for: ' + str(c.adapters1) + '\n' +
+           'R2 searched for: ' + str(c.adapters2) + '\n' +
            'adapter_match = ' + str(c.adapter_match) + '\n' +
            'q_min = ' + str(c.q_min) + '\n' +
            'q_percent = ' + str(c.q_percent) + '\n' +
