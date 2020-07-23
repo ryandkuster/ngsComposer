@@ -820,7 +820,7 @@ def summary_file():
 
 
 if __name__ == '__main__':
-    version = '0.4.6'
+    version = '0.4.7'
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
         '#' * 50 + '\n\n' +

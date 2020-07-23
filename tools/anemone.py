@@ -111,7 +111,7 @@ def anemone_init(in1, in2, out1, out2, mismatch, bcs_file, proj, front_trim):
         of1_ls, of2_ls = anemone_open(in1, in2, out1, out2, of1_ls, of2_ls,
                                       mismatch, R1_bcs, proj, True, front_trim)
         if dual_index is True:
-            of1_master, of2_master = dual_indexer(in1, in2, R2_bcs, proj,
+            of1_master, of2_master = dual_indexer(out1, out2, R2_bcs, proj,
                                                   of1_ls, of2_ls, mismatch, front_trim)
             for file1, file2 in zip(of2_master, of1_master):
                 of1_dict, of2_dict = rename_files(file1, file2, dual_index,
@@ -169,13 +169,13 @@ def bc_test(bcs, names_mx, r1):
     return dupe_ls
 
 
-def dual_indexer(in1, in2, R2_bcs, proj, of1_ls, of2_ls, mismatch, front_trim):
+def dual_indexer(out1, out2, R2_bcs, proj, of1_ls, of2_ls, mismatch, front_trim):
     '''
     create of1/2_di_ls to direct output for final iteration
     create of1/2_masters to keep track of ALL output files in directory
     '''
-    of1_master = [proj + '/unknown.' + os.path.basename(in2)]
-    of2_master = [proj + '/unknown.' + os.path.basename(in1)]
+    of1_master = [proj + '/unknown.' + out2]
+    of2_master = [proj + '/unknown.' + out1]
     for file1, file2 in zip(of1_ls[1:], of2_ls[1:]):
         in2 = file1.name
         in1 = file2.name  # the R2 reads become in1
