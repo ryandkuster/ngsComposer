@@ -272,9 +272,13 @@ def fastq_structure(f, filename, fastq_dt):
             try:
                 header = line.rstrip().split(' ')[0]
                 read_no = int(line.rstrip().split(' ')[1][0])
-            except (IndexError, TypeError, ValueError) as e:
-                sys.exit('expected fastq headers not found in ' +
-                         os.path.basename(filename))
+            except(IndexError, TypeError, ValueError) as e:
+                try:
+                    header = line.rstrip()[:-1]
+                    read_no = int(line.rstrip().split('/')[-1])
+                except(IndexError, TypeError, ValueError) as e:
+                    sys.exit('expected fastq headers not found in ' +
+                             os.path.basename(filename))
             if header in fastq_dt:
                 fastq_dt[header][read_no -1] = filename
             else:
@@ -285,6 +289,7 @@ def fastq_structure(f, filename, fastq_dt):
         if i == 2 and line[0] != '+':
             sys.exit('\n\n' + filename + msg.fastq_test1)
         else:
+            print(fastq_dt)
             return fastq_dt
 
 
