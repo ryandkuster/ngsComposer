@@ -279,6 +279,12 @@ $ sudo apt update
 $ sudo apt install r-base
 ```
 
+...or with homebrew on Mac using:
+
+```
+brew install r
+```
+
 ## Versioning
 Versioning will follow major.minor.patch <a href="https://semver.org">semantic versioning format</a>.
 
