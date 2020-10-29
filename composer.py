@@ -289,7 +289,6 @@ def fastq_structure(f, filename, fastq_dt):
         if i == 2 and line[0] != '+':
             sys.exit('\n\n' + filename + msg.fastq_test1)
         else:
-            print(fastq_dt)
             return fastq_dt
 
 
