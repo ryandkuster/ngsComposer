@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import gzip
+import logging
 import os
 import shutil
 import subprocess
@@ -21,6 +22,32 @@ from rotifer import rotifer_comp
 from scallop import scallop_comp
 from subprocess import check_call
 
+
+
+def init_logger():
+    """
+    initiate logging file for debugging
+    """
+    logger = logging.getLogger("example_logger")
+    logger.setLevel(logging.INFO)
+
+    fh = logging.FileHandler("summary.log")
+
+    fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    formatter = logging.Formatter(fmt)
+    fh.setFormatter(formatter)
+
+    logger.addHandler(fh)
+    return logger
+
+
+def logger(func):
+    def func_info(*args):
+        #logging.info(f'{args} were used variables')
+        logging.info(f'{func.__name__} just ran')
+        logging.info(f'{datetime.datetime.now()} just ran')
+        return func(*args)
+    return func_info
 
 class Project:
     def __init__(self):
@@ -58,7 +85,7 @@ class Project:
         self.q_percent = False
         self.rm_transit = True
         self.p64 = False
-        self.compress = True
+        self.compress = False
 
 
     def initialize(self, proj):
@@ -199,7 +226,7 @@ class Project:
                 pass
             elif os.path.join(self.proj, filename) in self.bcs_dict.values():
                 pass
-            elif filename == 'conf.py' or filename == '__pycache__':
+            elif filename in ['conf.py', '__pycache__']:
                 pass
             else:
                 self.fastq_ls.append(os.path.join(self.proj, filename))
@@ -509,6 +536,7 @@ def concater(curr):
                     os.remove(i)
 
 
+@logger
 def crinoid_multi(proj, ls):
     '''
     create user-defined subprocesses to produce base-call summary
@@ -520,6 +548,7 @@ def crinoid_multi(proj, ls):
     pool_multi(crinoid_part, ls)
 
 
+@logger
 def scallop_multi():
     '''
     create user-defined subprocesses to trim every file in fastq_ls
@@ -534,6 +563,7 @@ def scallop_multi():
     return temp_ls
 
 
+@logger
 def anemone_multi():
     '''
     create user-defined subprocesses to demultiplex
@@ -554,6 +584,7 @@ def anemone_multi():
     return temp_ls
 
 
+@logger
 def paired_setup(curr):
     '''
     avoids conflict of writing identically named files to the
@@ -566,6 +597,7 @@ def paired_setup(curr):
     os.mkdir(os.path.join(curr, 'paired'))
 
 
+@logger
 def paired_takedown(curr):
     '''
     combine identically named files in pe_lib and se_lib and remove
@@ -576,6 +608,7 @@ def paired_takedown(curr):
     shutil.rmtree(os.path.join(curr, 'single', 'se_lib'))
 
 
+@logger
 def rotifer_multi():
     '''
     create user-defined subprocesses to parse based on expected sequences
@@ -603,6 +636,7 @@ def rotifer_multi():
     return temp_ls
 
 
+@logger
 def scallop_end_multi():
     '''
     create user-defined subprocesses to remove low-scoring 3' ends
@@ -630,6 +664,7 @@ def scallop_end_multi():
     return temp_ls
 
 
+@logger
 def porifera_multi():
     '''
     create user-defined subprocesses to detect and remove adapter sequences
@@ -662,6 +697,7 @@ def porifera_multi():
     return temp_ls
 
 
+@logger
 def krill_multi():
     '''
     create user-defined subprocesses to parse based on quality scores
@@ -849,6 +885,10 @@ if __name__ == '__main__':
     c.index_reader()
     c.conf_confirm()
     c.dir_test()
+
+    #logging.basicConfig(filename='summary.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+    logging = init_logger()
+
     r_packages()
     c.in1_ls, c.in2_ls = fastq_test(c.fastq_ls)
     demultiplex_test()
@@ -898,7 +938,7 @@ if __name__ == '__main__':
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = krill_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
-    
+
     tidy_up()
-    
+
     summary_file()
