@@ -29,13 +29,15 @@ def crinoid_main():
     if args.a:
         visualizer(out1, out2)
         sys.exit()
+    r_dir = os.path.join(os.path.dirname(__file__), 'helpers', 'R')
+    #r_dir = 'None'
     subprocess.check_call(['Rscript',
             os.path.abspath(os.path.join(os.path.dirname(__file__),
-            '..', 'tests', 'test_packages.R'))], shell=False)
+            '..', 'tests', 'test_packages.R'))] + [r_dir], shell=False)
     crinoid_open(in1, out1, out2, procs, p64)
     subprocess.check_call(['Rscript',
             os.path.abspath(os.path.join(os.path.dirname(__file__),
-            'helpers', 'qc_plots.R'))] + [out1, out2], shell=False)
+            'helpers', 'qc_plots.R'))] + [out1, out2, r_dir], shell=False)
 
 
 def crinoid_comp(curr, all_qc, procs, p64, in1):
