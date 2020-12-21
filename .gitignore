@@ -1,5 +1,7 @@
-__pycache__/
+__pycache__/*
 *.py[cod]
 *$py.class
 .Rhistory
 .vscode/
+tools/helpers/R_packages/*
+!README.md

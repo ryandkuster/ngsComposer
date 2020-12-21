@@ -58,6 +58,7 @@ class Project:
         self.q_percent = False
         self.rm_transit = True
         self.p64 = False
+        self.r_dir = 'None'
         self.compress = True
 
 
@@ -211,7 +212,7 @@ def r_packages():
     '''
     try:
         subprocess.check_call(['Rscript', os.path.join(os.path.dirname(
-            __file__), 'tests', 'test_packages.R')], shell=False)
+            __file__), 'tests', 'test_packages.R')] + [c.r_dir], shell=False)
     except FileNotFoundError:
         sys.exit(msg.r_packages1)
 
@@ -516,7 +517,7 @@ def crinoid_multi(proj, ls):
     curr = os.path.join(proj, 'qc')
     os.mkdir(curr)
     all_qc = 'full' if proj == c.proj else c.all_qc
-    crinoid_part = partial(crinoid_comp, curr, all_qc, 1, c.p64)
+    crinoid_part = partial(crinoid_comp, curr, all_qc, 1, c.p64, c.r_dir)
     pool_multi(crinoid_part, ls)
 
 
@@ -700,11 +701,11 @@ def walkthrough(curr, tool, temp_ls, **kwargs):
         crinoid_multi(curr, temp_ls[1])
 
     if len(temp_ls[2]) >= 1:
-        combine_matrix(temp_ls[2], 'R1_summary.csv')
+        combine_matrix(temp_ls[2], c.r_dir, 'R1_summary.csv')
     if len(temp_ls[3]) >= 1:
-        combine_matrix(temp_ls[3], 'R2_summary.csv')
+        combine_matrix(temp_ls[3], c.r_dir, 'R2_summary.csv')
     if len(temp_ls[0]) >= 1:
-        combine_matrix(temp_ls[0], 'singles_summary.csv')
+        combine_matrix(temp_ls[0], c.r_dir, 'singles_summary.csv')
 
     if c.walkaway:
         return temp_ls

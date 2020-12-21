@@ -1,4 +1,4 @@
-#options(warn=-1)
+options(warn=-1)
 
 composer_in <- commandArgs(trailingOnly = TRUE)
 

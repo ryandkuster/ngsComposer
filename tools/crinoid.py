@@ -26,11 +26,10 @@ def crinoid_main():
     p64 = False if args.s is None else True
     out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1)) + '.csv'
     out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1)) + '.csv'
+    r_dir = args.g if args.g else 'None'
     if args.a:
-        visualizer(out1, out2)
+        visualizer(out1, out2, r_dir)
         sys.exit()
-    r_dir = os.path.join(os.path.dirname(__file__), 'helpers', 'R')
-    #r_dir = 'None'
     subprocess.check_call(['Rscript',
             os.path.abspath(os.path.join(os.path.dirname(__file__),
             '..', 'tests', 'test_packages.R'))] + [r_dir], shell=False)
@@ -40,7 +39,7 @@ def crinoid_main():
             'helpers', 'qc_plots.R'))] + [out1, out2, r_dir], shell=False)
 
 
-def crinoid_comp(curr, all_qc, procs, p64, in1):
+def crinoid_comp(curr, all_qc, procs, p64, r_dir, in1):
     '''
     composer entry point to crinoid
     '''
@@ -50,7 +49,7 @@ def crinoid_comp(curr, all_qc, procs, p64, in1):
     if all_qc == 'full':
         subprocess.check_call(['Rscript',
             os.path.dirname(os.path.abspath(sys.argv[0])) +
-            '/tools/helpers/qc_plots.R'] + [out1, out2], shell=False)
+            '/tools/helpers/qc_plots.R'] + [out1, out2, r_dir], shell=False)
 
 
 def crinoid_open(in1, out1, out2, procs, p64):
@@ -259,16 +258,16 @@ def matrix_succinct(mx):
     return mx
 
 
-def visualizer(out1, out2):
+def visualizer(out1, out2, r_dir):
     '''
     produce images using existing, raw nucleotide and qscore files
     '''
     subprocess.check_call(['Rscript',
            os.path.dirname(os.path.abspath(__file__)) +
-           '/helpers/qc_plots.R'] + [out1, out2], shell=False)
+           '/helpers/qc_plots.R'] + [out1, out2, r_dir], shell=False)
 
 
-def combine_matrix(in_ls, out):
+def combine_matrix(in_ls, r_dir, out):
     '''
     combine values from previously generated qc matrices
     '''
@@ -302,7 +301,7 @@ def combine_matrix(in_ls, out):
             o2.write(",".join(str(x) for x in row))
             o2.write("\n")
 
-    visualizer(out_n, out_q)
+    visualizer(out_n, out_q, r_dir)
 
 
 def matrix_mash(a1, a2):
@@ -333,5 +332,7 @@ if __name__ == "__main__":
             help='type True for phred 64 samples (optional, default phred 33)')
     parser.add_argument('-t', type=int, metavar='',
             help='number of subprocesses')
+    parser.add_argument('-g', type=str, metavar='',
+            help='filepath to R packages including ggplot2 (optional)')
     args = parser.parse_args()
     crinoid_main()
