@@ -2,11 +2,8 @@ options(warn=-1)
 
 composer_in <- commandArgs(trailingOnly = TRUE)
 
-if (composer_in[3] == 'None') {
-  suppressMessages(library(ggplot2))
-} else {
-  suppressMessages(library(ggplot2, lib.loc = composer_in[3]))
-}
+.libPaths(composer_in[3])
+suppressMessages(library(ggplot2))
 
 qscores <- read.table(composer_in[2], header=F, sep=",")
 

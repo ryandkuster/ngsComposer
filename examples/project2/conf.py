@@ -11,3 +11,4 @@ q_percent = 95
 end_score = 30
 window = 10
 rm_transit = False
+compress = False
