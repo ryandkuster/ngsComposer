@@ -13,21 +13,8 @@ if (as.numeric(r_version[[6]]) > 3) {
     quit(status=1)}
 }
 
-tryCatch({
-  if (suppressMessages(!require(ggplot2))) {
-    install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org')}
-  suppressMessages(library(ggplot2))
-}, error = function(e) {
+.libPaths(args[1])
 
-  tryCatch({
-  if (suppressMessages(!require(ggplot2, lib.loc = args[1]))) {
-    install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org', lib = comp_dir)}
-  suppressMessages(library(ggplot2, lib.loc = args[1]))
-  }, error = function(e) {
-    print('error encountered while installing ggplot and its dependencies, check write access to R libraries')
-  },finally = function(e){
-  })
+if (suppressMessages(!require(ggplot2))) install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org')
+suppressMessages(library(ggplot2))
 
-},finally = function(e){
-  print('error encountered while installing ggplot and its dependencies, check R version and write access to R libraries')
-})
