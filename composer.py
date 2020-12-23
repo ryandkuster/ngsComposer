@@ -58,8 +58,9 @@ class Project:
         self.q_percent = False
         self.rm_transit = True
         self.p64 = False
-        self.r_dir = 'None'
         self.compress = True
+        self.r_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                'tools', 'helpers', 'R_packages')
 
 
     def initialize(self, proj):

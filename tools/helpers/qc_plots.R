@@ -2,11 +2,14 @@ options(warn=-1)
 
 composer_in <- commandArgs(trailingOnly = TRUE)
 
-if (composer_in[3] == 'None') {
+tryCatch({
   suppressMessages(library(ggplot2))
-} else {
+}, error = function(e) {
   suppressMessages(library(ggplot2, lib.loc = composer_in[3]))
-}
+},finally = function(e){
+  print('error encountered while installing ggplot and its dependencies, check R version and write access to R libraries')
+})
+
 
 qscores <- read.table(composer_in[2], header=F, sep=",")
 

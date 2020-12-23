@@ -21,7 +21,6 @@ See <a href="https://github.com/ryandkuster/composer/blob/master/README.md">main
 |-a|create visualizations on existing qscore and nucleotide raw data (optional, requires -r1 input)|
 |-s|type True for phred 64 samples (optional, default phred 33)|
 |-t|number of subprocesses (optional, default 1)|
-|-g|the full path to install R packages, if not default R libraries (optional)|
 
 Example:
 ```bash

@@ -26,7 +26,8 @@ def crinoid_main():
     p64 = False if args.s is None else True
     out1 = os.path.join(proj, 'nucleotides.' + os.path.basename(in1)) + '.csv'
     out2 = os.path.join(proj, 'qscores.' + os.path.basename(in1)) + '.csv'
-    r_dir = args.g if args.g else 'None'
+    r_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'helpers',
+            'R_packages')
     if args.a:
         visualizer(out1, out2, r_dir)
         sys.exit()
@@ -332,7 +333,5 @@ if __name__ == "__main__":
             help='type True for phred 64 samples (optional, default phred 33)')
     parser.add_argument('-t', type=int, metavar='',
             help='number of subprocesses')
-    parser.add_argument('-g', type=str, metavar='',
-            help='filepath to R packages including ggplot2 (optional)')
     args = parser.parse_args()
     crinoid_main()

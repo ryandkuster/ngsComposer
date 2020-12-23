@@ -1,9 +1,33 @@
 args <- commandArgs(trailingOnly = TRUE)
 
-if (args[1] == 'None') {
-  if (suppressMessages(!require(ggplot2))) install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org')
-  suppressMessages(library(ggplot2))
+r_version = R.Version()
+
+if (as.numeric(r_version[[6]]) > 3) {
+  invisible()
 } else {
-  if (suppressMessages(!require(ggplot2, lib.loc = args[1]))) install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org', lib = args[1])
-  suppressMessages(library(ggplot2))
+  if (as.numeric(r_version[[6]]) == 3 & as.numeric(r_version[[7]]) > 5) {
+    invisible()
+  } else {
+    r_v = paste(r_version[[6]], '.', r_version[[7]], sep='')
+    print(paste('your version of R, ', r_v, ', needs to be 3.5 or higher for ngsComposer crinoid.py and composer.py usage', sep=''))
+    quit(status=1)}
 }
+
+tryCatch({
+  if (suppressMessages(!require(ggplot2))) {
+    install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org')}
+  suppressMessages(library(ggplot2))
+}, error = function(e) {
+
+  tryCatch({
+  if (suppressMessages(!require(ggplot2, lib.loc = args[1]))) {
+    install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org', lib = comp_dir)}
+  suppressMessages(library(ggplot2, lib.loc = args[1]))
+  }, error = function(e) {
+    print('error encountered while installing ggplot and its dependencies, check write access to R libraries')
+  },finally = function(e){
+  })
+
+},finally = function(e){
+  print('error encountered while installing ggplot and its dependencies, check R version and write access to R libraries')
+})
