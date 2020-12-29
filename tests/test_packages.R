@@ -13,8 +13,18 @@ if (as.numeric(r_version[[6]]) > 3) {
     quit(status=1)}
 }
 
-.libPaths(args[1])
+tryCatch({
+  if (suppressMessages(!require(ggplot2))) install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org')
+  suppressMessages(library(ggplot2))
+}, warning = function(e) {
+  .libPaths(args[1])
+  if (suppressMessages(!require(ggplot2))) install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org')
+  suppressMessages(library(ggplot2))
+}, error = function(e) {
+  print('error')
+}, finally={
+  print('R packages installed into ngsComposer/tools/helpers/R_packages')
+})
 
-if (suppressMessages(!require(ggplot2))) install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org')
-suppressMessages(library(ggplot2))
+
 

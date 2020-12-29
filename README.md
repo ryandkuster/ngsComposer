@@ -31,7 +31,7 @@ Base-call error-filtering and read preprocessing pipeline designed by biologists
 
 ## Installation
 
-Currently, ngsComposer is only available for unix-based systems (i.e. mac and linux).
+Currently, ngsComposer is only available for unix-based systems (i.e. macOS and linux).
 
 Clone or download the Git repository to your desired folder
 
@@ -263,6 +263,14 @@ $ sudo apt-get update
 $ sudo apt-get install python3.X
 ```
 
+...or with homebrew on macOS using:
+
+```
+brew install python3
+```
+
+After installation please check that the newest version is present in your current environment (i.e.; $PATH).
+
 ### R installation
 To view R version, from the terminal type:
 
@@ -279,11 +287,17 @@ $ sudo apt update
 $ sudo apt install r-base
 ```
 
-...or with homebrew on Mac using:
+...or with homebrew on macOS using:
 
 ```
 brew install r
 ```
+
+**Note**
+
+ngsComposer requires the R package ggplot2 along with its dependencies. ngsComposer will check for these packages in .libPaths() and if not found will attempt to automatically download them. If you are working in an environment and lack write permission to the standard .libPaths() locations, the local ngsComposer repo will be used for package installation (/ngsComposer/tools/helpers/R_packages).
+
+*The installation of ggplot2 and its dependencies may take some time during the first use.*
 
 ## Versioning
 Versioning will follow major.minor.patch <a href="https://semver.org">semantic versioning format</a>.

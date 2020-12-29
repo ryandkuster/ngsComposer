@@ -37,7 +37,7 @@ boxplot <- ggplot(qc, aes(x = position, y = score, weight = count, group = posit
   theme_classic()+
   xlab(paste("Read Position\n(Total Number of reads = ",sum,")", sep="")) +
   ylab("Quality Scores (phred+33)")
-suppressMessages(ggsave(filename= paste(composer_in[2], ".tiff", sep = ""), plot=boxplot, width=15, height= 5, dpi=600, compression = "lzw"))
+suppressMessages(ggsave(filename= paste(composer_in[2], ".png", sep = ""), plot=boxplot, width=15, height= 5, dpi=600))
 invisible(gc())
 
 
@@ -66,5 +66,5 @@ barplot <- ggplot(nucsm, aes(x = position, y = count, fill = nucleotide)) +
                                         "N" = "pink"))+
   xlab(paste("Read Position\n(Total Number of reads = ",sum,")", sep="")) +
   ylab("Proportion")
-ggsave(filename= paste(composer_in[1], ".tiff", sep = ""), plot=barplot, width=15, height= 5, dpi=600, compression = "lzw")
+ggsave(filename= paste(composer_in[1], ".png", sep = ""), plot=barplot, width=15, height= 5, dpi=600)
 invisible(gc())
