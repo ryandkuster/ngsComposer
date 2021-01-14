@@ -23,7 +23,7 @@ tryCatch({
 }, error = function(e) {
   print('error')
 }, finally={
-  print('R packages installed into ngsComposer/tools/helpers/R_packages')
+  invisible()
 })
 
 

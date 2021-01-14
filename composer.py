@@ -84,8 +84,8 @@ class Project:
         open bcs_index and create dictionary of associated bc keyfiles
         open adapters and bcs_index and test for correct format
         '''
-        adapters1 = os.path.join(self.proj, 'adapters.R2.txt')
-        adapters2 = os.path.join(self.proj, 'adapters.R1.txt')
+        adapters1 = os.path.join(self.proj, 'adapters.R1.txt')
+        adapters2 = os.path.join(self.proj, 'adapters.R2.txt')
         self.adapters1 = adapters1 if os.path.exists(adapters1) else ''
         self.adapters2 = adapters2 if os.path.exists(adapters2) else ''
         if self.adapters1:
@@ -644,12 +644,14 @@ def porifera_multi():
         search = c.front_trim
     porifera_part = partial(porifera_comp, curr, c.in1_ls, c.in2_ls,
                             c.adapters1, c.adapters2, c.bcs_dict,
-                            search, c.adapter_match, c.min_len, c.tiny)
+                            search, c.adapter_match, c.min_len, c.tiny,
+                            c.R1_bases_ls, c.R2_bases_ls)
     pool_multi(porifera_part, c.in1_ls)
     if c.singles_ls:
         porifera_part = partial(porifera_comp, curr, [], [], c.adapters1,
                                 c.adapters2, c.bcs_dict, search,
-                                c.adapter_match, c.min_len, c.tiny)
+                                c.adapter_match, c.min_len, c.tiny,
+                                c.R1_bases_ls, c.R2_bases_ls)
         pool_multi(porifera_part, c.singles_ls)
     elif not c.in1_ls:
         pool_multi(porifera_part, c.fastq_ls)
@@ -900,7 +902,7 @@ if __name__ == '__main__':
         c.singles_ls, c.fastq_ls, c.in1_ls, c.in2_ls = krill_multi()
         if c.rm_transit is True:
             dir_del(c.rm_dirs[:-1])
-    
+
     tidy_up()
-    
+
     summary_file()

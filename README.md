@@ -81,28 +81,28 @@ The steps implemented are first specified in a configuration file.
 ### Configuration
 Using a text editor, save a file containing any of the following variables as a python script called 'conf.py' (includes '.py' as file extension) and include it in your project directory.
 
-|Variable        |Usage           |Input |
-|:-------------|:-------------|:-------------|
-|paired|if fastq files should be treated as paired ends|True or False|
-|procs|choose maximum number of subprocesses that can run simultaneously|integer|
-|alt_dir|optional, full path to empty directory for file storage|e.g. '/path/to/dir/' (quotes required)|
-|walkaway|run from beginning to end without pausing at qc steps (use True to run without interruption, use False to initiate user-controlled walkthrough mode: requires all_qc)|True or False|
-|rm_transit|optional, remove each transitional file folder to save space|True or False|
-|initial_qc|create initial QC output|True or False|
-|all_qc|perform qc step at each filtering stage (use 'full' to produce visualizations for every file, use 'summary' for a summarized version of the R1, R2, and single reads)|'full' or 'summary' (quotes required)|
-|front_trim|positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence|integer|
-|mismatch|number of mismatches (hamming distance) allowed in barcodes (must include 'index.txt' and barcodes file(s) in project directory; see "Demultiplexing" below)|integer|
-|R1_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes, commas, and brackets required)|
-|R2_bases_ls|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes, commas, and brackets required)|
-|non_genomic|number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)|integer|
-|end_score|end-trim once entire window >= this Q score|integer between 0 and 40|
-|window|size of window to test for >= end_trim|integer within read length|
-|min_len|minimum read length to retain for end-trimming and adapter removal|integer > 0|
-|q_min|Q score minimum (Phred value 0-40) applied to q_percent variable|integer between 0 and 40|
-|q_percent|percentage of reads >= q_min Q scores|number between 0 and 100|
-|adapter_match|number of base matches to identify adapters (requires 'adapters.txt')|integer (recommend 12)|
-|p64|defaults to phred+33, use True if using phred+64 qscores|True or False|
-|compress|gzip compress files after each step in the pipeline to save space (defaults to True)|True or False|
+|Variable      |Purpose       |Usage         |Input |
+|:-------------|:-------------|:-------------|:-------------|
+|paired|general|if fastq files should be treated as paired ends|True or False|
+|procs|general|choose maximum number of subprocesses that can run simultaneously|integer|
+|alt_dir|general|optional, full path to empty directory for file storage|e.g. '/path/to/dir/' (quotes required)|
+|walkaway|general|run from beginning to end without pausing at qc steps (use True to run without interruption, use False to initiate user-controlled walkthrough mode: requires all_qc)|True or False|
+|rm_transit|general|optional, remove each transitional file folder to save space|True or False|
+|initial_qc|QC metrics|create initial QC output|True or False|
+|all_qc|QC metrics|perform qc step at each filtering stage (use 'full' to produce visualizations for every file, use 'summary' for a summarized version of the R1, R2, and single reads)|'full' or 'summary' (quotes required)|
+|front_trim|buffer trimming|positions to trim from front of read before demultiplexing, leave 0 if no buffer sequence|integer|
+|mismatch|demultiplexing|number of mismatches (hamming distance) allowed in barcodes (must include 'index.txt' and barcodes file(s) in project directory; see "Demultiplexing" below)|integer|
+|R1_bases_ls|motif filtering|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes, commas, and brackets required)|
+|R2_bases_ls|motif filtering|list expected sequence motifs immediately adjacent to barcodes (e.g. restriction sites)|e.g. ['TCC', 'TCT'] (quotes, commas, and brackets required)|
+|non_genomic|motif filtering|number of non-genomic bases not found in barcode sequence (e.g. 'T' complementary to A-tailing library prep)|integer|
+|end_score|end trimming|end-trim once entire window >= this Q score|integer between 0 and 40|
+|window|end trimming|size of window to test for >= end_trim|integer within read length|
+|min_len|end trimming|minimum read length to retain for end-trimming and adapter removal|integer > 0|
+|q_min|quality filtering|Q score minimum (Phred value 0-40) applied to q_percent variable|integer between 0 and 40|
+|q_percent|quality filtering|percentage of reads >= q_min Q scores|number between 0 and 100|
+|adapter_match|adapter removal|number of base matches to identify adapters (requires 'adapters.txt')|integer (recommend 12)|
+|p64|general|defaults to phred+33, use True if using phred+64 qscores|True or False|
+|compress|general|gzip compress files after each step in the pipeline to save space (defaults to True)|True or False|
 
 
 An example configuration file may look like this:
