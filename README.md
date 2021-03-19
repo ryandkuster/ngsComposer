@@ -59,6 +59,7 @@ Set up your project directory containing the following files:
 Optionally, paired-end files and even multiple separate libraries can be included in the project directory.
 
 From command line, run ngsComposer with the specified directory of your project
+
 ```bash
 $ python3 <path_to_composer_directory>/composer.py -i <path_to_project_directory>
 ```
@@ -66,6 +67,24 @@ $ python3 <path_to_composer_directory>/composer.py -i <path_to_project_directory
 If this is the first time running the pipeline, you may need to wait for R to install the appropriate packages and dependencies.
 
 Several **example datasets** are included in the "examples" directory. Users are encouraged to examine and run these small projects to assist in understanding pipeline functionality.
+
+### Job mode
+
+If you plan on running ngsComposer as a job (e.g., qsub or sbatch job on a cluster), you will need to run job mode by adding the -j argument to the composer.py command.
+
+```bash
+$ python3 <path_to_composer_directory>/composer.py -i <path_to_project_directory> -j
+```
+
+Job mode will bypass all steps in the pipeline that require user input including walkthrough mode, estimating disk usage, and automatically assessing adapter content. If you still want to verify all settings without calling the pipeline, add the -v argument to initiate verification mode.
+
+### Verification mode
+
+In order to verify that your project directory and all variables are correctly structured without initiating the ngsComposer pipeline, use the -v argument in addition to the 'Basic usage' of the composer.py script.
+
+```bash
+$ python3 <path_to_composer_directory>/composer.py -i <path_to_project_directory> -v
+```
 
 ***
 

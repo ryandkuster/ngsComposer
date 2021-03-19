@@ -340,7 +340,7 @@ def adapters_test():
                      'sequences expected in R2 sequences.')
     else:
         return
- 
+
     for k, v in c.bcs_dict.items():
         names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
         for i in R2_bcs.values():
@@ -828,7 +828,8 @@ def summary_file():
 
 
 if __name__ == '__main__':
-    version = '0.4.8'
+    version = '0.4.9'
+
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
         '#' * 50 + '\n\n' +
@@ -841,13 +842,18 @@ if __name__ == '__main__':
         '    scallop.py  - trimming\n' +
         '    anemone.py  - demultiplexing\n' +
         '    rotifer.py  - motif detection\n' +
-        '    porifera.py - adapter removal\n\n' +
-        '    krill.py    - quality filtering\n' +
+        '    porifera.py - adapter removal\n' +
+        '    krill.py    - quality filtering\n\n' +
         'see https://github.com/ryandkuster/ngscomposer for full usage notes\n\n' +
         ''), formatter_class=RawTextHelpFormatter)
     parser.add_argument('-i', type=str, required=True,
-                        help='the full or relative path to the project directory')
+            help='the full or relative path to the project directory')
+    parser.add_argument('-j', default=False, action="store_true", required=False,
+            help='job mode (for advanced users): no project verification!')
+    parser.add_argument('-v', default=False, action="store_true", required=False,
+            help='verification mode: check project structure only (don\'t run)')
     args = parser.parse_args()
+
     c = Project()
     c.initialize(args.i)
     c.index_reader()
@@ -856,14 +862,22 @@ if __name__ == '__main__':
     r_packages()
     c.in1_ls, c.in2_ls = fastq_test(c.fastq_ls)
     demultiplex_test()
-    adapters_test()
 
     if c.alt_dir:
         c.initialize(c.alt_dir)
         if len(os.listdir(c.proj)) != 0:
             sys.exit('alt_dir must be an empty directory')
 
-    dir_size(c.proj, c.fastq_ls)
+    if args.j:
+        print('job mode: skipping adapters test and size estimation')
+        c.walkaway = True
+        args.v = False
+    else:
+        adapters_test()
+        dir_size(c.proj, c.fastq_ls)
+
+    if args.v:
+        sys.exit('verification complete, project looks good')
 
     if c.initial_qc:
         print(msg.crin_title)

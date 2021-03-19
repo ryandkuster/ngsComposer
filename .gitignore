@@ -5,3 +5,4 @@ __pycache__/*
 .vscode/
 tools/helpers/R_packages/*
 !README.md
+.DS_Store
