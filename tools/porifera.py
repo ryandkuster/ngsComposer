@@ -294,7 +294,7 @@ def porifera_single_open(args):
     compressed = gzip_test(args.in1)
     if compressed:
         se_1, _ = os.path.splitext(args.se_1)
-        with gzip.open(args.in1, 'rt') as f, open(args.se_1, 'w') as o:
+        with gzip.open(args.in1, 'rt') as f, open(se_1, 'w') as o:
             porifera_single(args, f, o)
     else:
         with open(args.in1) as f, open(args.se_1, 'w') as o:

@@ -84,8 +84,8 @@ class Project:
         open bcs_index and create dictionary of associated bc keyfiles
         open adapters and bcs_index and test for correct format
         '''
-        adapters1 = os.path.join(self.proj, 'adapters.R1.txt')
-        adapters2 = os.path.join(self.proj, 'adapters.R2.txt')
+        adapters1 = os.path.join(self.proj, 'adapters.R2.txt')
+        adapters2 = os.path.join(self.proj, 'adapters.R1.txt')
         self.adapters1 = adapters1 if os.path.exists(adapters1) else ''
         self.adapters2 = adapters2 if os.path.exists(adapters2) else ''
         if self.adapters1:
@@ -166,8 +166,12 @@ class Project:
                 raise Exception(msg.conf_confirm24)
             if self.adapter_match < 10:
                 raise Exception(msg.conf_confirm24)
-            if not os.path.exists(os.path.join(self.proj, 'adapters.R2.txt')):
-                raise Exception(msg.conf_confirm23)
+            if self.paired is True:
+                if not os.path.exists(os.path.join(self.proj, 'adapters.R1.txt')):
+                    raise Exception(msg.conf_confirm23)
+            else:
+                if not self.adapters1:
+                    raise Exception(msg.conf_confirm23)
 
         if self.q_min or self.q_percent:
             if not self.q_min or not self.q_percent:
@@ -340,7 +344,7 @@ def adapters_test():
                      'sequences expected in R2 sequences.')
     else:
         return
- 
+
     for k, v in c.bcs_dict.items():
         names_mx, R1_bcs, R2_bcs, dual_index = bc_reader(v)
         for i in R2_bcs.values():
@@ -828,7 +832,7 @@ def summary_file():
 
 
 if __name__ == '__main__':
-    version = '0.4.8'
+    version = '0.4.9'
     parser = argparse.ArgumentParser(description=('#' * 50 + '\n' +
         ' ' * 15 + 'NGS-COMPOSER:\n' +
         '#' * 50 + '\n\n' +
