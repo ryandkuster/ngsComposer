@@ -13,18 +13,10 @@ if (as.numeric(r_version[[6]]) > 3) {
     quit(status=1)}
 }
 
-tryCatch({
-  if (suppressMessages(!require(ggplot2))) install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org')
-  suppressMessages(library(ggplot2))
-}, warning = function(e) {
-  .libPaths(args[1])
-  if (suppressMessages(!require(ggplot2))) install.packages('ggplot2', dependencies=TRUE, repos='http://cran.us.r-project.org')
-  suppressMessages(library(ggplot2))
-}, error = function(e) {
-  print('error')
-}, finally={
-  invisible()
-})
+.libPaths(args[1])
 
-
-
+if (suppressMessages(!require(ggplot2, lib.loc = .libPaths()[1]))) {
+  print(paste('installing ggplot2 and dependencies into', .libPaths()[1]))
+  install.packages('ggplot2', dependencies=TRUE, quiet=TRUE, repos='http://cran.us.r-project.org')
+  }
+suppressMessages(library(ggplot2))
