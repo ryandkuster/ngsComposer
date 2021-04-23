@@ -293,11 +293,13 @@ $ sudo apt install r-base
 brew install r
 ```
 
-**Note**
+**Notes on ggplot2 installation:**
 
-ngsComposer requires the R package ggplot2 along with its dependencies. ngsComposer will check for these packages in .libPaths() and if not found will attempt to automatically download them. If you are working in an environment and lack write permission to the standard .libPaths() locations, the local ngsComposer repo will be used for package installation (/ngsComposer/tools/helpers/R_packages).
+ngsComposer requires the R package ggplot2 and its dependencies. ngsComposer will attempt to automatically download these packages to the local ngsComposer repo (/ngsComposer/tools/helpers/R_packages).
 
-*The installation of ggplot2 and its dependencies may take some time during the first use.*
+The installation of ggplot2 and dependencies may take some time during the first use.
+If package installation fails, manual installation within R may be necessary.
+It may be beneficial to install R packages as root and if using macOS, ensure Xcode toolkit is up to date.
 
 ## Versioning
 Versioning will follow major.minor.patch <a href="https://semver.org">semantic versioning format</a>.
