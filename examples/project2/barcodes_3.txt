@@ -1,5 +1,0 @@
-	A	C	G	T
-A	sample_a	sample_a	sample_b	sample_b
-C	sample_a	sample_a	sample_b	sample_b
-G	sample_a	sample_a	sample_b	sample_b
-T	sample_a	sample_a	sample_b	sample_b

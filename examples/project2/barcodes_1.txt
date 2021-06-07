@@ -1,5 +1,0 @@
-	A	C	G	T
-A	sample1	sample5	sample6	sample10
-C	sample2	sample5	sample7	sample10
-G	sample3	sample5	sample8	sample10
-T	sample4	sample5	sample9	sample10

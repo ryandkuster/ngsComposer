@@ -1,4 +1,0 @@
-1_R1.fastq  barcodes_1.txt
-2_R1.fastq  barcodes_2.txt
-3_R1.fastq  barcodes_2.txt
-4_R1.fastq  barcodes_3.txt
