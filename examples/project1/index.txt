@@ -1,0 +1,1 @@
+1_R1.fastq  barcodes_1.txt
